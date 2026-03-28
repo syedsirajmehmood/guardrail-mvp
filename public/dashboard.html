@@ -510,7 +510,7 @@
     </div>
 
     <script>
-        const gr = new Guardrail({ endpoint: 'http://localhost:3001' });
+        const gr = new Guardrail({ endpoint: window.location.origin });
         let feedCount = 0;
         let reasons = [];
 

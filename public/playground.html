@@ -591,8 +591,14 @@
     </div>
 
     <script>
-        const gr = new Guardrail({ endpoint: 'http://localhost:3001', debug: false });
+        // Use relative URL — works locally and on Railway
+        const BASE = window.location.origin;
         const history = [];
+
+        // Read Guardrail key from localStorage (set when user signs in from landing page)
+        function getGrKey() {
+            return localStorage.getItem('gr_dev_key') || '';
+        }
 
         const PRESETS = {
             deliver: {
@@ -626,16 +632,32 @@
             const context = document.getElementById('contextSelect').value;
             if (!text) { alert('Please enter some text first.'); return; }
 
+            const key = getGrKey();
+            if (!key) {
+                if (!confirm('No Guardrail key found.\n\nSign up on the home page to get your free gr_live_xxx key, then come back.\n\nOpen home page?')) return;
+                window.location.href = '/';
+                return;
+            }
+
             const btn = document.getElementById('checkBtn');
             btn.disabled = true;
             btn.classList.add('loading');
 
             try {
-                const result = await gr.check(text, { context, userId: 'playground-user' });
+                const res = await fetch(BASE + '/api/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Guardrail-Key': key },
+                    body: JSON.stringify({ text, context, userId: 'playground-user' })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Server error ' + res.status);
+                }
+                const result = await res.json();
                 renderResult(result, text);
                 addHistory(result, text);
             } catch (e) {
-                alert('Could not reach Guardrail server. Is it running on port 3001?');
+                alert('Guardrail error: ' + e.message + '\n\nMake sure your gr_live_xxx key is valid.');
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('loading');
