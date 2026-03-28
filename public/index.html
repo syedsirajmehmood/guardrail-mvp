@@ -540,6 +540,94 @@
         </div>
     </div>
 
+    <!-- GETTING STARTED -->
+    <section id="get-started" style="max-width:100%;padding:100px 60px;background:rgba(29,185,154,.03)">
+        <div style="max-width:1100px;margin:0 auto">
+            <div class="section-tag">Get Started</div>
+            <h2 class="section-title">Up and running in 3 steps.</h2>
+            <p class="section-sub">No credit card. No waiting. Enter your email above and you're integrated in under 60 seconds.</p>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px">
+
+                <!-- Step 1 -->
+                <div style="background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:32px">
+                    <div style="width:44px;height:44px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:#fff;margin-bottom:20px">1</div>
+                    <div style="font-size:1.05rem;font-weight:700;margin-bottom:10px">Sign up with your email</div>
+                    <p style="font-size:.875rem;color:var(--muted);line-height:1.7;margin-bottom:18px">Enter your email in the hero form. We instantly generate a unique API key — no password, no waiting list, no credit card.</p>
+                    <div style="background:#060e1a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--teal);line-height:1.8">
+                        ✉️ &nbsp;your@email.com<br>
+                        <span style="color:var(--muted)">→</span> gr_live_a3b4c5d6...
+                    </div>
+                    <a href="#" onclick="document.getElementById('signup-email').focus();window.scrollTo({top:0,behavior:'smooth'});return false"
+                        style="display:inline-block;margin-top:16px;background:var(--teal);color:#fff;padding:10px 20px;border-radius:8px;font-weight:700;font-size:.875rem">
+                        Get free key ↑
+                    </a>
+                </div>
+
+                <!-- Step 2 -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px">
+                    <div style="width:44px;height:44px;background:var(--card2);border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:var(--teal);margin-bottom:20px">2</div>
+                    <div style="font-size:1.05rem;font-weight:700;margin-bottom:10px">Copy your snippet</div>
+                    <p style="font-size:.875rem;color:var(--muted);line-height:1.7;margin-bottom:18px">Your Developer Portal shows a ready-to-paste code block with your key already inside it. Works in browser or Node.js.</p>
+                    <div style="background:#060e1a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.8;color:#e2edf8">
+                        <span style="color:#c792ea">new</span> <span style="color:var(--teal)">Guardrail</span>({<br>
+                        &nbsp;&nbsp;<span style="color:#82aaff">endpoint</span>: <span style="color:#c3e88d">"https://..."</span>,<br>
+                        &nbsp;&nbsp;<span style="color:#82aaff">apiKey</span>: <span style="color:#c3e88d">"gr_live_xxx"</span><br>
+                        });
+                    </div>
+                    <a href="developer.html"
+                        style="display:inline-block;margin-top:16px;border:1px solid var(--border);color:var(--muted);padding:10px 20px;border-radius:8px;font-weight:600;font-size:.875rem">
+                        Open Developer Portal →
+                    </a>
+                </div>
+
+                <!-- Step 3 -->
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px">
+                    <div style="width:44px;height:44px;background:var(--card2);border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:var(--teal);margin-bottom:20px">3</div>
+                    <div style="font-size:1.05rem;font-weight:700;margin-bottom:10px">Wrap your AI calls</div>
+                    <p style="font-size:.875rem;color:var(--muted);line-height:1.7;margin-bottom:18px">Pass every AI response through <code style="background:#06111f;padding:2px 6px;border-radius:4px;font-size:.82rem;color:var(--teal)">gr.check()</code>. Get back a decision and confidence score in milliseconds.</p>
+                    <div style="background:#060e1a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.8;color:#e2edf8">
+                        gr.<span style="color:var(--teal)">check</span>(aiText)<br>
+                        <span style="color:#4a6fa5">// → decision: 'deliver'</span><br>
+                        <span style="color:#4a6fa5">// → confidence: 0.91</span>
+                    </div>
+                    <a href="playground.html"
+                        style="display:inline-block;margin-top:16px;border:1px solid var(--border);color:var(--muted);padding:10px 20px;border-radius:8px;font-weight:600;font-size:.875rem">
+                        Try Playground first →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TOOLS -->
+    <section style="max-width:1100px;padding:60px 60px 0;margin:0 auto">
+        <div class="section-tag">Explore</div>
+        <h2 class="section-title">Everything included.</h2>
+        <p class="section-sub">Four tools built in. All browser-based. No installs required beyond the SDK snippet.</p>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:36px">
+            <a href="developer.html" style="display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:all .2s;text-decoration:none" onmouseover="this.style.borderColor='var(--teal)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+                <div style="font-size:1.5rem;margin-bottom:8px">🔑</div>
+                <div style="font-weight:700;margin-bottom:5px;color:var(--text)">Developer Portal</div>
+                <div style="font-size:.85rem;color:var(--muted)">Your API key, usage stats, decision breakdown, and ready-to-paste code snippet.</div>
+            </a>
+            <a href="playground.html" style="display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:all .2s;text-decoration:none" onmouseover="this.style.borderColor='var(--teal)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+                <div style="font-size:1.5rem;margin-bottom:8px">🧪</div>
+                <div style="font-weight:700;margin-bottom:5px;color:var(--text)">Playground</div>
+                <div style="font-size:.85rem;color:var(--muted)">Paste any AI response and see Guardrail score it live — before writing a single line of code.</div>
+            </a>
+            <a href="dashboard.html" style="display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:all .2s;text-decoration:none" onmouseover="this.style.borderColor='var(--teal)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+                <div style="font-size:1.5rem;margin-bottom:8px">📊</div>
+                <div style="font-weight:700;margin-bottom:5px;color:var(--text)">Live Dashboard</div>
+                <div style="font-size:.85rem;color:var(--muted)">Real-time stream of every decision. See deliver / flag / escalate events as they happen.</div>
+            </a>
+            <a href="chat.html" style="display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:all .2s;text-decoration:none" onmouseover="this.style.borderColor='var(--teal)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+                <div style="font-size:1.5rem;margin-bottom:8px">💬</div>
+                <div style="font-weight:700;margin-bottom:5px;color:var(--text)">Claude Chat Demo</div>
+                <div style="font-size:.85rem;color:var(--muted)">Chat with Claude live and watch Guardrail score every response in real-time.</div>
+            </a>
+        </div>
+    </section>
+
     <section id="how">
         <div class="section-tag">How it works</div>
         <h2 class="section-title">Four steps. Zero trust issues.</h2>
