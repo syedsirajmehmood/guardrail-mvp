@@ -541,6 +541,128 @@
     </div>
 
     <!-- GETTING STARTED -->
+    <!-- ARCHITECTURE VISUAL -->
+    <section style="padding:100px 60px;max-width:1100px;margin:0 auto">
+        <div class="section-tag">How it works</div>
+        <h2 class="section-title">Guardrail sits between your AI and your users.</h2>
+        <p class="section-sub">We don't generate text. We don't consume your AI tokens. We only read the <strong style="color:var(--teal)">response text</strong> and score it in milliseconds.</p>
+
+        <style>
+            /* ── arch diagram ── */
+            .arch-row { display:flex; align-items:center; justify-content:center; gap:0; margin:56px auto 0; max-width:960px; position:relative; }
+            .arch-node {
+                display:flex; flex-direction:column; align-items:center; gap:10px;
+                background:var(--card); border:1px solid var(--border); border-radius:16px;
+                padding:22px 20px; min-width:130px; flex-shrink:0; position:relative; z-index:1;
+            }
+            .arch-node.guardrail-node {
+                border-color:var(--teal); box-shadow:0 0 0 1px rgba(29,185,154,.2), 0 0 32px rgba(29,185,154,.08);
+                background:rgba(29,185,154,.05); min-width:155px;
+            }
+            .arch-node-icon { font-size:2rem; }
+            .arch-node-label { font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+            .arch-node-name { font-size:.95rem; font-weight:700; color:var(--text); text-align:center; }
+
+            /* pipe between nodes */
+            .arch-pipe {
+                height:3px; flex:1; position:relative; overflow:hidden; min-width:40px;
+                background:linear-gradient(90deg, var(--border), rgba(30,48,80,.3));
+            }
+            .arch-pipe.active { background:linear-gradient(90deg, var(--border), var(--teal), var(--border)); }
+
+            /* animated dot travelling along pipe */
+            .arch-dot {
+                position:absolute; top:50%; transform:translateY(-50%);
+                width:8px; height:8px; border-radius:50%; background:var(--teal);
+                box-shadow:0 0 8px rgba(29,185,154,.8);
+                animation:travel 1.8s ease-in-out infinite;
+            }
+            .arch-pipe:nth-child(2) .arch-dot { animation-delay:0s; }
+            .arch-pipe:nth-child(4) .arch-dot { animation-delay:.6s; }
+            .arch-pipe:nth-child(6) .arch-dot { animation-delay:1.2s; }
+            @keyframes travel { 0%{left:-8px;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% + 8px);opacity:0} }
+
+            /* decision badges */
+            .arch-decisions { display:flex; flex-direction:column; gap:8px; margin-left:12px; }
+            .arch-dec { padding:7px 14px; border-radius:8px; font-size:.8rem; font-weight:700; display:flex; align-items:center; gap:7px; animation:fadepulse 2.4s ease-in-out infinite; }
+            .arch-dec.deliver { background:rgba(29,185,154,.12); color:var(--teal); animation-delay:0s; }
+            .arch-dec.flag { background:rgba(245,166,35,.12); color:var(--amber); animation-delay:.8s; }
+            .arch-dec.escalate { background:rgba(255,92,92,.12); color:var(--coral); animation-delay:1.6s; }
+            @keyframes fadepulse { 0%,100%{opacity:.35} 50%{opacity:1} }
+
+            /* callouts */
+            .arch-callouts { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:40px; }
+            .arch-callout { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px; }
+            .arch-callout-icon { font-size:1.4rem; margin-bottom:8px; }
+            .arch-callout-title { font-size:.85rem; font-weight:700; margin-bottom:4px; }
+            .arch-callout-desc { font-size:.8rem; color:var(--muted); line-height:1.65; }
+
+            @media(max-width:700px){
+                .arch-row{ flex-direction:column; gap:0; }
+                .arch-pipe{ width:3px; height:32px; min-width:unset; flex:none; }
+                @keyframes travel{ 0%{top:-8px;left:50%;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{top:calc(100% + 8px);left:50%;opacity:0} }
+                .arch-callouts{ grid-template-columns:1fr; }
+            }
+        </style>
+
+        <!-- Pipeline diagram -->
+        <div class="arch-row">
+            <!-- User -->
+            <div class="arch-node">
+                <div class="arch-node-icon">👤</div>
+                <div class="arch-node-label">Step 1</div>
+                <div class="arch-node-name">User asks<br>a question</div>
+            </div>
+
+            <div class="arch-pipe active"><div class="arch-dot"></div></div>
+
+            <!-- AI Model -->
+            <div class="arch-node">
+                <div class="arch-node-icon">🤖</div>
+                <div class="arch-node-label">Step 2</div>
+                <div class="arch-node-name">Your AI<br>responds</div>
+            </div>
+
+            <div class="arch-pipe active"><div class="arch-dot"></div></div>
+
+            <!-- Guardrail -->
+            <div class="arch-node guardrail-node">
+                <div class="arch-node-icon">🛡️</div>
+                <div class="arch-node-label" style="color:var(--teal)">Step 3</div>
+                <div class="arch-node-name">Guardrail<br>scores it</div>
+                <div style="font-size:.7rem;color:var(--teal);margin-top:4px;font-weight:600">≤ 20ms</div>
+            </div>
+
+            <div class="arch-pipe active" style="min-width:20px;flex:0.4"><div class="arch-dot"></div></div>
+
+            <!-- Decisions -->
+            <div class="arch-decisions">
+                <div class="arch-dec deliver">✅ Deliver</div>
+                <div class="arch-dec flag">⚠️ Flag</div>
+                <div class="arch-dec escalate">🔴 Escalate</div>
+            </div>
+        </div>
+
+        <!-- Key callouts -->
+        <div class="arch-callouts">
+            <div class="arch-callout">
+                <div class="arch-callout-icon">⚡</div>
+                <div class="arch-callout-title">Zero tokens consumed</div>
+                <div class="arch-callout-desc">Guardrail never calls your LLM. We only receive the response text your AI already generated — no extra API costs, ever.</div>
+            </div>
+            <div class="arch-callout">
+                <div class="arch-callout-icon">🔌</div>
+                <div class="arch-callout-title">Works with any AI</div>
+                <div class="arch-callout-desc">One line of code wraps OpenAI, Claude, Gemini, Llama, or your own model. Guardrail is model-agnostic by design.</div>
+            </div>
+            <div class="arch-callout">
+                <div class="arch-callout-icon">🔒</div>
+                <div class="arch-callout-title">Your data stays yours</div>
+                <div class="arch-callout-desc">We analyse response text only. No user PII, no prompts, no conversation history is ever stored or accessed.</div>
+            </div>
+        </div>
+    </section>
+
     <section id="get-started" style="max-width:100%;padding:100px 60px;background:rgba(29,185,154,.03)">
         <div style="max-width:1100px;margin:0 auto">
             <div class="section-tag">Get Started</div>
