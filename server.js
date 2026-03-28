@@ -42,8 +42,9 @@ function broadcast(data) {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-// SDK is NOT served publicly anymore — users install via npm
-// app.use('/sdk', express.static(path.join(__dirname, 'sdk')));
+// Serve SDK and embed widget publicly
+app.use('/sdk', express.static(path.join(__dirname, 'sdk')));
+app.use('/embed', express.static(path.join(__dirname, 'public/embed')));
 
 /** Validate a regular API key OR master key. */
 function requireKey(req, res, next) {

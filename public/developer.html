@@ -108,6 +108,13 @@
         code { font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 1.9; color: #e2edf8; }
         .tk-comment { color: #4a6fa5; } .tk-kw { color: #c792ea; } .tk-str { color: #c3e88d; }
         .tk-fn { color: var(--teal); } .tk-key { color: #82aaff; }
+        /* TABS */
+        .tab-bar { display: flex; gap: 6px; padding: 10px 16px; background: #0a1929; border-bottom: 1px solid var(--border); }
+        .tab-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid transparent; font-size: .78rem; font-weight: 600; cursor: pointer; background: none; color: var(--muted); transition: all .2s; }
+        .tab-btn.active { background: rgba(29,185,154,.12); border-color: rgba(29,185,154,.3); color: var(--teal); }
+        .tab-btn:hover:not(.active) { color: var(--text); border-color: var(--border); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
         /* LOGS */
         .logs-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
@@ -206,14 +213,21 @@
             </div>
         </div>
 
-        <!-- Integration snippet -->
+        <!-- Integration snippets (tabbed) -->
         <div class="snippet-section">
             <div class="snippet-header">
                 <div class="snippet-dots"><span></span><span></span><span></span></div>
-                <span class="snippet-label">Your integration snippet</span>
-                <button class="copy-btn" onclick="copySnippet()">Copy code</button>
+                <span class="snippet-label">Integration</span>
+                <button class="copy-btn" onclick="copyActiveTab()">Copy code</button>
             </div>
-            <pre><code id="snippet-code"></code></pre>
+            <div class="tab-bar">
+                <button class="tab-btn active" onclick="switchTab('sdk',this)">🧩 JS SDK</button>
+                <button class="tab-btn" onclick="switchTab('widget',this)">💬 Website Widget</button>
+                <button class="tab-btn" onclick="switchTab('mcp',this)">🤖 Claude Desktop</button>
+            </div>
+            <div class="tab-panel active" id="tab-sdk"><pre><code id="snippet-sdk"></code></pre></div>
+            <div class="tab-panel" id="tab-widget"><pre><code id="snippet-widget"></code></pre></div>
+            <div class="tab-panel" id="tab-mcp"><pre><code id="snippet-mcp"></code></pre></div>
         </div>
 
         <!-- Recent logs -->
@@ -296,28 +310,67 @@
             document.getElementById('stat-flag').textContent = d.flag || 0;
             document.getElementById('stat-escalate').textContent = d.escalate || 0;
 
-            // Snippet
-            const snippet = genSnippet();
-            document.getElementById('snippet-code').innerHTML = snippet;
+            // Snippets
+            genSnippets();
 
             // Logs
             renderLogs(userData.recentLogs || []);
         }
 
-        function genSnippet() {
-            const origin = window.location.origin;
-            return `<span class="tk-comment">// 1. Load the SDK</span>\n` +
-`&lt;script src=<span class="tk-str">"${origin}/sdk/guardrail.js"</span>&gt;&lt;/script&gt;\n\n` +
-`<span class="tk-comment">// 2. Initialize with your key</span>\n` +
-`<span class="tk-kw">const</span> gr = <span class="tk-kw">new</span> <span class="tk-fn">Guardrail</span>({\n` +
-`  <span class="tk-key">endpoint</span>: <span class="tk-str">"${origin}"</span>,\n` +
-`  <span class="tk-key">apiKey</span>:  <span class="tk-str">"${currentKey}"</span>,\n` +
-`  <span class="tk-key">context</span>: <span class="tk-str">"general"</span>,\n` +
-`  <span class="tk-key">onEscalate</span>: (r) => <span class="tk-fn">notifyHuman</span>(r)\n` +
-`});\n\n` +
-`<span class="tk-comment">// 3. Wrap any AI response</span>\n` +
-`<span class="tk-kw">const</span> result = <span class="tk-kw">await</span> gr.<span class="tk-fn">check</span>(aiResponse);\n` +
-`<span class="tk-comment">// → { decision: 'deliver', confidence: 0.91, reasons: [] }</span>`;
+        function genSnippets() {
+            const o = window.location.origin;
+            const k = currentKey;
+
+            // SDK tab
+            document.getElementById('snippet-sdk').innerHTML =
+                `<span class="tk-comment">&lt;!-- 1. Load SDK --&gt;</span>\n` +
+                `&lt;script src=<span class="tk-str">"${o}/sdk/guardrail.js"</span>&gt;&lt;/script&gt;\n\n` +
+                `<span class="tk-kw">const</span> gr = <span class="tk-kw">new</span> <span class="tk-fn">Guardrail</span>({\n` +
+                `  <span class="tk-key">endpoint</span>: <span class="tk-str">"${o}"</span>,\n` +
+                `  <span class="tk-key">apiKey</span>:  <span class="tk-str">"${k}"</span>,\n` +
+                `  <span class="tk-key">context</span>: <span class="tk-str">"general"</span>,\n` +
+                `  <span class="tk-key">onEscalate</span>: (r) =&gt; <span class="tk-fn">notifyHuman</span>(r)\n` +
+                `});\n` +
+                `<span class="tk-kw">const</span> result = <span class="tk-kw">await</span> gr.<span class="tk-fn">check</span>(aiResponse);`;
+
+            // Widget tab
+            document.getElementById('snippet-widget').innerHTML =
+                `<span class="tk-comment">&lt;!-- Drop this into your site's &lt;/body&gt; --&gt;</span>\n` +
+                `&lt;script\n` +
+                `  src=<span class="tk-str">"${o}/embed/widget.js"</span>\n` +
+                `  data-key=<span class="tk-str">"${k}"</span>\n` +
+                `  data-context=<span class="tk-str">"general"</span>\n` +
+                `  data-title=<span class="tk-str">"AI Assistant"</span>\n` +
+                `  data-theme=<span class="tk-str">"dark"</span>\n` +
+                `&gt;&lt;/script&gt;\n\n` +
+                `<span class="tk-comment">&lt;!-- That's it! A 🛡️ chat bubble appears in the corner. --&gt;</span>`;
+
+            // MCP tab
+            document.getElementById('snippet-mcp').innerHTML =
+                `<span class="tk-comment">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>\n` +
+                `{\n` +
+                `  <span class="tk-key">"mcpServers"</span>: {\n` +
+                `    <span class="tk-key">"guardrail"</span>: {\n` +
+                `      <span class="tk-key">"command"</span>: <span class="tk-str">"node"</span>,\n` +
+                `      <span class="tk-key">"args"</span>: [<span class="tk-str">"PATH_TO/guardrail-mvp/mcp/server.js"</span>],\n` +
+                `      <span class="tk-key">"env"</span>: {\n` +
+                `        <span class="tk-key">"GUARDRAIL_API_KEY"</span>: <span class="tk-str">"${k}"</span>,\n` +
+                `        <span class="tk-key">"GUARDRAIL_ENDPOINT"</span>: <span class="tk-str">"${o}"</span>\n` +
+                `      }\n` +
+                `    }\n` +
+                `  }\n` +
+                `}\n\n` +
+                `<span class="tk-comment">// Then restart Claude Desktop. Claude can now call:</span>\n` +
+                `<span class="tk-comment">// check_confidence · get_my_stats · score_and_explain</span>`;
+        }
+
+        let activeTab = 'sdk';
+        function switchTab(name, btn) {
+            activeTab = name;
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            btn.classList.add('active');
         }
 
         function renderLogs(logs) {
@@ -343,10 +396,10 @@
             showToast('API key copied!');
         }
 
-        function copySnippet() {
-            const origin = window.location.origin;
-            const plain = `<script src="${origin}/sdk/guardrail.js"><\/script>\n\nconst gr = new Guardrail({\n  endpoint: "${origin}",\n  apiKey: "${currentKey}",\n  context: "general"\n});\n\nconst result = await gr.check(aiResponse);`;
-            navigator.clipboard.writeText(plain);
+        function copyActiveTab() {
+            const el = document.querySelector('.tab-panel.active code');
+            const text = el ? el.innerText : '';
+            navigator.clipboard.writeText(text);
             showToast('Snippet copied!');
         }
 
