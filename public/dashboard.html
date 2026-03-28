@@ -8,7 +8,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
         rel="stylesheet" />
-    <script src="/sdk/guardrail.js"></script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <style>
         *,
         *::before,
@@ -423,6 +423,18 @@
         </div>
     </nav>
 
+    <!-- KEY BAR -->
+    <div style="background:#0a1525;border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="font-size:.9rem">🔑</span>
+        <span style="font-size:.82rem;font-weight:700">Your Guardrail Key</span>
+        <input type="text" id="grKeyInput" placeholder="gr_live_xxx"
+            style="flex:1;min-width:200px;max-width:360px;background:#0a1929;border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none" />
+        <span id="keyBadge" style="font-size:.72rem;padding:3px 12px;border-radius:999px;font-weight:700">⚠ Required</span>
+        <button onclick="connectDashboard()" id="connectBtn"
+            style="background:var(--teal);border:none;color:#fff;padding:8px 18px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">⚡ Connect</button>
+        <a href="/" style="font-size:.72rem;color:var(--teal);text-decoration:underline;margin-left:auto">Need a key? Sign up free →</a>
+    </div>
+
     <div class="layout">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -510,31 +522,95 @@
     </div>
 
     <script>
-        const gr = new Guardrail({ endpoint: window.location.origin });
+        const BASE = window.location.origin;
         let feedCount = 0;
         let reasons = [];
+        let eventSource = null;
+
+        (function init() {
+            const saved = localStorage.getItem('gr_dev_key') || '';
+            const inp = document.getElementById('grKeyInput');
+            if (saved && !inp.value) inp.value = saved;
+            updateKeyBadge();
+            inp.addEventListener('input', updateKeyBadge);
+            if (saved) setTimeout(connectDashboard, 300);
+        })();
+
+        function updateKeyBadge() {
+            const k = document.getElementById('grKeyInput').value.trim();
+            const badge = document.getElementById('keyBadge');
+            if (k && k.startsWith('gr_live_')) {
+                badge.textContent = '✅ Ready';
+                badge.style.background = 'rgba(29,185,154,.12)';
+                badge.style.color = '#1db99a';
+            } else {
+                badge.textContent = '⚠ Required';
+                badge.style.background = 'rgba(255,92,92,.12)';
+                badge.style.color = '#ff5c5c';
+            }
+        }
+
+        function getKey() { return document.getElementById('grKeyInput').value.trim(); }
 
         function fmt(iso) {
             const d = new Date(iso);
             return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
+        function connectDashboard() {
+            const key = getKey();
+            if (!key) {
+                document.getElementById('grKeyInput').focus();
+                document.getElementById('grKeyInput').style.borderColor = '#ff5c5c';
+                setTimeout(() => document.getElementById('grKeyInput').style.borderColor = '', 2000);
+                return;
+            }
+            localStorage.setItem('gr_dev_key', key);
+            updateKeyBadge();
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(BASE + '/api/events?key=' + key);
+            eventSource.onmessage = function(e) {
+                try {
+                    const ev = JSON.parse(e.data);
+                    if (ev.type === 'connected') {
+                        document.getElementById('connectBtn').textContent = '✅ Connected';
+                        document.getElementById('connectBtn').style.background = 'rgba(29,185,154,.15)';
+                        document.getElementById('connectBtn').style.color = '#1db99a';
+                        return;
+                    }
+                    addFeedItem(ev);
+                    updateStats();
+                } catch(_) {}
+            };
+            eventSource.onerror = function() {
+                document.getElementById('connectBtn').textContent = '⚡ Reconnect';
+                document.getElementById('connectBtn').style.background = 'var(--teal)';
+                document.getElementById('connectBtn').style.color = '#fff';
+            };
+            fetch(BASE + '/api/logs?limit=20', { headers: { 'X-Guardrail-Key': key } })
+                .then(r => r.json()).then(logs => { logs.reverse().forEach(addFeedItem); }).catch(() => {});
+            updateStats();
+        }
+
         function updateStats() {
-            gr.getStats().then(s => {
-                document.getElementById('statTotal').textContent = s.total;
-                document.getElementById('statDeliver').textContent = s.deliver;
-                document.getElementById('statFlag').textContent = s.flag;
-                document.getElementById('statEscalate').textContent = s.escalate;
-                document.getElementById('subDeliver').textContent = s.deliverRate + '%';
-                document.getElementById('subFlag').textContent = s.flagRate + '%';
-                document.getElementById('subEscalate').textContent = s.escalateRate + '%';
-                document.getElementById('barDeliver').style.width = s.deliverRate + '%';
-                document.getElementById('barFlag').style.width = s.flagRate + '%';
-                document.getElementById('barEscalate').style.width = s.escalateRate + '%';
-                document.getElementById('pctDeliver').textContent = s.deliverRate + '%';
-                document.getElementById('pctFlag').textContent = s.flagRate + '%';
-                document.getElementById('pctEscalate').textContent = s.escalateRate + '%';
-            }).catch(() => { });
+            const key = getKey();
+            if (!key) return;
+            fetch(BASE + '/api/stats', { headers: { 'X-Guardrail-Key': key } })
+                .then(r => r.json()).then(s => {
+                    document.getElementById('statTotal').textContent = s.total;
+                    document.getElementById('statDeliver').textContent = s.deliver;
+                    document.getElementById('statFlag').textContent = s.flag;
+                    document.getElementById('statEscalate').textContent = s.escalate;
+                    document.getElementById('subDeliver').textContent = s.deliverRate + '%';
+                    document.getElementById('subFlag').textContent = s.flagRate + '%';
+                    document.getElementById('subEscalate').textContent = s.escalateRate + '%';
+                    document.getElementById('barDeliver').style.width = s.deliverRate + '%';
+                    document.getElementById('barFlag').style.width = s.flagRate + '%';
+                    document.getElementById('barEscalate').style.width = s.escalateRate + '%';
+                    document.getElementById('pctDeliver').textContent = s.deliverRate + '%';
+                    document.getElementById('pctFlag').textContent = s.flagRate + '%';
+                    document.getElementById('pctEscalate').textContent = s.escalateRate + '%';
+                }).catch(() => {});
         }
 
         function addFeedItem(ev) {
@@ -543,19 +619,15 @@
             const list = document.getElementById('feedList');
             const empty = list.querySelector('.empty');
             if (empty) empty.remove();
-
             const item = document.createElement('div');
             item.className = 'feed-item';
-            item.innerHTML = `
-    <span class="feed-time">${fmt(ev.timestamp)}</span>
-    <span><span class="badge ${ev.decision}">${ev.decision}</span></span>
-    <span class="feed-conf">${(ev.confidence * 100).toFixed(0)}%</span>
-    <span class="feed-ctx">${ev.context}</span>
-    <span class="feed-text">${ev.text.substring(0, 80)}…</span>
-  `;
+            item.innerHTML = '<span class="feed-time">' + fmt(ev.timestamp) + '</span>'
+                + '<span><span class="badge ' + ev.decision + '">' + ev.decision + '</span></span>'
+                + '<span class="feed-conf">' + (ev.confidence * 100).toFixed(0) + '%</span>'
+                + '<span class="feed-ctx">' + ev.context + '</span>'
+                + '<span class="feed-text">' + (ev.text||'').substring(0,80) + '…</span>';
             list.insertBefore(item, list.firstChild);
             if (list.children.length > 100) list.lastChild.remove();
-
             if (ev.decision === 'escalate') addEscalation(ev);
             if (ev.reasons && ev.reasons.length) addReasons(ev.reasons);
         }
@@ -566,18 +638,18 @@
             if (empty) empty.remove();
             const item = document.createElement('div');
             item.className = 'esc-item';
-            item.innerHTML = `<div class="esc-time">${fmt(ev.timestamp)}</div>
-    <div class="esc-text">${ev.text.substring(0, 100)}…</div>
-    <div class="esc-conf">conf: ${(ev.confidence * 100).toFixed(0)}%</div>`;
+            item.innerHTML = '<div class="esc-time">' + fmt(ev.timestamp) + '</div>'
+                + '<div class="esc-text">' + (ev.text||'').substring(0,100) + '…</div>'
+                + '<div class="esc-conf">conf: ' + (ev.confidence * 100).toFixed(0) + '%</div>';
             list.insertBefore(item, list.firstChild);
             if (list.children.length > 10) list.lastChild.remove();
         }
 
         function addReasons(newReasons) {
-            reasons = [...newReasons, ...reasons].slice(0, 6);
+            reasons = newReasons.concat(reasons).slice(0, 6);
             const list = document.getElementById('reasonsList');
             list.innerHTML = reasons.length
-                ? reasons.map(r => `<div class="reason-item">${r}</div>`).join('')
+                ? reasons.map(function(r){ return '<div class="reason-item">' + r + '</div>'; }).join('')
                 : '<div class="empty">No signals yet</div>';
         }
 
@@ -589,20 +661,6 @@
             document.getElementById('feedCount').textContent = '0 events';
         }
 
-        // SSE stream
-        const stream = gr.stream(ev => {
-            if (ev.type === 'connected') return;
-            addFeedItem(ev);
-            updateStats();
-        });
-
-        // Seed with existing logs
-        gr.getLogs(20).then(logs => {
-            logs.reverse().forEach(addFeedItem);
-            updateStats();
-        }).catch(() => { });
-
-        // Poll stats every 5s
         setInterval(updateStats, 5000);
     </script>
 </body>

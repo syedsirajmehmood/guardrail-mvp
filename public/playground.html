@@ -527,6 +527,20 @@
                 <div class="panel-sub">Paste any AI response. Guardrail will score it and route it.</div>
             </div>
 
+            <!-- KEY INPUT (clear inline guidance) -->
+            <div style="background:#081420;border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <span style="font-size:1rem">🔑</span>
+                    <span style="font-size:.82rem;font-weight:700;color:var(--text)">Your Guardrail Key</span>
+                    <span id="keyBadge" style="margin-left:auto;font-size:.7rem;padding:2px 10px;border-radius:999px;font-weight:700"></span>
+                </div>
+                <input type="text" id="grKeyInput" placeholder="gr_live_xxx  —  get one free at the home page"
+                    style="width:100%;background:#0a1929;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none" />
+                <div style="font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5">
+                    Don't have a key? <a href="/" style="color:var(--teal);text-decoration:underline">Sign up free on the home page</a> — takes 10 seconds.
+                </div>
+            </div>
+
             <div>
                 <label>AI Response Text</label>
                 <textarea id="inputText"
@@ -597,9 +611,31 @@
         const BASE = window.location.origin;
         const history = [];
 
-        // Read Guardrail key from localStorage (set when user signs in from landing page)
-        function getGrKey() {
-            return localStorage.getItem('gr_dev_key') || '';
+        // Pre-fill key from localStorage if available
+        (function initKey() {
+            const saved = localStorage.getItem('gr_dev_key') || '';
+            const inp = document.getElementById('grKeyInput');
+            if (saved && !inp.value) inp.value = saved;
+            updateKeyBadge();
+            inp.addEventListener('input', updateKeyBadge);
+        })();
+
+        function updateKeyBadge() {
+            const k = document.getElementById('grKeyInput').value.trim();
+            const badge = document.getElementById('keyBadge');
+            if (k && k.startsWith('gr_live_')) {
+                badge.textContent = '✅ Key set';
+                badge.style.background = 'rgba(29,185,154,.12)';
+                badge.style.color = '#1db99a';
+            } else if (k) {
+                badge.textContent = '⚠ Invalid format';
+                badge.style.background = 'rgba(245,166,35,.12)';
+                badge.style.color = '#f5a623';
+            } else {
+                badge.textContent = '⚠ Required';
+                badge.style.background = 'rgba(255,92,92,.12)';
+                badge.style.color = '#ff5c5c';
+            }
         }
 
         const PRESETS = {
@@ -634,12 +670,15 @@
             const context = document.getElementById('contextSelect').value;
             if (!text) { alert('Please enter some text first.'); return; }
 
-            const key = getGrKey();
+            const key = document.getElementById('grKeyInput').value.trim();
             if (!key) {
-                if (!confirm('No Guardrail key found.\n\nSign up on the home page to get your free gr_live_xxx key, then come back.\n\nOpen home page?')) return;
-                window.location.href = '/';
+                document.getElementById('grKeyInput').focus();
+                document.getElementById('grKeyInput').style.borderColor = '#ff5c5c';
+                setTimeout(() => document.getElementById('grKeyInput').style.borderColor = '', 2000);
                 return;
             }
+            // Save for next visit
+            localStorage.setItem('gr_dev_key', key);
 
             const btn = document.getElementById('checkBtn');
             btn.disabled = true;

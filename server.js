@@ -13,9 +13,33 @@ const PORT = process.env.PORT || 3001;
 // ── Master key (set GUARDRAIL_MASTER_KEY in .env) ─────────────────────────────
 const MASTER_KEY = process.env.GUARDRAIL_MASTER_KEY || 'gr_master_changeme';
 
-// ── In-memory API key store ───────────────────────────────────────────────────
-// Map<key, { email, label, created, requests, decisions }>
+// ── Persistent API key store ──────────────────────────────────────────────────
+// Keys persist in data/keys.json so they survive Railway redeploys
+const fs = require('fs');
+const DATA_DIR = path.join(__dirname, 'data');
+const KEYS_FILE = path.join(DATA_DIR, 'keys.json');
+
 const apiKeys = new Map();
+
+function saveKeys() {
+    try {
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+        const obj = {};
+        apiKeys.forEach((v, k) => { obj[k] = v; });
+        fs.writeFileSync(KEYS_FILE, JSON.stringify(obj, null, 2));
+    } catch (e) { console.error('[keys] save failed:', e.message); }
+}
+
+function loadKeys() {
+    try {
+        if (fs.existsSync(KEYS_FILE)) {
+            const obj = JSON.parse(fs.readFileSync(KEYS_FILE, 'utf8'));
+            for (const [k, v] of Object.entries(obj)) apiKeys.set(k, v);
+            console.log(`[keys] Loaded ${apiKeys.size} keys from disk`);
+        }
+    } catch (e) { console.error('[keys] load failed:', e.message); }
+}
+loadKeys();
 
 function createKey(email, label) {
     const key = 'gr_live_' + uuidv4().replace(/-/g, '');
@@ -26,6 +50,7 @@ function createKey(email, label) {
         requests: 0,
         decisions: { deliver: 0, flag: 0, escalate: 0 }
     });
+    saveKeys();
     return key;
 }
 
@@ -250,6 +275,7 @@ app.delete('/api/keys/:key', requireMasterKey, (req, res) => {
     const { key } = req.params;
     if (!apiKeys.has(key)) return res.status(404).json({ error: 'Key not found' });
     apiKeys.delete(key);
+    saveKeys();
     res.json({ revoked: key });
 });
 
