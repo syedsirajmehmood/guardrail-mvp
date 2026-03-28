@@ -547,15 +547,37 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sb-section">
-                <div class="sb-label">Your Anthropic Key</div>
-                <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
-                <div style="font-size:.67rem;color:var(--muted);line-height:1.4">Used for Claude calls. Charged to your account. Guardrail analysis is free.</div>
+                <div class="sb-label">Step 1 — Your Anthropic Key</div>
+                <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+                <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-top:4px">
+                    <strong style="color:var(--text)">What is this?</strong> Your personal Claude API key from Anthropic.<br>
+                    <strong style="color:var(--text)">What it does:</strong> Powers the AI chat — Claude answers your questions using <em>your</em> tokens.<br>
+                    <strong style="color:var(--text)">How to get it:</strong>
+                    <ol style="margin:4px 0 0 14px;padding:0">
+                        <li>Go to <a href="https://console.anthropic.com" target="_blank" style="color:var(--teal)">console.anthropic.com</a></li>
+                        <li>Sign up or log in</li>
+                        <li>Go to <strong>API Keys</strong> → <strong>Create Key</strong></li>
+                        <li>Copy the key starting with <code style="color:var(--teal)">sk-ant-...</code></li>
+                    </ol>
+                    <div style="margin-top:4px;color:var(--amber);font-size:.68rem">💳 Claude charges your account (not ours). Guardrail analysis is always free.</div>
+                </div>
             </div>
 
             <div class="sb-section">
-                <div class="sb-label">Guardrail API Key</div>
-                <input type="password" id="grKeyInput" placeholder="gr_live_... (from Developer Portal)" />
-                <div class="key-status missing" id="keyStatus">⚠ Enter both keys above</div>
+                <div class="sb-label">Step 2 — Your Guardrail Key</div>
+                <input type="password" id="grKeyInput" placeholder="gr_live_..." />
+                <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-top:4px">
+                    <strong style="color:var(--text)">What is this?</strong> Your free Guardrail API key.<br>
+                    <strong style="color:var(--text)">What it does:</strong> Lets Guardrail score every Claude response for confidence, risk signals, and routing.<br>
+                    <strong style="color:var(--text)">How to get it:</strong>
+                    <ol style="margin:4px 0 0 14px;padding:0">
+                        <li>Go to the <a href="/" style="color:var(--teal)">Guardrail home page</a></li>
+                        <li>Enter your email → click <strong>Get Free Key</strong></li>
+                        <li>Copy the key starting with <code style="color:var(--teal)">gr_live_...</code></li>
+                    </ol>
+                    <div style="margin-top:4px;color:var(--teal);font-size:.68rem">🛡️ This is 100% free — no tokens, no charges.</div>
+                </div>
+                <div class="key-status missing" id="keyStatus">⚠ Enter both keys above to start</div>
             </div>
 
             <div class="sb-section">
