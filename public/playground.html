@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Guardrail — Interactive Playground</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <script src="/sdk/guardrail.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --navy: #0f1e3d;
+            --teal: #1db99a;
+            --teal2: #15a085;
+            --coral: #ff5c5c;
+            --amber: #f5a623;
+            --bg: #06111f;
+            --card: #0d1e33;
+            --border: #1e3050;
+            --text: #e2edf8;
+            --muted: #6b8aab
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 800
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            font-size: .85rem;
+            margin-left: 24px;
+            text-decoration: none;
+            transition: color .2s
+        }
+
+        .nav-links a:hover {
+            color: var(--text)
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 0;
+            min-height: calc(100vh - 57px)
+        }
+
+        /* Left: input panel */
+        .input-panel {
+            padding: 40px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 24px
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 4px
+        }
+
+        .panel-sub {
+            color: var(--muted);
+            font-size: .88rem
+        }
+
+        label {
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 8px
+        }
+
+        textarea {
+            width: 100%;
+            background: #0a1929;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: .9rem;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 160px;
+            transition: border-color .2s;
+            outline: none
+        }
+
+        textarea:focus {
+            border-color: var(--teal)
+        }
+
+        select {
+            width: 100%;
+            background: #0a1929;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: .9rem;
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+            transition: border-color .2s
+        }
+
+        select:focus {
+            border-color: var(--teal)
+        }
+
+        .check-btn {
+            background: var(--teal);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px
+        }
+
+        .check-btn:hover {
+            background: var(--teal2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(29, 185, 154, .3)
+        }
+
+        .check-btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        .check-btn .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, .3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            display: none
+        }
+
+        .check-btn.loading .spinner {
+            display: block
+        }
+
+        .check-btn.loading .btn-text {
+            display: none
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* Presets */
+        .presets {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .preset-btn {
+            background: #0a1929;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            text-align: left;
+            transition: all .2s;
+            color: var(--text)
+        }
+
+        .preset-btn:hover {
+            border-color: var(--teal);
+            background: rgba(29, 185, 154, .05)
+        }
+
+        .preset-btn .pb-label {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            margin-bottom: 3px
+        }
+
+        .preset-btn .pb-label.deliver {
+            color: var(--teal)
+        }
+
+        .preset-btn .pb-label.flag {
+            color: var(--amber)
+        }
+
+        .preset-btn .pb-label.escalate {
+            color: var(--coral)
+        }
+
+        .preset-btn .pb-text {
+            font-size: .8rem;
+            color: var(--muted);
+            line-height: 1.3
+        }
+
+        /* Right: result panel */
+        .result-panel {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: #080f1c
+        }
+
+        .result-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            color: var(--muted);
+            gap: 12px;
+            min-height: 300px
+        }
+
+        .result-empty .icon {
+            font-size: 3rem;
+            opacity: .3
+        }
+
+        .result-card {
+            background: var(--card);
+            border-radius: 16px;
+            border: 2px solid;
+            padding: 28px;
+            transition: all .4s
+        }
+
+        .result-card.deliver {
+            border-color: var(--teal);
+            box-shadow: 0 0 40px rgba(29, 185, 154, .1)
+        }
+
+        .result-card.flag {
+            border-color: var(--amber);
+            box-shadow: 0 0 40px rgba(245, 166, 35, .1)
+        }
+
+        .result-card.escalate {
+            border-color: var(--coral);
+            box-shadow: 0 0 40px rgba(255, 92, 92, .1)
+        }
+
+        .decision-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px
+        }
+
+        .decision-icon {
+            font-size: 2.5rem
+        }
+
+        .decision-label {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted)
+        }
+
+        .decision-val {
+            font-size: 1.8rem;
+            font-weight: 800
+        }
+
+        .result-card.deliver .decision-val {
+            color: var(--teal)
+        }
+
+        .result-card.flag .decision-val {
+            color: var(--amber)
+        }
+
+        .result-card.escalate .decision-val {
+            color: var(--coral)
+        }
+
+        .confidence-bar {
+            margin-bottom: 24px
+        }
+
+        .conf-label {
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .conf-track {
+            background: #0a1929;
+            border-radius: 999px;
+            height: 10px;
+            overflow: hidden
+        }
+
+        .conf-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width .8s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        .result-card.deliver .conf-fill {
+            background: linear-gradient(to right, var(--teal2), var(--teal))
+        }
+
+        .result-card.flag .conf-fill {
+            background: linear-gradient(to right, #c57e00, var(--amber))
+        }
+
+        .result-card.escalate .conf-fill {
+            background: linear-gradient(to right, #c00, var(--coral))
+        }
+
+        .reasons-section {
+            margin-bottom: 24px
+        }
+
+        .reasons-title {
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px
+        }
+
+        .reason-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0a1929;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: .75rem;
+            color: var(--muted);
+            margin: 3px 3px 3px 0
+        }
+
+        .meta-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .meta-chip {
+            background: #0a1929;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            color: var(--muted)
+        }
+
+        .action-block {
+            background: #0a1929;
+            border-radius: 10px;
+            padding: 16px;
+            border-left: 3px solid
+        }
+
+        .result-card.deliver .action-block {
+            border-left-color: var(--teal)
+        }
+
+        .result-card.flag .action-block {
+            border-left-color: var(--amber)
+        }
+
+        .result-card.escalate .action-block {
+            border-left-color: var(--coral)
+        }
+
+        .action-title {
+            font-size: .78rem;
+            font-weight: 700;
+            margin-bottom: 4px
+        }
+
+        .action-desc {
+            font-size: .8rem;
+            color: var(--muted);
+            line-height: 1.5
+        }
+
+        /* History */
+        .history {
+            display: flex;
+            flex-direction: column;
+            gap: 0
+        }
+
+        .history-title {
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px
+        }
+
+        .hist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .2s;
+            font-size: .78rem
+        }
+
+        .hist-item:hover {
+            background: #0a1929
+        }
+
+        .hist-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        .hist-dot.deliver {
+            background: var(--teal)
+        }
+
+        .hist-dot.flag {
+            background: var(--amber)
+        }
+
+        .hist-dot.escalate {
+            background: var(--coral)
+        }
+
+        .hist-text {
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1
+        }
+
+        .hist-conf {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            font-size: .7rem
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">🛡️ GUARDRAIL <span
+                style="font-weight:400;color:var(--muted);margin-left:6px;font-size:.9rem">Playground</span></div>
+        <div class="nav-links">
+            <a href="/">Docs</a>
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Input Panel -->
+        <div class="input-panel">
+            <div>
+                <div class="panel-title">🧪 Test the Engine</div>
+                <div class="panel-sub">Paste any AI response. Guardrail will score it and route it.</div>
+            </div>
+
+            <div>
+                <label>AI Response Text</label>
+                <textarea id="inputText"
+                    placeholder="Paste an AI-generated response here, or click a preset below…"></textarea>
+            </div>
+
+            <div>
+                <label>Context / Domain</label>
+                <select id="contextSelect">
+                    <option value="general">General</option>
+                    <option value="medical">Medical</option>
+                    <option value="legal">Legal</option>
+                    <option value="financial">Financial</option>
+                    <option value="security">Security</option>
+                    <option value="safety">Safety</option>
+                </select>
+            </div>
+
+            <button class="check-btn" id="checkBtn" onclick="runCheck()">
+                <div class="spinner"></div>
+                <span class="btn-text">⚡ Analyze with Guardrail</span>
+            </button>
+
+            <div>
+                <label>Quick Presets</label>
+                <div class="presets">
+                    <div class="preset-btn" onclick="loadPreset('deliver')">
+                        <div class="pb-label deliver">✅ Expected: Deliver</div>
+                        <div class="pb-text">"The capital of France is Paris. It has been the capital since the 10th
+                            century and is home to approximately 2.1 million people in the city proper."</div>
+                    </div>
+                    <div class="preset-btn" onclick="loadPreset('flag')">
+                        <div class="pb-label flag">⚠️ Expected: Flag</div>
+                        <div class="pb-text">"I believe the medication dosage is around 500mg, but I'm not entirely sure
+                            — it might depend on the patient's weight. You should probably consult a doctor."</div>
+                    </div>
+                    <div class="preset-btn" onclick="loadPreset('escalate')">
+                        <div class="pb-label escalate">🔴 Expected: Escalate</div>
+                        <div class="pb-text">"As of my knowledge cutoff, I cannot say for certain, but studies show that
+                            this drug combination is probably safe. However, I don't know your specific medical
+                            history."</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="result-panel">
+            <div id="resultEmpty" class="result-empty">
+                <div class="icon">🛡️</div>
+                <div style="font-size:1rem;font-weight:600;color:var(--text)">Awaiting analysis</div>
+                <div style="font-size:.85rem">Enter text and click Analyze</div>
+            </div>
+
+            <div id="resultCard" style="display:none">
+                <!-- filled by JS -->
+            </div>
+
+            <div id="historySection" style="display:none">
+                <div class="history-title">Run History</div>
+                <div class="history" id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gr = new Guardrail({ endpoint: 'http://localhost:3001', debug: false });
+        const history = [];
+
+        const PRESETS = {
+            deliver: {
+                text: "The capital of France is Paris. It has been the capital since the 10th century and is home to approximately 2.1 million people in the city proper.",
+                context: 'general'
+            },
+            flag: {
+                text: "I believe the medication dosage is around 500mg, but I'm not entirely sure — it might depend on the patient's weight. You should probably consult a doctor.",
+                context: 'medical'
+            },
+            escalate: {
+                text: "As of my knowledge cutoff, I cannot say for certain, but studies show that this drug combination is probably safe. However, I don't know your specific medical history.",
+                context: 'medical'
+            }
+        };
+
+        const DECISION_META = {
+            deliver: { icon: '✅', title: 'DELIVER', action: 'Response delivered to user.', actionDesc: 'High confidence. No intervention needed — the response goes straight to the end user.' },
+            flag: { icon: '⚠️', title: 'FLAG', action: 'Response held for review.', actionDesc: 'Uncertain answer. Add a disclaimer or route to async human review before delivery.' },
+            escalate: { icon: '🔴', title: 'ESCALATE', action: 'Human agent notified.', actionDesc: 'High risk detected. Response blocked. A human agent is being notified with full context.' }
+        };
+
+        function loadPreset(key) {
+            const p = PRESETS[key];
+            document.getElementById('inputText').value = p.text;
+            document.getElementById('contextSelect').value = p.context;
+        }
+
+        async function runCheck() {
+            const text = document.getElementById('inputText').value.trim();
+            const context = document.getElementById('contextSelect').value;
+            if (!text) { alert('Please enter some text first.'); return; }
+
+            const btn = document.getElementById('checkBtn');
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            try {
+                const result = await gr.check(text, { context, userId: 'playground-user' });
+                renderResult(result, text);
+                addHistory(result, text);
+            } catch (e) {
+                alert('Could not reach Guardrail server. Is it running on port 3001?');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+
+        function renderResult(r, text) {
+            document.getElementById('resultEmpty').style.display = 'none';
+            const m = DECISION_META[r.decision];
+            const pct = (r.confidence * 100).toFixed(1);
+
+            const reasonHtml = (r.reasons && r.reasons.length)
+                ? r.reasons.map(x => `<span class="reason-chip">⚡ ${x}</span>`).join('')
+                : '<span class="reason-chip">No risk signals detected</span>';
+
+            document.getElementById('resultCard').innerHTML = `
+    <div class="result-card ${r.decision}">
+      <div class="decision-header">
+        <div class="decision-icon">${m.icon}</div>
+        <div>
+          <div class="decision-label">Guardrail Decision</div>
+          <div class="decision-val">${m.title}</div>
+        </div>
+      </div>
+
+      <div class="confidence-bar">
+        <div class="conf-label"><span>Confidence Score</span><span>${pct}%</span></div>
+        <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
+      </div>
+
+      <div class="reasons-section">
+        <div class="reasons-title">Signals Detected</div>
+        ${reasonHtml}
+      </div>
+
+      <div class="meta-row" style="margin-bottom:20px">
+        <div class="meta-chip">id: ${r.id.substring(0, 8)}…</div>
+        <div class="meta-chip">ctx: ${r.context}</div>
+        <div class="meta-chip">${new Date(r.timestamp).toLocaleTimeString()}</div>
+      </div>
+
+      <div class="action-block">
+        <div class="action-title">${m.action}</div>
+        <div class="action-desc">${m.actionDesc}</div>
+      </div>
+    </div>`;
+
+            document.getElementById('resultCard').style.display = 'block';
+        }
+
+        function addHistory(r, text) {
+            history.unshift({ r, text });
+            if (history.length > 10) history.pop();
+            const section = document.getElementById('historySection');
+            section.style.display = 'block';
+            const list = document.getElementById('historyList');
+            list.innerHTML = history.map((h, i) => `
+    <div class="hist-item" onclick="replayHistory(${i})">
+      <div class="hist-dot ${h.r.decision}"></div>
+      <div class="hist-text">${h.text.substring(0, 55)}…</div>
+      <div class="hist-conf">${(h.r.confidence * 100).toFixed(0)}%</div>
+    </div>`).join('');
+        }
+
+        function replayHistory(idx) {
+            const h = history[idx];
+            renderResult(h.r, h.text);
+        }
+
+        // Load a preset by default
+        loadPreset('flag');
+    </script>
+</body>
+
+</html>

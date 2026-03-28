@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Guardrail — Live Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <script src="/sdk/guardrail.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --navy: #0f1e3d;
+            --teal: #1db99a;
+            --teal2: #15a085;
+            --coral: #ff5c5c;
+            --amber: #f5a623;
+            --bg: #06111f;
+            --card: #0d1e33;
+            --border: #1e3050;
+            --text: #e2edf8;
+            --muted: #6b8aab
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 800
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--teal)
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--teal);
+            animation: pulse 1.4s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.85)
+            }
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            font-size: .85rem;
+            margin-left: 24px;
+            text-decoration: none;
+            transition: color .2s
+        }
+
+        .nav-links a:hover {
+            color: var(--text)
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: calc(100vh - 57px)
+        }
+
+        .sidebar {
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px
+        }
+
+        .main {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px
+        }
+
+        .stat-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px
+        }
+
+        .stat-label {
+            font-size: .72rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px
+        }
+
+        .stat-val {
+            font-size: 2rem;
+            font-weight: 800
+        }
+
+        .stat-val.teal {
+            color: var(--teal)
+        }
+
+        .stat-val.amber {
+            color: var(--amber)
+        }
+
+        .stat-val.coral {
+            color: var(--coral)
+        }
+
+        .stat-val.white {
+            color: #fff
+        }
+
+        .stat-sub {
+            font-size: .75rem;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        /* Bar graph */
+        .bar-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px
+        }
+
+        .bar-title {
+            font-size: .85rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--muted)
+        }
+
+        .bar-track {
+            background: #0a1929;
+            border-radius: 6px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            position: relative
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width .6s ease
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px
+        }
+
+        .bar-row-label {
+            font-size: .78rem;
+            font-weight: 600;
+            width: 80px;
+            flex-shrink: 0
+        }
+
+        .bar-pct {
+            font-size: .78rem;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-left: auto
+        }
+
+        /* Feed */
+        .feed-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            flex: 1
+        }
+
+        .feed-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .feed-header h3 {
+            font-size: .9rem;
+            font-weight: 700
+        }
+
+        .feed-list {
+            max-height: 420px;
+            overflow-y: auto
+        }
+
+        .feed-item {
+            display: grid;
+            grid-template-columns: 100px 80px 80px 1fr auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(30, 48, 80, .5);
+            font-size: .8rem;
+            animation: fadeSlide .35s ease both
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .feed-item:hover {
+            background: rgba(255, 255, 255, .02)
+        }
+
+        .feed-time {
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem
+        }
+
+        .badge {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        .badge.deliver {
+            background: rgba(29, 185, 154, .15);
+            color: var(--teal);
+            border: 1px solid rgba(29, 185, 154, .3)
+        }
+
+        .badge.flag {
+            background: rgba(245, 166, 35, .15);
+            color: var(--amber);
+            border: 1px solid rgba(245, 166, 35, .3)
+        }
+
+        .badge.escalate {
+            background: rgba(255, 92, 92, .15);
+            color: var(--coral);
+            border: 1px solid rgba(255, 92, 92, .3)
+        }
+
+        .feed-ctx {
+            color: var(--muted);
+            font-size: .72rem
+        }
+
+        .feed-text {
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: .78rem
+        }
+
+        .feed-conf {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            font-size: .72rem;
+            text-align: right
+        }
+
+        /* Sidebar stuff */
+        .sb-title {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px
+        }
+
+        .reasons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .reason-item {
+            background: #0a1929;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: .78rem;
+            color: var(--muted);
+            border-left: 3px solid var(--amber)
+        }
+
+        .escalation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto
+        }
+
+        .esc-item {
+            background: #0a1929;
+            border-radius: 10px;
+            padding: 12px;
+            border-left: 3px solid var(--coral)
+        }
+
+        .esc-item .esc-time {
+            font-size: .68rem;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace
+        }
+
+        .esc-item .esc-text {
+            font-size: .78rem;
+            color: var(--text);
+            margin-top: 4px;
+            line-height: 1.4
+        }
+
+        .esc-item .esc-conf {
+            font-size: .72rem;
+            color: var(--coral);
+            margin-top: 4px
+        }
+
+        .mini-chart {
+            width: 100%;
+            height: 60px;
+            position: relative;
+            margin-top: 8px
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+            font-size: .85rem
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">🛡️ GUARDRAIL <span
+                style="font-weight:400;color:var(--muted);margin-left:6px;font-size:.9rem">Dashboard</span></div>
+        <div class="live-badge">
+            <div class="live-dot"></div> LIVE
+        </div>
+        <div class="nav-links">
+            <a href="/">Docs</a><a href="playground.html">Playground</a>
+            <button onclick="clearData()"
+                style="background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;margin-left:24px">Clear</button>
+        </div>
+    </nav>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div>
+                <div class="sb-title">🔴 Escalations</div>
+                <div class="escalation-list" id="escalationList">
+                    <div class="empty">No escalations yet</div>
+                </div>
+            </div>
+            <div>
+                <div class="sb-title">📊 Distribution</div>
+                <div class="bar-section" style="padding:16px">
+                    <div class="bar-row">
+                        <span class="bar-row-label" style="color:var(--teal)">Deliver</span>
+                        <div class="bar-track" style="flex:1">
+                            <div class="bar-fill" id="barDeliver" style="width:0%;background:var(--teal)"></div>
+                        </div>
+                        <span class="bar-pct" id="pctDeliver">0%</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-row-label" style="color:var(--amber)">Flag</span>
+                        <div class="bar-track" style="flex:1">
+                            <div class="bar-fill" id="barFlag" style="width:0%;background:var(--amber)"></div>
+                        </div>
+                        <span class="bar-pct" id="pctFlag">0%</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-row-label" style="color:var(--coral)">Escalate</span>
+                        <div class="bar-track" style="flex:1">
+                            <div class="bar-fill" id="barEscalate" style="width:0%;background:var(--coral)"></div>
+                        </div>
+                        <span class="bar-pct" id="pctEscalate">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="sb-title">⚠️ Recent Reasons</div>
+                <div class="reasons-list" id="reasonsList">
+                    <div class="empty">No signals yet</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-label">Total Checks</div>
+                    <div class="stat-val white" id="statTotal">0</div>
+                    <div class="stat-sub">all time</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">✅ Delivered</div>
+                    <div class="stat-val teal" id="statDeliver">0</div>
+                    <div class="stat-sub" id="subDeliver">—</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">⚠️ Flagged</div>
+                    <div class="stat-val amber" id="statFlag">0</div>
+                    <div class="stat-sub" id="subFlag">—</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">🔴 Escalated</div>
+                    <div class="stat-val coral" id="statEscalate">0</div>
+                    <div class="stat-sub" id="subEscalate">—</div>
+                </div>
+            </div>
+
+            <div class="feed-section">
+                <div class="feed-header">
+                    <h3>Real-Time Feed</h3>
+                    <span style="font-size:.75rem;color:var(--muted)" id="feedCount">0 events</span>
+                </div>
+                <div class="feed-item"
+                    style="background:#0a1929;font-size:.7rem;color:var(--muted);border-bottom:1px solid var(--border)">
+                    <span>TIME</span><span>DECISION</span><span>CONF.</span><span>CONTEXT</span><span>TEXT
+                        PREVIEW</span>
+                </div>
+                <div class="feed-list" id="feedList">
+                    <div class="empty">Waiting for events… try the <a href="playground.html"
+                            style="color:var(--teal)">Playground</a></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const gr = new Guardrail({ endpoint: 'http://localhost:3001' });
+        let feedCount = 0;
+        let reasons = [];
+
+        function fmt(iso) {
+            const d = new Date(iso);
+            return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function updateStats() {
+            gr.getStats().then(s => {
+                document.getElementById('statTotal').textContent = s.total;
+                document.getElementById('statDeliver').textContent = s.deliver;
+                document.getElementById('statFlag').textContent = s.flag;
+                document.getElementById('statEscalate').textContent = s.escalate;
+                document.getElementById('subDeliver').textContent = s.deliverRate + '%';
+                document.getElementById('subFlag').textContent = s.flagRate + '%';
+                document.getElementById('subEscalate').textContent = s.escalateRate + '%';
+                document.getElementById('barDeliver').style.width = s.deliverRate + '%';
+                document.getElementById('barFlag').style.width = s.flagRate + '%';
+                document.getElementById('barEscalate').style.width = s.escalateRate + '%';
+                document.getElementById('pctDeliver').textContent = s.deliverRate + '%';
+                document.getElementById('pctFlag').textContent = s.flagRate + '%';
+                document.getElementById('pctEscalate').textContent = s.escalateRate + '%';
+            }).catch(() => { });
+        }
+
+        function addFeedItem(ev) {
+            feedCount++;
+            document.getElementById('feedCount').textContent = feedCount + ' events';
+            const list = document.getElementById('feedList');
+            const empty = list.querySelector('.empty');
+            if (empty) empty.remove();
+
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            item.innerHTML = `
+    <span class="feed-time">${fmt(ev.timestamp)}</span>
+    <span><span class="badge ${ev.decision}">${ev.decision}</span></span>
+    <span class="feed-conf">${(ev.confidence * 100).toFixed(0)}%</span>
+    <span class="feed-ctx">${ev.context}</span>
+    <span class="feed-text">${ev.text.substring(0, 80)}…</span>
+  `;
+            list.insertBefore(item, list.firstChild);
+            if (list.children.length > 100) list.lastChild.remove();
+
+            if (ev.decision === 'escalate') addEscalation(ev);
+            if (ev.reasons && ev.reasons.length) addReasons(ev.reasons);
+        }
+
+        function addEscalation(ev) {
+            const list = document.getElementById('escalationList');
+            const empty = list.querySelector('.empty');
+            if (empty) empty.remove();
+            const item = document.createElement('div');
+            item.className = 'esc-item';
+            item.innerHTML = `<div class="esc-time">${fmt(ev.timestamp)}</div>
+    <div class="esc-text">${ev.text.substring(0, 100)}…</div>
+    <div class="esc-conf">conf: ${(ev.confidence * 100).toFixed(0)}%</div>`;
+            list.insertBefore(item, list.firstChild);
+            if (list.children.length > 10) list.lastChild.remove();
+        }
+
+        function addReasons(newReasons) {
+            reasons = [...newReasons, ...reasons].slice(0, 6);
+            const list = document.getElementById('reasonsList');
+            list.innerHTML = reasons.length
+                ? reasons.map(r => `<div class="reason-item">${r}</div>`).join('')
+                : '<div class="empty">No signals yet</div>';
+        }
+
+        function clearData() {
+            document.getElementById('feedList').innerHTML = '<div class="empty">Cleared. Waiting for events…</div>';
+            document.getElementById('escalationList').innerHTML = '<div class="empty">No escalations yet</div>';
+            document.getElementById('reasonsList').innerHTML = '<div class="empty">No signals yet</div>';
+            feedCount = 0;
+            document.getElementById('feedCount').textContent = '0 events';
+        }
+
+        // SSE stream
+        const stream = gr.stream(ev => {
+            if (ev.type === 'connected') return;
+            addFeedItem(ev);
+            updateStats();
+        });
+
+        // Seed with existing logs
+        gr.getLogs(20).then(logs => {
+            logs.reverse().forEach(addFeedItem);
+            updateStats();
+        }).catch(() => { });
+
+        // Poll stats every 5s
+        setInterval(updateStats, 5000);
+    </script>
+</body>
+
+</html>
