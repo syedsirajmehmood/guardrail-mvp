@@ -14,12 +14,18 @@ const PORT = process.env.PORT || 3001;
 const MASTER_KEY = process.env.GUARDRAIL_MASTER_KEY || 'gr_master_changeme';
 
 // ── In-memory API key store ───────────────────────────────────────────────────
-// Map<key, { label, created, requests }>
+// Map<key, { email, label, created, requests, decisions }>
 const apiKeys = new Map();
 
-function createKey(label) {
+function createKey(email, label) {
     const key = 'gr_live_' + uuidv4().replace(/-/g, '');
-    apiKeys.set(key, { label: label || 'unnamed', created: new Date().toISOString(), requests: 0 });
+    apiKeys.set(key, {
+        email: email || null,
+        label: label || email || 'unnamed',
+        created: new Date().toISOString(),
+        requests: 0,
+        decisions: { deliver: 0, flag: 0, escalate: 0 }
+    });
     return key;
 }
 
@@ -39,11 +45,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 // SDK is NOT served publicly anymore — users install via npm
 // app.use('/sdk', express.static(path.join(__dirname, 'sdk')));
 
-/** Validate a regular API key (not master). */
+/** Validate a regular API key OR master key. */
 function requireKey(req, res, next) {
     const key = req.headers['x-guardrail-key'] || req.query.key;
     if (!key) {
         return res.status(401).json({ error: 'API key required. Set X-Guardrail-Key header.' });
+    }
+    // Master key is always valid
+    if (key === MASTER_KEY) {
+        req.guardrailKey = key;
+        req.isMaster = true;
+        return next();
     }
     const entry = apiKeys.get(key);
     if (!entry) {
@@ -171,12 +183,49 @@ function getAnthropic() {
     return new Anthropic({ apiKey: key });
 }
 
+// ── Public Signup ─────────────────────────────────────────────────────────────
+
+// POST /api/signup — self-serve key generation
+app.post('/api/signup', (req, res) => {
+    const { email } = req.body || {};
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email is required.' });
+    }
+    // Check if email already has a key
+    for (const [k, v] of apiKeys.entries()) {
+        if (v.email === email.toLowerCase().trim()) {
+            return res.json({ key: k, email: v.email, created: v.created, existed: true });
+        }
+    }
+    const key = createKey(email.toLowerCase().trim());
+    const entry = apiKeys.get(key);
+    console.log(`[signup] New key created for ${email}: ${key}`);
+    res.json({ key, email: entry.email, created: entry.created, existed: false });
+});
+
+// GET /api/developer/me — per-key stats (self-serve)
+app.get('/api/developer/me', requireKey, (req, res) => {
+    if (req.isMaster) {
+        return res.json({ email: 'admin', key: MASTER_KEY, requests: store.stats.total, decisions: store.stats, created: 'N/A' });
+    }
+    const entry = apiKeys.get(req.guardrailKey);
+    const myLogs = store.logs.filter(l => l.apiKey === req.guardrailKey).slice(0, 100);
+    res.json({
+        email: entry.email,
+        key: req.guardrailKey,
+        created: entry.created,
+        requests: entry.requests,
+        decisions: entry.decisions,
+        recentLogs: myLogs
+    });
+});
+
 // ── Key Management Routes (master-key protected) ──────────────────────────────
 
-// POST /api/keys — generate a new API key
+// POST /api/keys — generate a new API key (admin)
 app.post('/api/keys', requireMasterKey, (req, res) => {
-    const { label } = req.body || {};
-    const key = createKey(label);
+    const { label, email } = req.body || {};
+    const key = createKey(email, label);
     res.json({ key, label: label || 'unnamed', created: apiKeys.get(key).created });
 });
 
@@ -256,6 +305,7 @@ app.post('/api/check', requireKey, (req, res) => {
         context: context || 'general',
         userId: userId || 'anonymous',
         metadata: metadata || {},
+        apiKey: req.guardrailKey,
         ...scored
     };
 
@@ -263,6 +313,11 @@ app.post('/api/check', requireKey, (req, res) => {
     if (store.logs.length > 500) store.logs.pop();
     store.stats.total++;
     store.stats[record.decision]++;
+    // Per-key decision tracking
+    if (!req.isMaster) {
+        const entry = apiKeys.get(req.guardrailKey);
+        if (entry) entry.decisions[record.decision]++;
+    }
     broadcast(record);
 
     res.json(record);
@@ -297,12 +352,18 @@ app.get('/api/events', requireKey, (req, res) => {
 // Health check (public)
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.0.0' }));
 
-app.listen(PORT, () => {
-    const hasAnthropicKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your-key-here';
-    console.log(`\n🛡️  Guardrail API v2.0.0 running at http://localhost:${PORT}\n`);
-    console.log(`   Dashboard  → http://localhost:${PORT}/dashboard.html`);
-    console.log(`   Health     → http://localhost:${PORT}/api/health`);
-    console.log(`\n   Master Key → ${MASTER_KEY}`);
-    console.log(`   Anthropic  → ${hasAnthropicKey ? '✅ loaded' : '❌ missing ANTHROPIC_API_KEY'}\n`);
-    console.log('   ⚠️  All /api/* routes now require X-Guardrail-Key header.\n');
-});
+// Only start listening when run directly (not in tests)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        const hasAnthropicKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your-key-here';
+        console.log(`\n🛡️  Guardrail API v2.0.0 running at http://localhost:${PORT}\n`);
+        console.log(`   Dashboard  → http://localhost:${PORT}/dashboard.html`);
+        console.log(`   Developer  → http://localhost:${PORT}/developer.html`);
+        console.log(`   Health     → http://localhost:${PORT}/api/health`);
+        console.log(`\n   Master Key → ${MASTER_KEY}`);
+        console.log(`   Anthropic  → ${hasAnthropicKey ? '✅ loaded' : '❌ missing ANTHROPIC_API_KEY'}\n`);
+    });
+}
+
+module.exports = app;
+

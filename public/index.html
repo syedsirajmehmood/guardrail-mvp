@@ -496,7 +496,7 @@
             <a href="#signals">Signals</a>
             <a href="#integrate">Integrate</a>
             <a href="playground.html">Playground</a>
-            <a href="dashboard.html" class="nav-cta">Dashboard →</a>
+            <a href="developer.html" class="nav-cta">Developer Portal →</a>
         </div>
     </nav>
 
@@ -507,7 +507,17 @@
         <p class="hero-sub">Guardrail sits between your AI model and your users. It scores every response and decides:
             deliver confidently, flag for review, or escalate to a human.</p>
         <div class="hero-actions">
-            <a href="#integrate" class="btn-primary">Get the SDK</a>
+            <div id="signup-box" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:480px">
+                <div style="display:flex;gap:10px;width:100%">
+                    <input id="signup-email" type="email" placeholder="your@email.com"
+                        style="flex:1;padding:14px 18px;background:#0d1e33;border:1px solid #1e3050;border-radius:10px;color:#e2edf8;font-size:1rem;outline:none;font-family:Inter,sans-serif;transition:border-color .2s"
+                        onfocus="this.style.borderColor='#1db99a'" onblur="this.style.borderColor='#1e3050'" />
+                    <button onclick="doSignup()" id="signup-btn"
+                        style="background:#1db99a;color:#fff;padding:14px 28px;border:none;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;transition:all .25s;white-space:nowrap;box-shadow:0 0 30px rgba(29,185,154,.25)"
+                        onmouseover="this.style.background='#15a085'" onmouseout="this.style.background='#1db99a'">Get Free Key →</button>
+                </div>
+                <div id="signup-msg" style="font-size:.83rem;color:#6b8aab;min-height:20px"></div>
+            </div>
             <a href="playground.html" class="btn-ghost">Try the Playground →</a>
         </div>
         <div class="hero-stats">
@@ -676,9 +686,52 @@
     </section>
 
     <footer>
-        <div>🛡️ <strong>GUARDRAIL</strong> · The AI Escalation Intelligence Layer · v1.0.0</div>
-        <div>MVP Build · <a href="playground.html">Playground</a> · <a href="dashboard.html">Dashboard</a></div>
+        <div>🛡️ <strong>GUARDRAIL</strong> · The AI Escalation Intelligence Layer · v2.0.0</div>
+        <div>MVP Build · <a href="playground.html">Playground</a> · <a href="developer.html">Developer Portal</a> · <a href="dashboard.html">Dashboard</a></div>
     </footer>
+
+    <script>
+        function doSignup() {
+            const email = document.getElementById('signup-email').value.trim();
+            const msg = document.getElementById('signup-msg');
+            const btn = document.getElementById('signup-btn');
+            if (!email || !email.includes('@')) {
+                msg.style.color = '#ff5c5c';
+                msg.textContent = 'Please enter a valid email address.';
+                return;
+            }
+            btn.textContent = 'Generating...';
+            btn.disabled = true;
+            fetch('/api/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.key) {
+                    msg.style.color = '#1db99a';
+                    msg.textContent = data.existed ? '✅ Welcome back! Redirecting...' : '🎉 Key created! Redirecting to your dashboard...';
+                    localStorage.setItem('gr_dev_key', data.key);
+                    setTimeout(() => window.location.href = '/developer.html?key=' + data.key, 1200);
+                } else {
+                    msg.style.color = '#ff5c5c';
+                    msg.textContent = data.error || 'Something went wrong.';
+                    btn.textContent = 'Get Free Key →';
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => {
+                msg.style.color = '#ff5c5c';
+                msg.textContent = 'Could not connect to server.';
+                btn.textContent = 'Get Free Key →';
+                btn.disabled = false;
+            });
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') doSignup();
+        });
+    </script>
 
 </body>
 

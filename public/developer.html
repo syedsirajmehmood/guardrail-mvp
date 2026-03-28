@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Guardrail — Developer Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy: #0f1e3d; --teal: #1db99a; --teal2: #15a085; --coral: #ff5c5c;
+            --amber: #f5a623; --bg: #06111f; --card: #0d1e33; --card2: #112035;
+            --border: #1e3050; --text: #e2edf8; --muted: #6b8aab;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        a { color: var(--teal); text-decoration: none; }
+
+        /* NAV */
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px; background: rgba(6,17,31,.9);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; }
+        .nav-right { display: flex; gap: 20px; align-items: center; font-size: .875rem; }
+        .nav-right a { color: var(--muted); transition: color .2s; }
+        .nav-right a:hover { color: var(--text); }
+
+        /* GATE — shown when no key */
+        .gate {
+            min-height: calc(100vh - 60px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+        }
+        .gate-icon { font-size: 3rem; margin-bottom: 20px; }
+        .gate h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; }
+        .gate p { color: var(--muted); max-width: 420px; margin-bottom: 28px; }
+        .gate-input-row { display: flex; gap: 10px; max-width: 420px; width: 100%; }
+        .input-field {
+            flex: 1; padding: 12px 16px; background: var(--card2); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text); font-size: .95rem; outline: none;
+            transition: border-color .2s; font-family: 'JetBrains Mono', monospace;
+        }
+        .input-field:focus { border-color: var(--teal); }
+        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: .95rem; border: none; cursor: pointer; transition: all .25s; }
+        .btn-primary { background: var(--teal); color: #fff; }
+        .btn-primary:hover { background: var(--teal2); transform: translateY(-1px); }
+        .gate-note { font-size: .8rem; color: var(--muted); margin-top: 14px; }
+
+        /* DASHBOARD */
+        .dash { display: none; padding: 32px 40px; max-width: 1000px; margin: 0 auto; }
+        .dash.visible { display: block; }
+
+        .dash-header { margin-bottom: 32px; }
+        .dash-header h1 { font-size: 1.7rem; font-weight: 800; }
+        .dash-header p { color: var(--muted); margin-top: 4px; font-size: .9rem; }
+
+        /* KEY CARD */
+        .key-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 24px; margin-bottom: 28px;
+        }
+        .key-card-label { font-size: .75rem; font-weight: 700; color: var(--teal); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+        .key-display {
+            display: flex; align-items: center; gap: 12px;
+            background: #060e1a; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;
+        }
+        .key-value { font-family: 'JetBrains Mono', monospace; font-size: .9rem; color: var(--teal); flex: 1; word-break: break-all; }
+        .copy-btn {
+            background: var(--card2); border: 1px solid var(--border); color: var(--muted);
+            padding: 6px 14px; border-radius: 8px; font-size: .8rem; cursor: pointer;
+            transition: all .2s; white-space: nowrap;
+        }
+        .copy-btn:hover { border-color: var(--teal); color: var(--teal); }
+        .key-meta { display: flex; gap: 24px; margin-top: 14px; }
+        .key-meta-item { font-size: .82rem; color: var(--muted); }
+        .key-meta-item span { color: var(--text); font-weight: 600; }
+
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 20px; text-align: center; transition: transform .2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-val { font-size: 2rem; font-weight: 800; }
+        .stat-val.total { color: var(--text); }
+        .stat-val.deliver { color: var(--teal); }
+        .stat-val.flag { color: var(--amber); }
+        .stat-val.escalate { color: var(--coral); }
+        .stat-label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+
+        /* SNIPPET */
+        .snippet-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 28px; }
+        .snippet-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; background: #0a1929; border-bottom: 1px solid var(--border);
+        }
+        .snippet-dots { display: flex; gap: 6px; }
+        .snippet-dots span { width: 11px; height: 11px; border-radius: 50%; }
+        .snippet-dots span:nth-child(1) { background: #ff5f56; }
+        .snippet-dots span:nth-child(2) { background: #ffbd2e; }
+        .snippet-dots span:nth-child(3) { background: #27c93f; }
+        .snippet-label { font-size: .72rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+        pre { padding: 22px 24px; overflow-x: auto; }
+        code { font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 1.9; color: #e2edf8; }
+        .tk-comment { color: #4a6fa5; } .tk-kw { color: #c792ea; } .tk-str { color: #c3e88d; }
+        .tk-fn { color: var(--teal); } .tk-key { color: #82aaff; }
+
+        /* LOGS */
+        .logs-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .logs-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .logs-header h3 { font-size: 1rem; font-weight: 700; }
+        .logs-empty { padding: 48px; text-align: center; color: var(--muted); font-size: .9rem; }
+        .log-row {
+            display: grid; grid-template-columns: 80px 80px 1fr 140px;
+            gap: 16px; padding: 14px 24px; border-bottom: 1px solid rgba(30,48,80,.5);
+            font-size: .83rem; align-items: center; transition: background .15s;
+        }
+        .log-row:hover { background: rgba(29,185,154,.04); }
+        .log-row:last-child { border-bottom: none; }
+        .badge { padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: .72rem; text-align: center; }
+        .badge.deliver { background: rgba(29,185,154,.15); color: var(--teal); }
+        .badge.flag { background: rgba(245,166,35,.15); color: var(--amber); }
+        .badge.escalate { background: rgba(255,92,92,.15); color: var(--coral); }
+        .conf-val { font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+        .log-text { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .log-time { color: var(--muted); font-size: .75rem; }
+
+        /* LOADING */
+        .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 40px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; background: var(--card);
+            border: 1px solid var(--teal); color: var(--teal); padding: 12px 20px;
+            border-radius: 10px; font-size: .875rem; font-weight: 600;
+            transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 999;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo"><span>🛡️</span> GUARDRAIL</a>
+        <div class="nav-right">
+            <a href="playground.html">Playground</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="chat.html">Chat Demo</a>
+        </div>
+    </nav>
+
+    <!-- GATE: shown until key is entered -->
+    <div class="gate" id="gate">
+        <div class="gate-icon">🔑</div>
+        <h2>Developer Portal</h2>
+        <p>Enter your API key to view your usage stats, copy your integration snippet, and see recent decisions.</p>
+        <div class="gate-input-row">
+            <input class="input-field" id="keyInput" type="text" placeholder="gr_live_xxxxxxxxxx" />
+            <button class="btn btn-primary" onclick="loadDash()">Load →</button>
+        </div>
+        <div class="gate-note">Don't have a key? <a href="/#signup">Sign up free →</a></div>
+        <div id="gate-error" style="color:var(--coral);font-size:.85rem;margin-top:12px;display:none;"></div>
+    </div>
+
+    <!-- DASHBOARD: shown after key verified -->
+    <div class="dash" id="dash">
+        <div class="dash-header">
+            <h1>Welcome back 👋</h1>
+            <p id="dash-email" style="color:var(--muted)">Loading...</p>
+        </div>
+
+        <!-- API Key display -->
+        <div class="key-card">
+            <div class="key-card-label">Your API Key</div>
+            <div class="key-display">
+                <div class="key-value" id="key-display">—</div>
+                <button class="copy-btn" onclick="copyKey()">Copy</button>
+            </div>
+            <div class="key-meta">
+                <div class="key-meta-item">Created <span id="key-created">—</span></div>
+                <div class="key-meta-item">Total requests <span id="key-requests">—</span></div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-val total" id="stat-total">0</div>
+                <div class="stat-label">Total Checks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val deliver" id="stat-deliver">0</div>
+                <div class="stat-label">✅ Delivered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val flag" id="stat-flag">0</div>
+                <div class="stat-label">⚠️ Flagged</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val escalate" id="stat-escalate">0</div>
+                <div class="stat-label">🔴 Escalated</div>
+            </div>
+        </div>
+
+        <!-- Integration snippet -->
+        <div class="snippet-section">
+            <div class="snippet-header">
+                <div class="snippet-dots"><span></span><span></span><span></span></div>
+                <span class="snippet-label">Your integration snippet</span>
+                <button class="copy-btn" onclick="copySnippet()">Copy code</button>
+            </div>
+            <pre><code id="snippet-code"></code></pre>
+        </div>
+
+        <!-- Recent logs -->
+        <div class="logs-section">
+            <div class="logs-header">
+                <h3>Recent Decisions</h3>
+                <span style="font-size:.8rem;color:var(--muted)" id="log-count"></span>
+            </div>
+            <div id="logs-body">
+                <div class="logs-empty"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const BASE = window.location.origin;
+        let currentKey = '';
+        let userData = null;
+
+        // Auto-load key from URL param or localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const urlKey = params.get('key');
+            const storedKey = localStorage.getItem('gr_dev_key');
+            const key = urlKey || storedKey;
+            if (key) {
+                document.getElementById('keyInput').value = key;
+                loadDash();
+            }
+        });
+
+        async function loadDash() {
+            const key = document.getElementById('keyInput').value.trim();
+            if (!key) return;
+            
+            const errEl = document.getElementById('gate-error');
+            errEl.style.display = 'none';
+
+            try {
+                const res = await fetch(`${BASE}/api/developer/me`, {
+                    headers: { 'X-Guardrail-Key': key }
+                });
+                if (!res.ok) {
+                    const e = await res.json();
+                    errEl.textContent = e.error || 'Invalid API key.';
+                    errEl.style.display = 'block';
+                    return;
+                }
+                userData = await res.json();
+                currentKey = key;
+                localStorage.setItem('gr_dev_key', key);
+                renderDash();
+            } catch (e) {
+                errEl.textContent = 'Could not connect to server.';
+                errEl.style.display = 'block';
+            }
+        }
+
+        function renderDash() {
+            document.getElementById('gate').style.display = 'none';
+            const dash = document.getElementById('dash');
+            dash.classList.add('visible');
+
+            // Header
+            document.getElementById('dash-email').textContent = `Signed in as ${userData.email || 'admin'}`;
+
+            // Key card
+            document.getElementById('key-display').textContent = currentKey;
+            document.getElementById('key-created').textContent = userData.created !== 'N/A'
+                ? new Date(userData.created).toLocaleDateString() : 'N/A';
+            document.getElementById('key-requests').textContent = userData.requests;
+
+            // Stats
+            const d = userData.decisions || {};
+            const total = (d.deliver || 0) + (d.flag || 0) + (d.escalate || 0);
+            document.getElementById('stat-total').textContent = total || userData.requests || 0;
+            document.getElementById('stat-deliver').textContent = d.deliver || 0;
+            document.getElementById('stat-flag').textContent = d.flag || 0;
+            document.getElementById('stat-escalate').textContent = d.escalate || 0;
+
+            // Snippet
+            const snippet = genSnippet();
+            document.getElementById('snippet-code').innerHTML = snippet;
+
+            // Logs
+            renderLogs(userData.recentLogs || []);
+        }
+
+        function genSnippet() {
+            const origin = window.location.origin;
+            return `<span class="tk-comment">// 1. Load the SDK</span>\n` +
+`&lt;script src=<span class="tk-str">"${origin}/sdk/guardrail.js"</span>&gt;&lt;/script&gt;\n\n` +
+`<span class="tk-comment">// 2. Initialize with your key</span>\n` +
+`<span class="tk-kw">const</span> gr = <span class="tk-kw">new</span> <span class="tk-fn">Guardrail</span>({\n` +
+`  <span class="tk-key">endpoint</span>: <span class="tk-str">"${origin}"</span>,\n` +
+`  <span class="tk-key">apiKey</span>:  <span class="tk-str">"${currentKey}"</span>,\n` +
+`  <span class="tk-key">context</span>: <span class="tk-str">"general"</span>,\n` +
+`  <span class="tk-key">onEscalate</span>: (r) => <span class="tk-fn">notifyHuman</span>(r)\n` +
+`});\n\n` +
+`<span class="tk-comment">// 3. Wrap any AI response</span>\n` +
+`<span class="tk-kw">const</span> result = <span class="tk-kw">await</span> gr.<span class="tk-fn">check</span>(aiResponse);\n` +
+`<span class="tk-comment">// → { decision: 'deliver', confidence: 0.91, reasons: [] }</span>`;
+        }
+
+        function renderLogs(logs) {
+            const body = document.getElementById('logs-body');
+            if (!logs || logs.length === 0) {
+                body.innerHTML = '<div class="logs-empty">No decisions yet. Start using your key to see data here.</div>';
+                document.getElementById('log-count').textContent = '';
+                return;
+            }
+            document.getElementById('log-count').textContent = `Last ${logs.length}`;
+            body.innerHTML = logs.map(l => `
+                <div class="log-row">
+                    <span class="badge ${l.decision}">${l.decision}</span>
+                    <span class="conf-val">${(l.confidence * 100).toFixed(0)}%</span>
+                    <span class="log-text">${escHtml(l.text || '')}</span>
+                    <span class="log-time">${timeAgo(l.timestamp)}</span>
+                </div>
+            `).join('');
+        }
+
+        function copyKey() {
+            navigator.clipboard.writeText(currentKey);
+            showToast('API key copied!');
+        }
+
+        function copySnippet() {
+            const origin = window.location.origin;
+            const plain = `<script src="${origin}/sdk/guardrail.js"><\/script>\n\nconst gr = new Guardrail({\n  endpoint: "${origin}",\n  apiKey: "${currentKey}",\n  context: "general"\n});\n\nconst result = await gr.check(aiResponse);`;
+            navigator.clipboard.writeText(plain);
+            showToast('Snippet copied!');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        function timeAgo(iso) {
+            const d = Math.floor((Date.now() - new Date(iso)) / 1000);
+            if (d < 60) return `${d}s ago`;
+            if (d < 3600) return `${Math.floor(d/60)}m ago`;
+            if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+            return new Date(iso).toLocaleDateString();
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // Enter key support
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && document.getElementById('gate').style.display !== 'none') loadDash();
+        });
+    </script>
+</body>
+</html>
