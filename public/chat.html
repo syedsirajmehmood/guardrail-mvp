@@ -547,9 +547,15 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sb-section">
-                <div class="sb-label">API Key</div>
-                <input type="password" id="apiKeyInput" placeholder="sk-ant-... (or set in .env)" />
-                <div class="key-status missing" id="keyStatus">⚠ Not configured</div>
+                <div class="sb-label">Your Anthropic Key</div>
+                <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
+                <div style="font-size:.67rem;color:var(--muted);line-height:1.4">Used for Claude calls. Charged to your account. Guardrail analysis is free.</div>
+            </div>
+
+            <div class="sb-section">
+                <div class="sb-label">Guardrail API Key</div>
+                <input type="password" id="grKeyInput" placeholder="gr_live_... (from Developer Portal)" />
+                <div class="key-status missing" id="keyStatus">⚠ Enter both keys above</div>
             </div>
 
             <div class="sb-section">
@@ -622,25 +628,34 @@
     </div>
 
     <script>
-        const ENDPOINT = 'http://localhost:3001';
+        // Use relative URL so this works both locally and on Railway
+        const ENDPOINT = window.location.origin;
         let isLoading = false;
 
         const ICONS = { deliver: '✅', flag: '⚠️', escalate: '🔴' };
         const LABELS = { deliver: 'DELIVER', flag: 'FLAG', escalate: 'ESCALATE' };
 
-        // Check API key
-        async function checkKey() {
-            const h = await fetch(ENDPOINT + '/api/health').catch(() => null);
-            if (!h) { setKeyStatus('❌ Server offline — run node server.js', false); return; }
-            const res = await fetch(ENDPOINT + '/api/chat', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: 'ping', context: 'general' })
-            }).catch(() => null);
-            if (!res) return;
-            if (res.status === 503) setKeyStatus('⚠ Add ANTHROPIC_API_KEY to .env', false);
-            else setKeyStatus('✅ Ready', true);
+        // Check server connectivity + key readiness
+        function checkKey() {
+            const grKey = document.getElementById('grKeyInput').value.trim()
+                || localStorage.getItem('gr_dev_key') || '';
+            const antKey = document.getElementById('apiKeyInput').value.trim();
+
+            // Pre-fill gr key from localStorage if available
+            if (!document.getElementById('grKeyInput').value && localStorage.getItem('gr_dev_key')) {
+                document.getElementById('grKeyInput').value = localStorage.getItem('gr_dev_key');
+            }
+
+            fetch(ENDPOINT + '/api/health').then(r => {
+                if (!r.ok) throw new Error();
+                if (grKey && antKey) setKeyStatus('✅ Ready — using your tokens', true);
+                else if (grKey) setKeyStatus('⚠ Add your Anthropic key above', false);
+                else setKeyStatus('⚠ Enter both keys to start chatting', false);
+            }).catch(() => setKeyStatus('❌ Cannot reach server', false));
         }
         checkKey();
+        document.getElementById('grKeyInput').addEventListener('input', checkKey);
+        document.getElementById('apiKeyInput').addEventListener('input', checkKey);
 
         function setKeyStatus(msg, ok) {
             const el = document.getElementById('keyStatus');
@@ -745,14 +760,31 @@
             const typingWrap = appendTyping();
 
             try {
+                const grKey = document.getElementById('grKeyInput').value.trim()
+                    || localStorage.getItem('gr_dev_key') || '';
+                const antKey = document.getElementById('apiKeyInput').value.trim();
+                if (!grKey) {
+                    typingWrap.remove();
+                    const e = document.createElement('div');
+                    e.className = 'msg assistant';
+                    e.innerHTML = `<div class="msg-bubble" style="border-color:var(--amber);color:var(--amber)">⚠ Enter your Guardrail API key in the sidebar. <a href="/developer.html" style="color:var(--teal)">Get one free →</a></div>`;
+                    document.getElementById('messages').appendChild(e);
+                    isLoading = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    return;
+                }
                 const res = await fetch(ENDPOINT + '/api/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Guardrail-Key': grKey
+                    },
                     body: JSON.stringify({
                         message: msg,
                         context: document.getElementById('contextSelect').value,
                         systemPrompt: document.getElementById('sysPrompt').value,
-                        userId: 'chat-demo'
+                        userId: 'chat-demo',
+                        anthropicKey: antKey || undefined
                     })
                 });
 

@@ -178,8 +178,9 @@ function scoreText(text, context) {
 }
 
 // ── Anthropic client ──────────────────────────────────────────────────────────
-function getAnthropic() {
-    const key = process.env.ANTHROPIC_API_KEY;
+// Pass overrideKey to use the caller's own Anthropic key (their tokens, not ours)
+function getAnthropic(overrideKey) {
+    const key = overrideKey || process.env.ANTHROPIC_API_KEY;
     if (!key || key === 'your-key-here') return null;
     return new Anthropic({ apiKey: key });
 }
@@ -249,12 +250,15 @@ app.delete('/api/keys/:key', requireMasterKey, (req, res) => {
 
 // POST /api/chat — call Claude then score
 app.post('/api/chat', requireKey, async (req, res) => {
-    const { message, context, userId, systemPrompt } = req.body;
+    const { message, context, userId, systemPrompt, anthropicKey } = req.body;
     if (!message) return res.status(400).json({ error: 'message is required' });
 
-    const anthropic = getAnthropic();
+    // Use caller's own Anthropic key if provided, else fall back to server key
+    const anthropic = getAnthropic(anthropicKey);
     if (!anthropic) {
-        return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured on server.' });
+        return res.status(503).json({
+            error: 'No Anthropic API key available. Add your sk-ant- key in the chat sidebar or set ANTHROPIC_API_KEY on the server.'
+        });
     }
 
     try {
