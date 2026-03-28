@@ -1107,7 +1107,7 @@ Output:
             var cmd = 'curl -X POST https://guardrail-mvp-production.up.railway.app/api/check'
                 + ' -H "X-Guardrail-Key: gr_live_xxx"'
                 + ' -H "Content-Type: application/json"'
-                + ' -d '{"text":"your AI response"}'';
+                + ' -d \'{"text":"your AI response"}\'';
             navigator.clipboard.writeText(cmd);
             el.textContent = 'Copied!';
             setTimeout(function(){ el.textContent = 'Copy curl →'; }, 2000);
