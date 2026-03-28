@@ -750,7 +750,169 @@
         </div>
     </section>
 
+    <!-- ── INTEGRATIONS ─────────────────────────────────────────────────── -->
+    <section style="padding:100px 60px;max-width:1200px;margin:0 auto" id="integrations">
+        <div class="section-tag">Integrations</div>
+        <h2 class="section-title">Every way to use Guardrail</h2>
+        <p class="section-sub">One API, five ways to plug in. Pick the one that matches your stack.</p>
+
+        <style>
+            .int-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:52px; }
+            @media(max-width:900px){ .int-grid{ grid-template-columns:1fr; } }
+            .int-card {
+                background:var(--card); border:1px solid var(--border); border-radius:18px;
+                padding:28px; display:flex; flex-direction:column; gap:14px;
+                transition:transform .2s,border-color .2s;
+            }
+            .int-card:hover { transform:translateY(-4px); border-color:rgba(29,185,154,.35); }
+            .int-card.featured { border-color:rgba(29,185,154,.3); background:rgba(29,185,154,.04); grid-column:span 1; }
+            .int-icon { font-size:1.8rem; }
+            .int-title { font-size:1.05rem; font-weight:800; }
+            .int-desc { font-size:.85rem; color:var(--muted); line-height:1.7; flex:1; }
+            .int-code {
+                background:#060e1a; border:1px solid var(--border); border-radius:10px;
+                padding:14px 16px; font-family:'JetBrains Mono',monospace; font-size:.76rem;
+                line-height:1.8; color:#c3e88d; overflow-x:auto; white-space:pre;
+            }
+            .int-code .c { color:#4a6fa5; }
+            .int-code .k { color:#c792ea; }
+            .int-code .s { color:#c3e88d; }
+            .int-code .f { color:#1db99a; }
+            .int-cta {
+                display:inline-flex; align-items:center; gap:6px; padding:9px 18px;
+                border-radius:8px; font-size:.82rem; font-weight:700; text-decoration:none;
+                border:1px solid var(--border); color:var(--muted); transition:all .2s; margin-top:auto;
+            }
+            .int-cta:hover { border-color:var(--teal); color:var(--teal); }
+            .int-cta.primary { background:var(--teal); color:#fff; border-color:var(--teal); }
+            .int-cta.primary:hover { background:#15a085; }
+            .int-badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:.67rem; font-weight:700; background:rgba(29,185,154,.12); color:var(--teal); margin-bottom:2px; }
+        </style>
+
+        <div class="int-grid">
+
+            <!-- 1. JS SDK -->
+            <div class="int-card">
+                <div class="int-icon">🧩</div>
+                <div>
+                    <div class="int-badge">Browser · Node.js</div>
+                    <div class="int-title">JS SDK</div>
+                </div>
+                <div class="int-desc">Wrap any AI response with <code style="background:#0a192a;padding:1px 6px;border-radius:4px;color:var(--teal)">gr.check()</code>. Works in the browser or server-side Node.js. One line added to your existing pipeline.</div>
+                <div class="int-code"><span class="c">// load once</span>
+&lt;script src="<span class="s">/sdk/guardrail.js</span>"&gt;&lt;/script&gt;
+
+<span class="k">const</span> gr = <span class="k">new</span> <span class="f">Guardrail</span>({
+  apiKey: <span class="s">"gr_live_xxx"</span>
+});
+<span class="k">const</span> r = <span class="k">await</span> gr.<span class="f">check</span>(aiText);
+<span class="c">// → { decision, confidence }</span></div>
+                <a href="/developer.html" class="int-cta primary">Get snippet →</a>
+            </div>
+
+            <!-- 2. Website Widget -->
+            <div class="int-card">
+                <div class="int-icon">💬</div>
+                <div>
+                    <div class="int-badge">Any website</div>
+                    <div class="int-title">Drop-in Chat Widget</div>
+                </div>
+                <div class="int-desc">One <code style="background:#0a192a;padding:1px 6px;border-radius:4px;color:var(--teal)">&lt;script&gt;</code> tag adds a floating 🛡️ AI chat to any site. Every response shows a confidence badge. Zero config, dark/light theme.</div>
+                <div class="int-code"><span class="c">&lt;!-- paste before &lt;/body&gt; --&gt;</span>
+&lt;script
+  src="<span class="s">/embed/widget.js</span>"
+  data-key="<span class="s">gr_live_xxx</span>"
+  data-context="<span class="s">general</span>"
+  data-theme="<span class="s">dark</span>"
+&gt;&lt;/script&gt;
+<span class="c">&lt;!-- 🛡️ bubble appears instantly --&gt;</span></div>
+                <a href="/developer.html" class="int-cta">Copy widget code →</a>
+            </div>
+
+            <!-- 3. Claude Desktop MCP -->
+            <div class="int-card featured">
+                <div class="int-icon">🤖</div>
+                <div>
+                    <div class="int-badge">Claude Desktop · Cursor · Windsurf</div>
+                    <div class="int-title">Claude Desktop MCP</div>
+                </div>
+                <div class="int-desc">Add Guardrail as an MCP server. Claude can then call <strong style="color:var(--teal)">check_confidence</strong>, <strong style="color:var(--teal)">score_and_explain</strong>, and <strong style="color:var(--teal)">get_my_stats</strong> as native tools — no proxy needed.</div>
+                <div class="int-code"><span class="c">// claude_desktop_config.json</span>
+{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"guardrail"</span>: {
+      <span class="s">"command"</span>: <span class="s">"node"</span>,
+      <span class="s">"args"</span>: [<span class="s">"mcp/server.js"</span>],
+      <span class="s">"env"</span>: {
+        <span class="s">"GUARDRAIL_API_KEY"</span>: <span class="s">"gr_live_xxx"</span>
+      }
+    }
+  }
+}</div>
+                <a href="/developer.html" class="int-cta">Get MCP config →</a>
+            </div>
+
+            <!-- 4. REST API -->
+            <div class="int-card">
+                <div class="int-icon">🔌</div>
+                <div>
+                    <div class="int-badge">Python · Go · curl · Any language</div>
+                    <div class="int-title">REST API</div>
+                </div>
+                <div class="int-desc">Plain HTTP POST to <code style="background:#0a192a;padding:1px 6px;border-radius:4px;color:var(--teal)">/api/check</code>. Works from any language or tool. Pass your text and get a decision back in JSON. No SDK required.</div>
+                <div class="int-code"><span class="f">curl</span> -X POST \
+  <span class="s">https://guardrail-mvp-production.up.railway.app/api/check</span> \
+  -H <span class="s">"X-Guardrail-Key: gr_live_xxx"</span> \
+  -d <span class="s">'{"text":"your AI response"}'</span>
+
+<span class="c">→ {"decision":"deliver","confidence":0.91}</span></div>
+                <a href="/#" onclick="copyCurl(this);return false;" class="int-cta">Copy curl →</a>
+            </div>
+
+            <!-- 5. No-code chat demo -->
+            <div class="int-card">
+                <div class="int-icon">🧪</div>
+                <div>
+                    <div class="int-badge">No code needed</div>
+                    <div class="int-title">Live Chat Demo</div>
+                </div>
+                <div class="int-desc">Try Guardrail right now without writing any code. Chat with Claude via a web UI — every response is confidence-scored and highlighted in real-time. Bring your own Anthropic key.</div>
+                <div class="int-code"><span class="c">// Nothing to install.</span>
+<span class="c">// Just need:</span>
+
+✅ A Guardrail key  <span class="c">→ sign up above</span>
+✅ An Anthropic key <span class="c">→ console.anthropic.com</span>
+
+<span class="c">// Open the Chat Demo and start typing.</span>
+<span class="c">// Guardrail scores every reply.</span></div>
+                <a href="/chat.html" class="int-cta primary">Open Chat Demo →</a>
+            </div>
+
+            <!-- 6. Playground -->
+            <div class="int-card">
+                <div class="int-icon">🎮</div>
+                <div>
+                    <div class="int-badge">No setup needed</div>
+                    <div class="int-title">Confidence Playground</div>
+                </div>
+                <div class="int-desc">Paste any text and score it instantly against different domain contexts — medical, legal, financial, and more. See which signals trigger flags and why. No API key needed to explore.</div>
+                <div class="int-code"><span class="c">// Paste. Click. See results.</span>
+
+Input:  <span class="s">"I think maybe this drug might help"</span>
+Context: <span class="s">medical</span>
+
+Output:
+  decision:   <span class="f">escalate</span>
+  confidence: <span class="s">0.28</span>
+  reasons: [<span class="s">"hedged_language"</span>, <span class="s">"medical_risk"</span>]</div>
+                <a href="/playground.html" class="int-cta">Try Playground →</a>
+            </div>
+
+        </div>
+    </section>
+
     <section id="how">
+
         <div class="section-tag">How it works</div>
         <h2 class="section-title">Four steps. Zero trust issues.</h2>
         <p class="section-sub">Guardrail wraps your existing AI pipeline and adds an intelligence layer between output
@@ -941,6 +1103,15 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Enter') doSignup();
         });
+        function copyCurl(el) {
+            var cmd = 'curl -X POST https://guardrail-mvp-production.up.railway.app/api/check'
+                + ' -H "X-Guardrail-Key: gr_live_xxx"'
+                + ' -H "Content-Type: application/json"'
+                + ' -d '{"text":"your AI response"}'' ;
+            navigator.clipboard.writeText(cmd);
+            el.textContent = 'Copied!';
+            setTimeout(function(){ el.textContent = 'Copy curl →'; }, 2000);
+        }
     </script>
 
 </body>
