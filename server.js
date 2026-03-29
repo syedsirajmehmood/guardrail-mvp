@@ -117,6 +117,10 @@ const UNCERTAINTY_SIGNALS = [
     { pat: /\b(might|maybe|perhaps|possibly|could be|it depends|i think|i believe|i guess)\b/i, weight: 0.12, label: 'Hedged language' },
     { pat: /\b(no information|no data|limited information|beyond my knowledge)\b/i, weight: 0.18, label: 'Knowledge gap admission' },
     { pat: /\?{2,}/, weight: 0.08, label: 'Excessive question marks' },
+    { pat: /\b(allegedly|supposedly|purportedly|ostensibly)\b/i, weight: 0.10, label: 'Epistemic distancing' },
+    { pat: /\b(to my (knowledge|understanding|recollection)|as far as i (know|can tell|recall))\b/i, weight: 0.14, label: 'Scoped knowledge claim' },
+    { pat: /\b(roughly|approximately|around|somewhere (around|between)|give or take)\b/i, weight: 0.08, label: 'Approximate quantification' },
+    { pat: /\b(i('m| am) (not entirely|not fully|not 100%) sure)\b/i, weight: 0.12, label: 'Partial uncertainty' },
 ];
 
 const KNOWLEDGE_CUTOFF_SIGNALS = [
@@ -126,27 +130,54 @@ const KNOWLEDGE_CUTOFF_SIGNALS = [
     { pat: /\b(my (information|data|knowledge) (may|might|could) (be|not be) (up to date|current|accurate|outdated))\b/i, weight: 0.18, label: 'Outdated information warning' },
     { pat: /\b(i (don'?t|do not) have (access|the ability) to)\b/i, weight: 0.15, label: 'Capability limitation' },
     { pat: /\b(i (should note|must note|want to clarify) that i)\b/i, weight: 0.08, label: 'Model self-reference' },
+    { pat: /\b(things? (may|might|could) have changed|this (may|might) (have changed|be outdated))\b/i, weight: 0.16, label: 'Staleness hedge' },
+    { pat: /\b(at the time of (my training|writing|this response)|when i was trained)\b/i, weight: 0.18, label: 'Training-time anchor' },
+    { pat: /\b(i('d| would) (recommend|suggest) (checking|verifying|confirming) (this|that))\b/i, weight: 0.10, label: 'Verification nudge' },
+    { pat: /\b(please (verify|check|confirm|look up|consult) (the )?(latest|current|recent|official))\b/i, weight: 0.12, label: 'Explicit verification request' },
 ];
 
 const CONTRADICTION_SIGNALS = [
     { pat: /\b(actually|in fact|wait|correction|let me correct|i made an error)\b/i, weight: 0.14, label: 'Self-correction' },
+    { pat: /\b(to clarify|let me rephrase|what i meant (was|is)|more precisely|to be more accurate)\b/i, weight: 0.12, label: 'Self-clarification' },
+    { pat: /\b(on (second|further) thought|i('ve| have) reconsidered|revising (that|my answer))\b/i, weight: 0.14, label: 'Position reversal' },
+    { pat: /\b(that (said|being said)|although|but (actually|in fact))\b/i, weight: 0.06, label: 'Soft contradiction pivot' },
 ];
 
 const EVASION_SIGNALS = [
     { pat: /\b(i'?m (just )?an? (ai|language model|assistant|chatbot)|as an ai)\b/i, weight: 0.10, label: 'AI identity deflection' },
     { pat: /\b(you should (consult|speak to|ask|see|contact) (a|an|your) (doctor|lawyer|financial|professional|expert|specialist))\b/i, weight: 0.08, label: 'Professional referral deflection' },
     { pat: /\b(this is not (medical|legal|financial) advice)\b/i, weight: 0.06, label: 'Not-advice disclaimer' },
+    { pat: /\b(it('s| is) (complicated|complex|nuanced)|there('s| is) no (simple|easy|one-size) answer)\b/i, weight: 0.08, label: 'Complexity deflection' },
+    { pat: /\b(i('m| am) not (qualified|in a position|the right (source|person)) to)\b/i, weight: 0.10, label: 'Competence deflection' },
+    { pat: /\b(that (falls outside|is beyond|is outside) (my|the scope))\b/i, weight: 0.10, label: 'Scope deflection' },
+    { pat: /\b(i (prefer|choose|want) not to (comment|speculate|say))\b/i, weight: 0.12, label: 'Explicit refusal' },
 ];
 
 const HALLUCINATION_SIGNALS = [
     { pat: /\b([A-Z][a-z]+ [A-Z][a-z]+), (born|died|founded) in \d{4}\b/, weight: 0.12, label: 'Unverifiable biographical claim' },
     { pat: /\b(exact(ly)? \$?\d[\d,.]* (billion|million|thousand))\b/i, weight: 0.10, label: 'Suspiciously precise number' },
     { pat: /\b(studies show|research (shows|suggests|proves)|experts say|according to experts)\b/i, weight: 0.10, label: 'Unattributed authority claim' },
+    { pat: /\b(in (his|her|their) (landmark|seminal|groundbreaking|famous) (paper|study|book|work))\b/i, weight: 0.14, label: 'Unverifiable citation framing' },
+    { pat: /\b(ISBN|DOI|arXiv)[\s:][\d\w./-]{5,}\b/i, weight: 0.20, label: 'Specific citation identifier (possible fabrication)' },
+    { pat: /\b(published in \d{4} (by|in))\b/i, weight: 0.12, label: 'Unverifiable publication claim' },
+    { pat: /\b(the (study|paper|report|survey) (found|showed|concluded|reported))\b/i, weight: 0.10, label: 'Unattributed study claim' },
+    { pat: /\b(as (reported|documented|noted|stated) (by|in))\b/i, weight: 0.08, label: 'Vague attribution' },
+    { pat: /\b(\d{1,3}(\.\d+)?% of (people|users|respondents|Americans|patients))\b/i, weight: 0.12, label: 'Suspiciously precise statistic' },
 ];
 
 const FRUSTRATION_SIGNALS = [
     { pat: /\b(wrong|incorrect|mistake|error|that's not right|you're wrong|bad answer|useless)\b/i, weight: 0.10, label: 'User frustration' },
     { pat: /!{2,}|:{2,}/, weight: 0.06, label: 'Aggressive punctuation' },
+    { pat: /\b(still (wrong|not right|incorrect)|again,? (that'?s? (wrong|not))|you (keep|still|again))\b/i, weight: 0.14, label: 'Repeated correction' },
+    { pat: /\b(this is (terrible|awful|horrible|useless|garbage|trash)|what a (waste|joke))\b/i, weight: 0.12, label: 'Explicit negative evaluation' },
+    { pat: /\b(never mind|forget (it|this)|i('ll| will) (just )?ask (elsewhere|someone else|google))\b/i, weight: 0.14, label: 'Abandonment signal' },
+];
+
+const SYCOPHANCY_SIGNALS = [
+    { pat: /^(great question|excellent question|what a (great|wonderful|fantastic) question)/im, weight: 0.06, label: 'Sycophantic opener' },
+    { pat: /\b(you('re| are) (absolutely|exactly|completely) right)\b/i, weight: 0.08, label: 'Excessive agreement' },
+    { pat: /\b(that('s| is) (a |an )?(excellent|brilliant|fantastic|wonderful|great) (point|observation|insight|question))\b/i, weight: 0.06, label: 'Flattery' },
+    { pat: /^(absolutely|certainly|of course|definitely)[.!,]/im, weight: 0.04, label: 'Overconfident affirmation' },
 ];
 
 const HIGH_STAKES_PATTERNS = {
@@ -155,11 +186,15 @@ const HIGH_STAKES_PATTERNS = {
     financial: /\b(invest|portfolio|tax advice|financial advice|trade|stock|fund|pension|fiduciary)\b/i,
     safety: /\b(danger|hazard|risk|emergency|explosion|toxic|harmful|fatal|lethal)\b/i,
     security: /\b(password|credential|exploit|vulnerability|hack|breach|malware|phishing|encryption)\b/i,
+    mental_health: /\b(suicide|self[- ]harm|overdose|crisis|therapist|psychiatrist|antidepressant|trauma|ptsd|bipolar)\b/i,
+    child_safety: /\b(minor|child (abuse|safety)|grooming|exploitation|underage)\b/i,
+    nuclear: /\b(radioactive|uranium|enrichment|reactor|fissile|criticality|rad(iation)? exposure)\b/i,
 };
 
 const CONTEXT_RISK = {
     medical: 0.25, legal: 0.25, financial: 0.20,
     safety: 0.30, security: 0.25, general: 0.00,
+    mental_health: 0.35, child_safety: 0.35, nuclear: 0.35,
 };
 
 // --- Auto-context detection ---
@@ -349,6 +384,7 @@ function scoreText(text, context) {
     scanSignals(EVASION_SIGNALS);
     scanSignals(HALLUCINATION_SIGNALS);
     scanSignals(FRUSTRATION_SIGNALS);
+    scanSignals(SYCOPHANCY_SIGNALS);
 
     // Auto-context: detect domain even if user selected "general"
     const autoContext = detectContext(text);
