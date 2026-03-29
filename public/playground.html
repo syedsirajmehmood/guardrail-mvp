@@ -71,18 +71,20 @@
 
         .container {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: 1fr 1fr;
             gap: 0;
-            min-height: calc(100vh - 57px)
+            height: calc(100vh - 57px);
+            overflow: hidden
         }
 
         /* Left: input panel */
         .input-panel {
-            padding: 40px;
+            padding: 32px;
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            gap: 24px
+            gap: 20px;
+            overflow-y: auto
         }
 
         .panel-title {
@@ -199,8 +201,8 @@
 
         /* Presets */
         .presets {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px
         }
 
@@ -248,11 +250,12 @@
 
         /* Right: result panel */
         .result-panel {
-            padding: 40px;
+            padding: 32px;
             display: flex;
             flex-direction: column;
             gap: 24px;
-            background: #080f1c
+            background: #080f1c;
+            overflow-y: auto
         }
 
         .result-empty {
