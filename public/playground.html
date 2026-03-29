@@ -535,7 +535,7 @@
                     <span style="font-size:.82rem;font-weight:700;color:var(--text)">Your Guardrail Key</span>
                     <span id="keyBadge" style="margin-left:auto;font-size:.7rem;padding:2px 10px;border-radius:999px;font-weight:700"></span>
                 </div>
-                <input type="text" id="grKeyInput" placeholder="gr_live_xxx  —  get one free at the home page"
+                <input type="text" id="grKeyInput" placeholder="gr_live_xxx (optional — try without a key!)"
                     style="width:100%;background:#0a1929;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none" />
                 <div style="font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5">
                     Don't have a key? <a href="/" style="color:var(--teal);text-decoration:underline">Sign up free on the home page</a> — takes 10 seconds.
@@ -636,9 +636,9 @@
                 badge.style.background = 'rgba(245,166,35,.12)';
                 badge.style.color = '#f5a623';
             } else {
-                badge.textContent = '⚠ Required';
-                badge.style.background = 'rgba(255,92,92,.12)';
-                badge.style.color = '#ff5c5c';
+                badge.textContent = 'ℹ Demo mode (5/hr)';
+                badge.style.background = 'rgba(130,170,255,.12)';
+                badge.style.color = '#82aaff';
             }
         }
 
