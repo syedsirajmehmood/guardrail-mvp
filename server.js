@@ -556,6 +556,60 @@ app.delete('/api/keys/:key', requireMasterKey, (req, res) => {
 // ── Protected API Routes ──────────────────────────────────────────────────────
 
 // POST /api/chat — call Claude then score
+
+// ── Demo Chat — keyless with pre-recorded responses ──────────────────────────
+const DEMO_RESPONSES = {
+    'general': [
+        "Python is a high-level, interpreted programming language. It was created by Guido van Rossum and first released in 1991. Python emphasizes code readability with its use of significant indentation. It supports multiple programming paradigms, including procedural, object-oriented, and functional programming.",
+        "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. Common approaches include supervised learning, unsupervised learning, and reinforcement learning.",
+        "The internet works through a system of interconnected networks that communicate using standardized protocols. Data is broken into packets, routed through various nodes, and reassembled at the destination. The core protocols are TCP/IP, which handle addressing and reliable data transfer.",
+    ],
+    'medical': [
+        "I believe the recommended dosage is around 500mg, but I'm not entirely sure — it might depend on the patient's weight and medical history. You should probably consult a doctor or pharmacist for the exact dosage. I don't have access to real-time medical databases.",
+        "Based on my training data, the symptoms you describe could be associated with several conditions. However, I'm not qualified to make a diagnosis. I would strongly recommend consulting with a healthcare professional who can examine you in person.",
+    ],
+    'financial': [
+        "I don't have access to real-time market data, so I can't tell you the current stock price. As of my last update, the company was trading around $175, but things may have changed significantly since then. I'd recommend checking a financial data provider for current prices.",
+        "Generally speaking, diversification is considered a sound investment strategy. However, I should note that I'm not a licensed financial advisor. Your individual financial situation, risk tolerance, and goals should all be considered. You should consult a qualified financial professional.",
+    ],
+    'security': [
+        "To secure your application, you should implement multiple layers of defense. Use HTTPS for all communications, implement proper authentication with hashed passwords, set up input validation, and follow the principle of least privilege. However, security requirements can vary — I'd recommend a professional security audit.",
+    ],
+};
+
+app.post('/api/demo-chat', (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    const now = Date.now();
+    if (!demoLimits[ip]) demoLimits[ip] = [];
+    demoLimits[ip] = demoLimits[ip].filter(t => now - t < 3600000);
+    if (demoLimits[ip].length >= 10) {
+        return res.status(429).json({ error: 'Demo limit reached (10/hour). Sign up for unlimited access — it\'s free!' });
+    }
+    demoLimits[ip].push(now);
+
+    const { message, context } = req.body || {};
+    if (!message) return res.status(400).json({ error: 'message is required' });
+
+    const ctx = context || 'general';
+    const pool = DEMO_RESPONSES[ctx] || DEMO_RESPONSES['general'];
+    const aiText = pool[Math.floor(Math.random() * pool.length)];
+
+    // Score it with Guardrail
+    const guardrail = scoreText(aiText, ctx);
+
+    res.json({
+        aiResponse: aiText,
+        confidence: guardrail.confidence,
+        decision: guardrail.decision,
+        reasons: guardrail.reasons,
+        excerpts: guardrail.excerpts || [],
+        claims: guardrail.claims || [],
+        context: guardrail.effectiveContext,
+        demo: true,
+        remaining: 10 - demoLimits[ip].length,
+    });
+});
+
 app.post('/api/chat', requireKey, async (req, res) => {
     const { message, context, userId, systemPrompt, anthropicKey } = req.body;
     if (!message) return res.status(400).json({ error: 'message is required' });

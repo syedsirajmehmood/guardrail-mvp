@@ -538,7 +538,8 @@
             <div class="model-dot"></div> claude-sonnet-4-5-20250929
         </div>
         <div class="nav-links">
-            <a href="/">Docs</a><a href="playground.html">Playground</a><a href="dashboard.html">Dashboard</a>
+            <a href="/">Docs</a><a href="playground.html">Playground</a><a href="dashboard.html">Docs</a>
+            <a href="docs.html">Dashboard</a>
         <a href="chat.html">Chat Demo</a>
         </div>
     </nav>
@@ -768,28 +769,19 @@
                 const grKey = document.getElementById('grKeyInput').value.trim()
                     || localStorage.getItem('gr_dev_key') || '';
                 const antKey = document.getElementById('apiKeyInput').value.trim();
-                if (!grKey) {
-                    typingWrap.remove();
-                    const e = document.createElement('div');
-                    e.className = 'msg assistant';
-                    e.innerHTML = `<div class="msg-bubble" style="border-color:var(--amber);color:var(--amber)">⚠ Enter your Guardrail API key in the sidebar. <a href="/developer.html" style="color:var(--teal)">Get one free →</a></div>`;
-                    document.getElementById('messages').appendChild(e);
-                    isLoading = false;
-                    document.getElementById('sendBtn').disabled = false;
-                    return;
-                }
-                const res = await fetch(ENDPOINT + '/api/chat', {
+                const isDemoChat = !grKey;
+                const chatEndpoint = isDemoChat ? '/api/demo-chat' : '/api/chat';
+                const chatHeaders = { 'Content-Type': 'application/json' };
+                if (!isDemoChat) chatHeaders['X-Guardrail-Key'] = grKey;
+                const res = await fetch(ENDPOINT + chatEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Guardrail-Key': grKey
-                    },
+                    headers: chatHeaders,
                     body: JSON.stringify({
                         message: msg,
                         context: document.getElementById('contextSelect').value,
-                        systemPrompt: document.getElementById('sysPrompt').value,
+                        systemPrompt: isDemoChat ? undefined : document.getElementById('sysPrompt').value,
                         userId: 'chat-demo',
-                        anthropicKey: antKey || undefined
+                        anthropicKey: isDemoChat ? undefined : (antKey || undefined)
                     })
                 });
 

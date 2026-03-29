@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation — Guardrail</title>
+    <meta name="description" content="Guardrail API reference — endpoints, authentication, request/response schemas, error codes, and rate limits.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a1628; --card:#0d1e33; --card2:#081420; --border:#1e3050; --text:#e2edf8; --muted:#6b8aab; --teal:#1db99a; --amber:#f5a623; --coral:#ff5c5c; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; }
+        a { color:var(--teal); text-decoration:none; }
+        a:hover { text-decoration:underline; }
+
+        .nav { display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); background:var(--card); }
+        .nav-brand { font-weight:900; font-size:1rem; color:var(--text); }
+        .nav-links { display:flex; gap:20px; font-size:.82rem; font-weight:600; }
+        .nav-links a { color:var(--muted); }
+        .nav-links a:hover { color:var(--teal); text-decoration:none; }
+
+        .layout { display:grid; grid-template-columns:220px 1fr; height:calc(100vh - 57px); }
+        .sidebar { padding:24px 16px; border-right:1px solid var(--border); overflow-y:auto; position:sticky; top:0; }
+        .sidebar a { display:block; padding:6px 12px; border-radius:6px; color:var(--muted); font-size:.8rem; font-weight:600; margin-bottom:2px; }
+        .sidebar a:hover, .sidebar a.active { background:rgba(29,185,154,.08); color:var(--teal); text-decoration:none; }
+        .sidebar .cat { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:16px 12px 6px; opacity:.6; }
+        .main { padding:40px 56px; overflow-y:auto; max-width:900px; }
+        h1 { font-size:1.8rem; font-weight:900; margin-bottom:4px; }
+        .sub { color:var(--muted); font-size:.9rem; margin-bottom:40px; }
+        h2 { font-size:1.15rem; font-weight:800; margin:48px 0 12px; padding-top:24px; border-top:1px solid var(--border); }
+        h2:first-of-type { border-top:none; margin-top:0; }
+        h3 { font-size:.95rem; font-weight:700; margin:24px 0 8px; color:var(--teal); }
+        p { font-size:.87rem; color:var(--muted); margin-bottom:12px; }
+        code { background:var(--card2); padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.8rem; color:var(--teal); }
+        pre { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.8; overflow-x:auto; margin:12px 0 20px; color:var(--text); }
+
+        .method { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.7rem; font-weight:800; margin-right:8px; font-family:'JetBrains Mono',monospace; }
+        .method.get { background:rgba(130,170,255,.15); color:#82aaff; }
+        .method.post { background:rgba(29,185,154,.15); color:var(--teal); }
+        .method.delete { background:rgba(255,92,92,.15); color:var(--coral); }
+
+        .endpoint { font-family:'JetBrains Mono',monospace; font-size:.85rem; font-weight:700; }
+
+        table { width:100%; border-collapse:collapse; margin:12px 0 20px; font-size:.82rem; }
+        th { text-align:left; padding:8px 12px; background:var(--card); border:1px solid var(--border); font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+        td { padding:8px 12px; border:1px solid var(--border); color:var(--muted); }
+        td code { font-size:.75rem; }
+
+        .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.68rem; font-weight:700; }
+        .badge.required { background:rgba(255,92,92,.12); color:var(--coral); }
+        .badge.optional { background:rgba(130,170,255,.12); color:#82aaff; }
+        .badge.auth { background:rgba(245,166,35,.12); color:var(--amber); }
+        .badge.coming { background:rgba(29,185,154,.12); color:var(--teal); }
+
+        .error-row td:first-child { font-weight:700; font-family:'JetBrains Mono',monospace; }
+
+        @media(max-width:768px) {
+            .layout { grid-template-columns:1fr; }
+            .sidebar { display:none; }
+            .main { padding:24px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">🛡️ Guardrail</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="playground.html">Playground</a>
+            <a href="developer.html">Developer</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="chat.html">Chat Demo</a>
+        </div>
+    </nav>
+
+    <div class="layout">
+        <div class="sidebar">
+            <div class="cat">Getting Started</div>
+            <a href="#auth">Authentication</a>
+            <a href="#base-url">Base URL</a>
+            <a href="#rate-limits">Rate Limits</a>
+
+            <div class="cat">Core API</div>
+            <a href="#check">POST /api/check</a>
+            <a href="#demo-check">POST /api/demo-check</a>
+            <a href="#signup">POST /api/signup</a>
+
+            <div class="cat">Dashboard</div>
+            <a href="#developer-me">GET /api/developer/me</a>
+            <a href="#stats">GET /api/stats</a>
+            <a href="#logs">GET /api/logs</a>
+            <a href="#health">GET /api/health</a>
+
+            <div class="cat">Admin</div>
+            <a href="#keys-create">POST /api/keys</a>
+            <a href="#keys-list">GET /api/keys</a>
+            <a href="#keys-delete">DELETE /api/keys/:key</a>
+
+            <div class="cat">Integrations</div>
+            <a href="#sdk">Browser SDK</a>
+            <a href="#mcp">MCP Server</a>
+            <a href="#webhooks">Webhooks</a>
+
+            <div class="cat">Reference</div>
+            <a href="#errors">Error Codes</a>
+            <a href="#signals">Signal Categories</a>
+            <a href="#contexts">Contexts</a>
+        </div>
+
+        <div class="main">
+            <h1>API Reference</h1>
+            <p class="sub">Complete documentation for the Guardrail scoring API. Pattern-based detection with configurable thresholds — no gen-AI in the scoring path.</p>
+
+            <!-- ═══ AUTHENTICATION ═══ -->
+            <h2 id="auth">Authentication</h2>
+            <p>All API requests (except <code>/api/signup</code>, <code>/api/demo-check</code>, and <code>/api/health</code>) require authentication via your API key.</p>
+
+            <h3>Send your key via header (recommended)</h3>
+<pre>X-Guardrail-Key: gr_live_your_key_here</pre>
+
+            <h3>Or via query parameter</h3>
+<pre>GET /api/stats?key=gr_live_your_key_here</pre>
+
+            <p>Admin endpoints (key management) require the master key set via <code>GUARDRAIL_MASTER_KEY</code>.</p>
+
+            <!-- ═══ BASE URL ═══ -->
+            <h2 id="base-url">Base URL</h2>
+<pre>https://guardrail-mvp-production.up.railway.app</pre>
+
+            <!-- ═══ RATE LIMITS ═══ -->
+            <h2 id="rate-limits">Rate Limits</h2>
+            <table>
+                <tr><th>Endpoint</th><th>Limit</th><th>Window</th></tr>
+                <tr><td><code>/api/demo-check</code></td><td>5 requests</td><td>Per hour, per IP</td></tr>
+                <tr><td><code>/api/check</code></td><td>Unlimited</td><td>With valid API key</td></tr>
+                <tr><td><code>/api/signup</code></td><td>Unlimited</td><td>Idempotent per email</td></tr>
+            </table>
+            <p><span class="badge coming">Coming Soon</span> Configurable per-key rate limits and usage quotas.</p>
+
+            <!-- ═══ POST /api/check ═══ -->
+            <h2 id="check"><span class="method post">POST</span> <span class="endpoint">/api/check</span></h2>
+            <p>Score an AI response for confidence, detect signals, extract claims, and route to a decision. <span class="badge auth">Auth Required</span></p>
+
+            <h3>Request Body</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td><code>text</code></td><td>string</td><td><span class="badge required">Required</span></td><td>The AI-generated response text to score</td></tr>
+                <tr><td><code>context</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Domain context: <code>general</code>, <code>medical</code>, <code>legal</code>, <code>financial</code>, <code>security</code>, <code>safety</code>, <code>mental_health</code>, <code>child_safety</code>, <code>nuclear</code>. Default: <code>general</code></td></tr>
+                <tr><td><code>userId</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Your internal user ID for tracking</td></tr>
+            </table>
+
+            <h3>Example Request</h3>
+<pre>curl -X POST https://guardrail-mvp-production.up.railway.app/api/check \
+  -H "Content-Type: application/json" \
+  -H "X-Guardrail-Key: gr_live_your_key" \
+  -d '{
+    "text": "The capital of France is Paris.",
+    "context": "general"
+  }'</pre>
+
+            <h3>Response (200 OK)</h3>
+<pre>{
+  "id": "a1b2c3d4-...",
+  "confidence": 0.76,
+  "decision": "deliver",
+  "reasons": ["Hedged language", "Approximate quantification"],
+  "context": "general",
+  "effectiveContext": "general",
+  "detectedContext": null,
+  "timestamp": "2026-03-29T08:30:00.000Z",
+  "excerpts": [
+    {
+      "signal": "Approximate quantification",
+      "match": "approximately",
+      "impact": "-8%"
+    }
+  ],
+  "claims": [
+    {
+      "text": "The capital of France is Paris",
+      "type": "claim",
+      "verification": "unverified"
+    }
+  ]
+}</pre>
+
+            <h3>Response Fields</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td><code>id</code></td><td>string</td><td>Unique check ID (UUID)</td></tr>
+                <tr><td><code>confidence</code></td><td>float</td><td>Score 0.0–1.0 (higher = more confident)</td></tr>
+                <tr><td><code>decision</code></td><td>string</td><td><code>deliver</code> (≥0.75), <code>flag</code> (0.45–0.74), or <code>escalate</code> (<0.45)</td></tr>
+                <tr><td><code>reasons</code></td><td>string[]</td><td>Human-readable signal labels that fired</td></tr>
+                <tr><td><code>context</code></td><td>string</td><td>The context used for scoring</td></tr>
+                <tr><td><code>effectiveContext</code></td><td>string</td><td>Actual context used (may be auto-elevated)</td></tr>
+                <tr><td><code>detectedContext</code></td><td>string?</td><td>Auto-detected domain (null if none detected)</td></tr>
+                <tr><td><code>excerpts</code></td><td>object[]</td><td>Exact text matches + impact percentage per signal</td></tr>
+                <tr><td><code>claims</code></td><td>object[]</td><td>Extracted statements with type + verification status</td></tr>
+            </table>
+
+            <h3>Claim Types</h3>
+            <table>
+                <tr><th>Type</th><th>Description</th></tr>
+                <tr><td><code>claim</code></td><td>Factual assertion (dates, stats, named entities)</td></tr>
+                <tr><td><code>opinion</code></td><td>Subjective statement ("I think", "probably best")</td></tr>
+                <tr><td><code>instruction</code></td><td>Imperative/directive ("Run this", "You should")</td></tr>
+                <tr><td><code>question</code></td><td>Interrogative sentence</td></tr>
+                <tr><td><code>disclaimer</code></td><td>Self-hedging ("I don't have access", "as an AI")</td></tr>
+                <tr><td><code>filler</code></td><td>Non-substantive connective text</td></tr>
+            </table>
+
+            <h3>Verification Statuses</h3>
+            <table>
+                <tr><th>Status</th><th>Meaning</th></tr>
+                <tr><td><code>sourced</code></td><td>Claim has URL, DOI, or "according to [source]"</td></tr>
+                <tr><td><code>unverified</code></td><td>Factual claim with no citation (−3% penalty, capped −15%)</td></tr>
+                <tr><td><code>self_hedging</code></td><td>Disclaimer/caveat — informational only</td></tr>
+            </table>
+
+            <!-- ═══ POST /api/demo-check ═══ -->
+            <h2 id="demo-check"><span class="method post">POST</span> <span class="endpoint">/api/demo-check</span></h2>
+            <p>Same as <code>/api/check</code> but requires no authentication. Rate-limited to 5 requests per hour per IP. Response includes <code>"demo": true</code> and <code>"remaining": N</code>.</p>
+
+            <!-- ═══ POST /api/signup ═══ -->
+            <h2 id="signup"><span class="method post">POST</span> <span class="endpoint">/api/signup</span></h2>
+            <p>Self-serve API key generation. Idempotent — same email returns same key.</p>
+
+            <h3>Request Body</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td><code>email</code></td><td>string</td><td><span class="badge required">Required</span></td><td>Valid email address</td></tr>
+            </table>
+
+            <h3>Response (200)</h3>
+<pre>{
+  "key": "gr_live_a3b4c5d6...",
+  "email": "you@example.com",
+  "message": "Your API key has been created."
+}</pre>
+
+            <!-- ═══ GET /api/developer/me ═══ -->
+            <h2 id="developer-me"><span class="method get">GET</span> <span class="endpoint">/api/developer/me</span></h2>
+            <p>Get info about your API key — request counts, decision breakdown, recent logs. <span class="badge auth">Auth Required</span></p>
+
+            <h3>Response (200)</h3>
+<pre>{
+  "key": "gr_live_xxx...xxx",
+  "email": "you@example.com",
+  "created": "2026-03-28T...",
+  "requests": 42,
+  "decisions": { "deliver": 30, "flag": 10, "escalate": 2 },
+  "recentLogs": [...]
+}</pre>
+
+            <!-- ═══ GET /api/stats ═══ -->
+            <h2 id="stats"><span class="method get">GET</span> <span class="endpoint">/api/stats</span></h2>
+            <p>Aggregate platform stats. <span class="badge auth">Auth Required</span></p>
+
+            <h3>Response (200)</h3>
+<pre>{
+  "totalChecks": 1234,
+  "deliverRate": 68.5,
+  "avgConfidence": 0.72,
+  "recentFlags": 12,
+  "recentEscalations": 3
+}</pre>
+
+            <!-- ═══ GET /api/logs ═══ -->
+            <h2 id="logs"><span class="method get">GET</span> <span class="endpoint">/api/logs</span></h2>
+            <p>Recent scoring logs (newest first). <span class="badge auth">Auth Required</span></p>
+
+            <h3>Query Parameters</h3>
+            <table>
+                <tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                <tr><td><code>limit</code></td><td>integer</td><td>20</td><td>Number of logs to return (max 200)</td></tr>
+            </table>
+
+            <!-- ═══ GET /api/health ═══ -->
+            <h2 id="health"><span class="method get">GET</span> <span class="endpoint">/api/health</span></h2>
+            <p>Health check — no auth required.</p>
+<pre>{ "status": "ok" }</pre>
+
+            <!-- ═══ ADMIN KEYS ═══ -->
+            <h2 id="keys-create"><span class="method post">POST</span> <span class="endpoint">/api/keys</span></h2>
+            <p>Create a new API key (admin only). <span class="badge auth">Master Key Required</span></p>
+
+            <h2 id="keys-list"><span class="method get">GET</span> <span class="endpoint">/api/keys</span></h2>
+            <p>List all API keys (admin only). <span class="badge auth">Master Key Required</span></p>
+
+            <h2 id="keys-delete"><span class="method delete">DELETE</span> <span class="endpoint">/api/keys/:key</span></h2>
+            <p>Revoke an API key (admin only). <span class="badge auth">Master Key Required</span></p>
+
+            <!-- ═══ SDK ═══ -->
+            <h2 id="sdk">Browser SDK</h2>
+            <p>Drop-in JavaScript SDK available at:</p>
+<pre>&lt;script src="https://guardrail-mvp-production.up.railway.app/sdk/guardrail.js"&gt;&lt;/script&gt;
+
+const gr = new Guardrail({
+  apiKey: 'gr_live_xxx',
+  context: 'medical',
+  onEscalate: (r) => notifyHuman(r),
+  onFlag: (r) => showDisclaimer(r),
+});
+
+const result = await gr.check(aiResponse);</pre>
+
+            <!-- ═══ MCP ═══ -->
+            <h2 id="mcp">MCP Server (Claude Desktop)</h2>
+            <p>Guardrail has a native MCP server for use with Claude Desktop and other MCP-compatible clients.</p>
+
+            <h3>Install via npx</h3>
+<pre>npx guardrail-mcp --key gr_live_xxx</pre>
+
+            <h3>Or download directly</h3>
+            <p>Visit <a href="developer.html">Developer Portal</a> → "Download MCP Server" button, or:</p>
+<pre>curl -o guardrail-mcp.js https://guardrail-mvp-production.up.railway.app/api/mcp-download</pre>
+
+            <h3>Claude Desktop config</h3>
+<pre>{
+  "mcpServers": {
+    "guardrail": {
+      "command": "node",
+      "args": ["guardrail-mcp.js"],
+      "env": {
+        "GUARDRAIL_API_KEY": "gr_live_xxx",
+        "GUARDRAIL_ENDPOINT": "https://guardrail-mvp-production.up.railway.app"
+      }
+    }
+  }
+}</pre>
+
+            <!-- ═══ WEBHOOKS ═══ -->
+            <h2 id="webhooks">Webhooks <span class="badge coming">Coming Soon</span></h2>
+            <p>Receive real-time notifications when responses are flagged or escalated. Configure a webhook URL and Guardrail will <code>POST</code> events to your endpoint.</p>
+
+            <h3>Planned event types</h3>
+            <table>
+                <tr><th>Event</th><th>When</th></tr>
+                <tr><td><code>response.flagged</code></td><td>Confidence 0.45–0.74 (needs review)</td></tr>
+                <tr><td><code>response.escalated</code></td><td>Confidence < 0.45 (human required)</td></tr>
+                <tr><td><code>response.delivered</code></td><td>Confidence ≥ 0.75 (optional)</td></tr>
+            </table>
+
+            <h3>Planned webhook payload</h3>
+<pre>{
+  "event": "response.escalated",
+  "timestamp": "2026-03-29T...",
+  "data": {
+    "id": "check-uuid",
+    "confidence": 0.31,
+    "decision": "escalate",
+    "reasons": ["Knowledge cutoff disclaimer", "No real-time access"],
+    "context": "financial",
+    "textPreview": "I don't have access to real-time..."
+  }
+}</pre>
+            <p>Integrations planned: <strong>Slack</strong>, <strong>PagerDuty</strong>, <strong>custom HTTP endpoints</strong>. <a href="mailto:guardrail@example.com">Request access</a> to the private beta.</p>
+
+            <!-- ═══ ERROR CODES ═══ -->
+            <h2 id="errors">Error Codes</h2>
+            <table>
+                <tr class="error-row"><th>Status</th><th>Code</th><th>Description</th></tr>
+                <tr class="error-row"><td>400</td><td><code>text is required</code></td><td>Missing or empty <code>text</code> field in request body</td></tr>
+                <tr class="error-row"><td>401</td><td><code>Missing API key</code></td><td>No <code>X-Guardrail-Key</code> header or <code>?key=</code> param</td></tr>
+                <tr class="error-row"><td>403</td><td><code>Invalid API key</code></td><td>Key not found or revoked</td></tr>
+                <tr class="error-row"><td>404</td><td><code>Key not found</code></td><td>Attempted to delete a non-existent key</td></tr>
+                <tr class="error-row"><td>429</td><td><code>Demo limit reached</code></td><td>Exceeded 5 demo requests per hour</td></tr>
+                <tr class="error-row"><td>500</td><td><code>Internal error</code></td><td>Server-side failure (report to maintainer)</td></tr>
+            </table>
+
+            <!-- ═══ SIGNAL CATEGORIES ═══ -->
+            <h2 id="signals">Signal Categories (55 patterns)</h2>
+            <table>
+                <tr><th>Category</th><th>Patterns</th><th>Weight Range</th><th>Examples</th></tr>
+                <tr><td>Uncertainty</td><td>8</td><td>0.08–0.18</td><td>hedged language, epistemic distancing, partial uncertainty</td></tr>
+                <tr><td>Knowledge Cutoff</td><td>10</td><td>0.08–0.22</td><td>training cutoff, staleness hedge, verification nudge</td></tr>
+                <tr><td>Contradiction</td><td>4</td><td>0.06–0.14</td><td>self-correction, position reversal, soft pivot</td></tr>
+                <tr><td>Evasion</td><td>7</td><td>0.06–0.12</td><td>AI identity deflection, complexity deflection, explicit refusal</td></tr>
+                <tr><td>Hallucination</td><td>9</td><td>0.08–0.20</td><td>ISBN/DOI fabrication, unattributed studies, precise statistics</td></tr>
+                <tr><td>Frustration</td><td>5</td><td>0.06–0.14</td><td>repeated correction, abandonment signal, negative evaluation</td></tr>
+                <tr><td>Sycophancy</td><td>4</td><td>0.04–0.08</td><td>flattery opener, excessive agreement, overconfident affirmation</td></tr>
+                <tr><td>Quality Bonuses</td><td>8</td><td>+0.02–0.04</td><td>numbered lists, code blocks, URLs, specific numbers</td></tr>
+            </table>
+
+            <!-- ═══ CONTEXTS ═══ -->
+            <h2 id="contexts">Domain Contexts</h2>
+            <table>
+                <tr><th>Context</th><th>Risk Penalty</th><th>Auto-detected?</th></tr>
+                <tr><td><code>general</code></td><td>0%</td><td>Default</td></tr>
+                <tr><td><code>medical</code></td><td>−25%</td><td>✅ Yes</td></tr>
+                <tr><td><code>legal</code></td><td>−25%</td><td>✅ Yes</td></tr>
+                <tr><td><code>financial</code></td><td>−20%</td><td>✅ Yes</td></tr>
+                <tr><td><code>security</code></td><td>−25%</td><td>✅ Yes</td></tr>
+                <tr><td><code>safety</code></td><td>−30%</td><td>✅ Yes</td></tr>
+                <tr><td><code>mental_health</code></td><td>−35%</td><td>✅ Yes</td></tr>
+                <tr><td><code>child_safety</code></td><td>−35%</td><td>✅ Yes</td></tr>
+                <tr><td><code>nuclear</code></td><td>−35%</td><td>✅ Yes</td></tr>
+            </table>
+            <p>When <code>general</code> is selected, Guardrail auto-scans for domain keywords and elevates the context automatically. The <code>detectedContext</code> field in the response shows what was detected.</p>
+
+            <div style="margin-top:48px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center">
+                <div style="font-size:1rem;font-weight:700;margin-bottom:8px">Need help?</div>
+                <p style="font-size:.85rem">Try the <a href="playground.html">Interactive Playground</a> · Check the <a href="changelog.html">Changelog</a> · View the <a href="developer.html">Developer Portal</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
