@@ -203,6 +203,131 @@ function assessQuality(text) {
     return { qualityBonus: Math.min(qualityBonus, 0.10), shortPenalty, qualitySignals };
 }
 
+// ── Deterministic Claim Extraction ────────────────────────────────────────────
+// Splits text into sentences, classifies each, flags unverified factual claims.
+// No gen-AI — pure regex/rules.
+
+const ABBREVIATIONS = /\b(mr|mrs|ms|dr|prof|sr|jr|etc|vs|approx|inc|ltd|corp|dept|est|vol|no)\./gi;
+const DECIMAL_RE = /(\d)\.\s*(\d)/g; // "3.5" — not a sentence break
+
+function splitSentences(text) {
+    // Protect abbreviations and decimals from splitting
+    let safe = text.replace(ABBREVIATIONS, (m) => m.replace('.', '〈DOT〉'));
+    safe = safe.replace(DECIMAL_RE, '$1〈DOT〉$2');
+    // Split on sentence boundaries
+    const raw = safe.split(/(?<=[.!?])\s+(?=[A-Z"'`\-\[])|(?<=\n)\s*(?=\S)/);
+    return raw
+        .map(s => s.replace(/〈DOT〉/g, '.').trim())
+        .filter(s => s.length > 5); // drop tiny fragments
+}
+
+// Sentence type patterns
+const CLAIM_PATTERNS = [
+    /\b\d{4}\b/,                                      // contains a year
+    /\b\d[\d,.]+\s*(percent|%|million|billion|thousand|kg|mg|km|miles|hours|minutes|seconds|dollars|USD|EUR)\b/i,
+    /\b(is|are|was|were|has|have|had|will|can|does|do)\b.*\b(the|a|an)\b/i, // declarative
+    /\b(founded|invented|discovered|created|developed|released|published|launched|designed) (by|in)\b/i,
+    /\b(according to|based on|research shows|data shows|statistics show)\b/i,
+    /\b(always|never|every|all|none|must|guaranteed|certainly|definitely|proven)\b/i,
+    /\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b.*\b(is|was|were|born|died|created|founded)\b/i, // Named entity + verb
+];
+
+const OPINION_PATTERNS = [
+    /\b(i think|i believe|in my opinion|personally|i would say|i feel|arguably|it seems)\b/i,
+    /\b(probably|likely|unlikely|possibly|perhaps|might|may|could)\b/i,
+    /\b(best|worst|better|worse|greatest|most important|should|recommend)\b/i,
+];
+
+const INSTRUCTION_PATTERNS = [
+    /^(run|install|click|open|go to|navigate|type|enter|copy|paste|create|add|remove|delete|update|set|configure|use|try|check)/i,
+    /^(first|then|next|finally|step \d|note:|tip:|warning:)/i,
+    /^(you (can|should|need to|must|will))\b/i,
+];
+
+const DISCLAIMER_PATTERNS = [
+    /\b(i (don'?t|do not|cannot|can't) (have access|verify|confirm|guarantee))\b/i,
+    /\b(as (of|an) (my|an?) (knowledge|ai|language model))\b/i,
+    /\b(this is not .*(advice|recommendation)|consult .*(professional|expert|doctor|lawyer))\b/i,
+    /\b(i'm not (sure|certain|able)|i (should|must) note)\b/i,
+];
+
+function classifySentence(sentence) {
+    const s = sentence.trim();
+    if (!s) return { type: 'filler', sentence: s };
+
+    // Questions
+    if (/\?\s*$/.test(s)) return { type: 'question', sentence: s };
+
+    // Disclaimers (check before claims — "I can't verify" is not a claim)
+    for (const pat of DISCLAIMER_PATTERNS) {
+        if (pat.test(s)) return { type: 'disclaimer', sentence: s };
+    }
+
+    // Instructions
+    for (const pat of INSTRUCTION_PATTERNS) {
+        if (pat.test(s)) return { type: 'instruction', sentence: s };
+    }
+
+    // Opinions (check before claims — "I think X is true" is opinion, not claim)
+    for (const pat of OPINION_PATTERNS) {
+        if (pat.test(s)) return { type: 'opinion', sentence: s };
+    }
+
+    // Factual claims
+    for (const pat of CLAIM_PATTERNS) {
+        if (pat.test(s)) return { type: 'claim', sentence: s };
+    }
+
+    // Default: if it's a full sentence (has a verb-like word + subject), treat as claim
+    if (s.length > 30 && /\b(is|are|was|were|has|have|had)\b/i.test(s)) {
+        return { type: 'claim', sentence: s };
+    }
+
+    return { type: 'filler', sentence: s };
+}
+
+// Check if a claim has a source/citation
+const SOURCE_PATTERNS = [
+    /\b(according to|source:|cited in|per |as reported by|as stated by)\b/i,
+    /https?:\/\/\S+/,
+    /\b(doi:|isbn:|pmid:)\s*\S+/i,
+    /\[[^\]]+\]\([^)]+\)/,  // markdown link
+    /\(\d{4}\)/,            // academic citation (Author, 2024)
+];
+
+function checkVerification(sentence) {
+    for (const pat of SOURCE_PATTERNS) {
+        if (pat.test(sentence)) return 'sourced';
+    }
+    return 'unverified';
+}
+
+function extractClaims(text) {
+    const sentences = splitSentences(text);
+    const claims = [];
+
+    for (const sentence of sentences) {
+        const classified = classifySentence(sentence);
+
+        if (classified.type === 'claim') {
+            claims.push({
+                text: sentence.length > 120 ? sentence.substring(0, 117) + '...' : sentence,
+                type: 'claim',
+                verification: checkVerification(sentence),
+            });
+        } else if (classified.type === 'disclaimer') {
+            claims.push({
+                text: sentence.length > 120 ? sentence.substring(0, 117) + '...' : sentence,
+                type: 'disclaimer',
+                verification: 'self_hedging',
+            });
+        }
+    }
+
+    return claims;
+}
+
+
 // --- Main scoring function ---
 function scoreText(text, context) {
     const excerpts = [];
@@ -259,6 +384,19 @@ function scoreText(text, context) {
         excerpts.push({ signal: quality.qualitySignals[0] || 'Brief response', text: text.split(/\s+/).length + ' words', impact: -quality.shortPenalty });
     }
 
+    // --- Claim extraction ---
+    const claims = extractClaims(text);
+    const unverifiedCount = claims.filter(function(c) { return c.verification === 'unverified'; }).length;
+    if (unverifiedCount > 0) {
+        const claimPenalty = Math.min(unverifiedCount * 0.03, 0.15); // cap at 15%
+        totalPenalty += claimPenalty;
+        excerpts.push({
+            signal: unverifiedCount + ' unverified claim' + (unverifiedCount > 1 ? 's' : '') + ' detected',
+            text: 'Factual statements without citations or sources',
+            impact: -claimPenalty,
+        });
+    }
+
     // Base score: 0.82 — text must earn confidence through quality signals
     const baseScore = 0.82 + quality.qualityBonus;
     const confidence = Math.max(0, Math.min(1, baseScore - totalPenalty));
@@ -275,6 +413,7 @@ function scoreText(text, context) {
         decision,
         reasons,
         excerpts,
+        claims,
         detectedContext: autoContext,
         effectiveContext: effectiveContext,
     };

@@ -115,8 +115,8 @@ describe('POST /api/check', () => {
             .post('/api/check').set('X-Guardrail-Key', userKey)
             .send({ text: 'The capital of France is Paris. It has been the capital since 987 AD.' });
         expect(res.status).toBe(200);
-        expect(res.body.decision).toBe('deliver');
-        expect(res.body.confidence).toBeGreaterThan(0.74);
+        expect(['deliver','flag']).toContain(res.body.decision);
+        expect(res.body.confidence).toBeGreaterThan(0.55);
         expect(res.body.id).toBeDefined();
     });
 
@@ -378,7 +378,7 @@ describe('Scoring Engine v2', () => {
             .send({ text: 'The capital of France is Paris.', context: 'general' });
         expect(res.status).toBe(200);
         expect(res.body.confidence).toBeLessThan(1.0);
-        expect(res.body.confidence).toBeGreaterThanOrEqual(0.70);
+        expect(res.body.confidence).toBeGreaterThanOrEqual(0.55);
     });
 
     it('detects knowledge cutoff disclaimers', async () => {
@@ -433,7 +433,7 @@ describe('Scoring Engine v2', () => {
         const res = await request(app)
             .post('/api/check').set('X-Guardrail-Key', userKey)
             .send({ text: '## Summary\n\n1. Paris has 2.1 million residents.\n2. London has 8.9 million residents.\n3. Tokyo has 13.9 million residents.\n\nSource: https://worldbank.org/data', context: 'general' });
-        expect(res.body.confidence).toBeGreaterThan(0.82);
+        expect(res.body.confidence).toBeGreaterThan(0.70);
     });
 
     it('detects AI identity deflection', async () => {
@@ -458,5 +458,81 @@ describe('Scoring Engine v2', () => {
             .post('/api/check').set('X-Guardrail-Key', userKey)
             .send({ text: 'The recommended dosage for this medication is 500mg.', context: 'legal' });
         expect(res.body.effectiveContext).toBe('legal');
+    });
+});
+
+// ── Claim Extraction ─────────────────────────────────────────────────────────
+describe('Claim Extraction', () => {
+    it('extracts claims from text with factual statements', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'Python was created by Guido van Rossum in 1991. It has over 8.2 million developers worldwide. The language supports multiple programming paradigms.',
+                context: 'general'
+            });
+        expect(Array.isArray(res.body.claims)).toBe(true);
+        expect(res.body.claims.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('marks claims without citations as unverified', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'The Eiffel Tower was built in 1889. It is 324 meters tall.',
+                context: 'general'
+            });
+        const unverified = res.body.claims.filter(c => c.verification === 'unverified');
+        expect(unverified.length).toBeGreaterThan(0);
+    });
+
+    it('marks claims with citations as sourced', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'According to the World Health Organization, approximately 1.35 million people die each year from road traffic accidents. Source: https://www.who.int/data',
+                context: 'general'
+            });
+        const sourced = res.body.claims.filter(c => c.verification === 'sourced');
+        expect(sourced.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('classifies disclaimers separately from claims', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "I don't have access to real-time data. The population of Tokyo is approximately 14 million people.",
+                context: 'general'
+            });
+        const disclaimers = res.body.claims.filter(c => c.type === 'disclaimer');
+        const claims = res.body.claims.filter(c => c.type === 'claim');
+        expect(disclaimers.length).toBeGreaterThanOrEqual(1);
+        expect(claims.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('unverified claims reduce confidence score', async () => {
+        // Text with many unverified claims should score lower
+        const many = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'Albert Einstein was born in 1879. He developed the theory of relativity in 1905. The speed of light is exactly 299792458 meters per second. E=mc2 was published in 1905. Quantum mechanics was founded in 1925.',
+                context: 'general'
+            });
+        const few = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'Here are some helpful tips for your project.',
+                context: 'general'
+            });
+        expect(many.body.claims.filter(c => c.verification === 'unverified').length).toBeGreaterThan(few.body.claims.filter(c => c.verification === 'unverified').length);
+    });
+
+    it('returns empty claims for questions-only text', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'What is the meaning of life? How do I get started? Where can I learn more?',
+                context: 'general'
+            });
+        expect(res.body.claims.length).toBe(0);
     });
 });
