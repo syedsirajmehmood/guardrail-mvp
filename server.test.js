@@ -694,3 +694,308 @@ describe('Expanded Signal Patterns', () => {
         ]));
     });
 });
+
+// ── Demo Check Endpoint ─────────────────────────────────────────────────────
+describe('POST /api/demo-check (keyless)', () => {
+    it('scores text without requiring an API key', async () => {
+        const res = await request(app)
+            .post('/api/demo-check')
+            .send({ text: 'The capital of France is Paris.', context: 'general' });
+        expect(res.status).toBe(200);
+        expect(res.body.demo).toBe(true);
+        expect(res.body.confidence).toBeDefined();
+        expect(res.body.decision).toMatch(/^(deliver|flag|escalate)$/);
+        expect(typeof res.body.remaining).toBe('number');
+    });
+
+    it('returns 400 for missing text', async () => {
+        const res = await request(app)
+            .post('/api/demo-check')
+            .send({ context: 'general' });
+        expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for empty text', async () => {
+        const res = await request(app)
+            .post('/api/demo-check')
+            .send({ text: '   ' });
+        expect(res.status).toBe(400);
+    });
+
+    it('returns excerpts and claims', async () => {
+        const res = await request(app)
+            .post('/api/demo-check')
+            .send({ text: "I think maybe the answer is around 42, but I'm not sure.", context: 'general' });
+        expect(Array.isArray(res.body.excerpts)).toBe(true);
+        expect(Array.isArray(res.body.claims)).toBe(true);
+    });
+
+    it('includes effectiveContext in response', async () => {
+        const res = await request(app)
+            .post('/api/demo-check')
+            .send({ text: 'Take two aspirin for your headache pain.', context: 'general' });
+        expect(res.body.effectiveContext || res.body.context).toBeDefined();
+    });
+});
+
+// ── Demo Chat Endpoint ──────────────────────────────────────────────────────
+describe('POST /api/demo-chat (keyless)', () => {
+    it('returns a pre-recorded response without API key', async () => {
+        const res = await request(app)
+            .post('/api/demo-chat')
+            .send({ message: 'What is Python?', context: 'general' });
+        expect(res.status).toBe(200);
+        expect(res.body.demo).toBe(true);
+        expect(res.body.aiResponse).toBeDefined();
+        expect(res.body.decision).toMatch(/^(deliver|flag|escalate)$/);
+        expect(typeof res.body.confidence).toBe('number');
+    });
+
+    it('returns medical-context responses for medical context', async () => {
+        const res = await request(app)
+            .post('/api/demo-chat')
+            .send({ message: 'What dosage should I take?', context: 'medical' });
+        expect(res.status).toBe(200);
+        expect(res.body.aiResponse).toBeDefined();
+    });
+
+    it('returns financial-context responses for financial context', async () => {
+        const res = await request(app)
+            .post('/api/demo-chat')
+            .send({ message: 'What is the stock price?', context: 'financial' });
+        expect(res.status).toBe(200);
+        expect(res.body.aiResponse).toBeDefined();
+    });
+
+    it('returns 400 for missing message', async () => {
+        const res = await request(app)
+            .post('/api/demo-chat')
+            .send({ context: 'general' });
+        expect(res.status).toBe(400);
+    });
+
+    it('falls back to general pool for unknown context', async () => {
+        const res = await request(app)
+            .post('/api/demo-chat')
+            .send({ message: 'Hello', context: 'unknown_context' });
+        expect(res.status).toBe(200);
+        expect(res.body.aiResponse).toBeDefined();
+    });
+});
+
+// ── New High-Stakes Domains ─────────────────────────────────────────────────
+describe('High-Stakes Domains', () => {
+    it('auto-detects child_safety context', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'Child abuse and child exploitation must be reported to the appropriate authorities. Protecting minors from harm is a legal obligation.',
+                context: 'general'
+            });
+        expect(res.body.detectedContext).toBe('child_safety');
+        expect(res.body.confidence).toBeLessThan(0.60);
+    });
+
+    it('auto-detects nuclear context', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'Nuclear reactor containment vessel integrity is critical for safe operation of the plant.',
+                context: 'general'
+            });
+        expect(res.body.detectedContext).toBe('nuclear');
+        expect(res.body.confidence).toBeLessThan(0.60);
+    });
+
+    it.each(['mental_health', 'child_safety', 'nuclear'])(
+        'accepts explicit context: %s',
+        async (ctx) => {
+            const res = await request(app)
+                .post('/api/check').set('X-Guardrail-Key', userKey)
+                .send({ text: 'This is a test statement with no signals.', context: ctx });
+            expect(res.status).toBe(200);
+            expect(res.body.confidence).toBeLessThan(0.70);
+        }
+    );
+});
+
+// ── Decision Thresholds ─────────────────────────────────────────────────────
+describe('Decision Thresholds', () => {
+    it('deliver threshold: confident text scores >= 0.75', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: '## Facts\n\n1. The Eiffel Tower is 324 meters tall.\n2. It was built in 1889.\n3. Source: https://tour-eiffel.fr\n\nThe tower is in Paris, France.',
+                context: 'general'
+            });
+        expect(res.body.decision).toBe('deliver');
+        expect(res.body.confidence).toBeGreaterThanOrEqual(0.75);
+    });
+
+    it('escalate threshold: heavily hedged high-stakes text scores < 0.45', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "I'm not sure, but I think the medication dosage might be around 500mg. Perhaps you should consult a doctor. I don't have access to real-time medical data. As of my training, this could be wrong.",
+                context: 'medical'
+            });
+        expect(res.body.decision).toBe('escalate');
+        expect(res.body.confidence).toBeLessThan(0.45);
+    });
+
+    it('confidence clamped between 0 and 1', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "I don't know. Maybe. Perhaps. I'm unsure. I think. It might. Could be. Allegedly. Supposedly. I cannot confirm. As of my knowledge cutoff.",
+                context: 'medical'
+            });
+        expect(res.body.confidence).toBeGreaterThanOrEqual(0);
+        expect(res.body.confidence).toBeLessThanOrEqual(1);
+    });
+});
+
+// ── Edge Cases ──────────────────────────────────────────────────────────────
+describe('Edge Cases', () => {
+    it('handles Unicode text gracefully', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: '日本の首都は東京です。The capital of Japan is Tokyo. 🇯🇵', context: 'general' });
+        expect(res.status).toBe(200);
+        expect(res.body.decision).toBeDefined();
+    });
+
+    it('sanitizes HTML in text (no XSS)', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: '<script>alert("xss")</script> The answer is 42.', context: 'general' });
+        expect(res.status).toBe(200);
+        expect(res.body.decision).toBeDefined();
+    });
+
+    it('rejects whitespace-only text', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: '' });
+        expect(res.status).toBe(400);
+    });
+
+    it('handles unknown context gracefully (falls back to general)', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'The answer is 42.', context: 'nonexistent_context' });
+        expect(res.status).toBe(200);
+        expect(res.body.decision).toBeDefined();
+    });
+
+    it('handles text with no alphabetic characters', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: '42 + 17 = 59. 100 / 4 = 25.', context: 'general' });
+        expect(res.status).toBe(200);
+    });
+});
+
+// ── Additional Static Pages ─────────────────────────────────────────────────
+describe('New Static Pages', () => {
+    it('serves /docs.html', async () => {
+        const res = await request(app).get('/docs.html');
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('API Reference');
+    });
+
+    it('serves /changelog.html', async () => {
+        const res = await request(app).get('/changelog.html');
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('Changelog');
+    });
+
+    it('serves /playground.html', async () => {
+        const res = await request(app).get('/playground.html');
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('Guardrail');
+    });
+
+    it('serves /chat.html', async () => {
+        const res = await request(app).get('/chat.html');
+        expect(res.status).toBe(200);
+    });
+
+    it('serves /developer.html', async () => {
+        const res = await request(app).get('/developer.html');
+        expect(res.status).toBe(200);
+    });
+
+    it('serves /setup.html', async () => {
+        const res = await request(app).get('/setup.html');
+        expect(res.status).toBe(200);
+    });
+});
+
+// ── Additional Signal Coverage ──────────────────────────────────────────────
+describe('Additional Signal Coverage', () => {
+    it('detects multiple sycophancy signals in one response', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "That's a great question! What an excellent point. You're absolutely right about that. I completely agree with your assessment.",
+                context: 'general'
+            });
+        const sycophanySignals = res.body.reasons.filter(r =>
+            /sycophant|flatter|agreement|overconfident/i.test(r)
+        );
+        expect(sycophanySignals.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('detects unattributed statistics as risk signals', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'Studies have shown that 87% of developers prefer this approach. Research indicates that productivity increases by 40% when using this method.',
+                context: 'general'
+            });
+        // Unverified claims with specific numbers should lower confidence
+        expect(res.body.confidence).toBeLessThan(0.82);
+        expect(res.body.reasons.length).toBeGreaterThan(0);
+    });
+
+    it('detects training-time anchor signals', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'At the time of my training, the latest version was 3.0. When I was trained, the recommended approach was different.',
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Training|training/i)
+        ]));
+    });
+
+    it('detects capability limitation signals', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "I don't have the ability to verify this claim. I cannot access real-time information to check whether this is accurate.",
+                context: 'general'
+            });
+        expect(res.body.confidence).toBeLessThan(0.75);
+        expect(res.body.reasons.length).toBeGreaterThan(0);
+    });
+
+    it('quality bonus: URLs increase confidence', async () => {
+        const withUrl = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'Paris has 2.1 million residents. Source: https://worldbank.org/data', context: 'general' });
+        const noUrl = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'Paris has 2.1 million residents.', context: 'general' });
+        expect(withUrl.body.confidence).toBeGreaterThanOrEqual(noUrl.body.confidence);
+    });
+
+    it('quality bonus: code blocks increase confidence', async () => {
+        const withCode = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'To solve the problem, use this code:\n```python\nprint("hello")\n```\nThis will output "hello".', context: 'general' });
+        expect(withCode.body.confidence).toBeGreaterThan(0.60);
+    });
+});
