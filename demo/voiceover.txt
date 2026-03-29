@@ -1,0 +1,11 @@
+Every day, AI models generate thousands of responses — and some of them are dangerously wrong. Hallucinated citations. Outdated medical advice. Financial data the model made up. There's no built-in way to know when AI is confident, and when it's guessing.
+
+Guardrail is a confidence scoring engine that sits between your AI and your users. It scores every response in under 50 milliseconds — no LLM calls, no extra latency, no tokens burned.
+
+Paste any AI response into the playground. Guardrail scans for 55 signal patterns across eight categories — uncertainty, hallucination, sycophancy, evasion, and more. Clean, confident text gets a green light.
+
+But watch what happens with hedged medical advice. Guardrail detects the uncertainty, the approximate language, the missing citations — and escalates it to a human. No hallucinated dosage reaches your user. Ever.
+
+Integrate in under five minutes. A REST API. A browser SDK. An embeddable widget. Or a native MCP server for Claude Desktop — one command: npx guardrail-mcp.
+
+Guardrail is free to try — no API key required. Score your first AI response in ten seconds. Because the best AI safety layer is the one you can ship today.
