@@ -568,26 +568,36 @@
                 <span class="btn-text">⚡ Analyze with Guardrail</span>
             </button>
 
+
             <div>
-                <label>Quick Presets</label>
+                <label>Try an Example — click to load &amp; auto-analyze</label>
                 <div class="presets">
                     <div class="preset-btn" onclick="loadPreset('deliver')">
-                        <div class="pb-label deliver">✅ Expected: Deliver</div>
-                        <div class="pb-text">"The capital of France is Paris. It has been the capital since the 10th
-                            century and is home to approximately 2.1 million people in the city proper."</div>
+                        <div class="pb-label deliver">✅ Clean factual text</div>
+                        <div class="pb-text">"The capital of France is Paris. It has been the capital since the 10th century and is home to approximately 2.1 million people."</div>
                     </div>
                     <div class="preset-btn" onclick="loadPreset('flag')">
-                        <div class="pb-label flag">⚠️ Expected: Flag</div>
-                        <div class="pb-text">"I believe the medication dosage is around 500mg, but I'm not entirely sure
-                            — it might depend on the patient's weight. You should probably consult a doctor."</div>
+                        <div class="pb-label flag">⚠️ Hedged medical advice</div>
+                        <div class="pb-text">"I believe the medication dosage is around 500mg, but I'm not entirely sure — it might depend on the patient's weight. You should probably consult a doctor."</div>
                     </div>
                     <div class="preset-btn" onclick="loadPreset('escalate')">
-                        <div class="pb-label escalate">🔴 Expected: Escalate</div>
-                        <div class="pb-text">"As of my knowledge cutoff, I cannot say for certain, but studies show that
-                            this drug combination is probably safe. However, I don't know your specific medical
-                            history."</div>
+                        <div class="pb-label escalate">🔴 Knowledge cutoff + uncertainty</div>
+                        <div class="pb-text">"As of my knowledge cutoff, I cannot say for certain, but studies show that this drug combination is probably safe. However, I don't know your specific medical history."</div>
+                    </div>
+                    <div class="preset-btn" onclick="loadPreset('sycophancy')">
+                        <div class="pb-label flag">🪞 Sycophantic response</div>
+                        <div class="pb-text">"Great question! That's an excellent observation. You're absolutely right — this is a nuanced topic with many perspectives."</div>
+                    </div>
+                    <div class="preset-btn" onclick="loadPreset('hallucination')">
+                        <div class="pb-label escalate">🎭 Fabricated citation</div>
+                        <div class="pb-text">"In his seminal 2019 paper, Dr. James Morton (ISBN: 978-0-13-468599-1) showed that 73.6% of users prefer dark mode interfaces."</div>
+                    </div>
+                    <div class="preset-btn" onclick="loadPreset('realtime')">
+                        <div class="pb-label flag">⏰ Real-time disclaimer</div>
+                        <div class="pb-text">"I don't have access to real-time information, so I can't tell you the current stock price. As of my last update, it was around $175, but things may have changed."</div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
 
@@ -654,6 +664,18 @@
             escalate: {
                 text: "As of my knowledge cutoff, I cannot say for certain, but studies show that this drug combination is probably safe. However, I don't know your specific medical history.",
                 context: 'medical'
+            },
+            sycophancy: {
+                text: "Great question! That's an excellent observation. You're absolutely right — this is a nuanced topic with many perspectives to consider.",
+                context: 'general'
+            },
+            hallucination: {
+                text: "In his seminal 2019 paper, Dr. James Morton (ISBN: 978-0-13-468599-1) showed that 73.6% of users prefer dark mode interfaces, as documented in the Journal of UI Research.",
+                context: 'general'
+            },
+            realtime: {
+                text: "I don't have access to real-time information, so I can't tell you the current stock price. As of my last update, it was trading around $175, but things may have changed since then.",
+                context: 'financial'
             }
         };
 
@@ -667,6 +689,7 @@
             const p = PRESETS[key];
             document.getElementById('inputText').value = p.text;
             document.getElementById('contextSelect').value = p.context;
+            runCheck(); // auto-analyze on preset click
         }
 
         async function runCheck() {
@@ -811,8 +834,7 @@
             renderResult(h.r, h.text);
         }
 
-        // Load a preset by default
-        loadPreset('flag');
+        // Presets ready — click any example to try it
     </script>
 </body>
 
