@@ -675,14 +675,12 @@
             if (!text) { alert('Please enter some text first.'); return; }
 
             const key = document.getElementById('grKeyInput').value.trim();
-            if (!key) {
-                document.getElementById('grKeyInput').focus();
-                document.getElementById('grKeyInput').style.borderColor = '#ff5c5c';
-                setTimeout(() => document.getElementById('grKeyInput').style.borderColor = '', 2000);
-                return;
+            const isDemo = !key;
+
+            if (!isDemo) {
+                // Save for next visit
+                localStorage.setItem('gr_dev_key', key);
             }
-            // Save for next visit
-            localStorage.setItem('gr_dev_key', key);
 
             const btn = document.getElementById('checkBtn');
             btn.disabled = true;
