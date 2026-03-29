@@ -70,8 +70,8 @@
         }
 
         .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
             gap: 0;
             height: calc(100vh - 57px);
             overflow: hidden
@@ -84,7 +84,8 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            overflow-y: auto
+            overflow-y: auto;
+            min-width: 0
         }
 
         .panel-title {
@@ -255,7 +256,8 @@
             flex-direction: column;
             gap: 24px;
             background: #080f1c;
-            overflow-y: auto
+            overflow-y: auto;
+            min-width: 0
         }
 
         .result-empty {
@@ -516,10 +518,12 @@
         <div class="logo">🛡️ GUARDRAIL <span
                 style="font-weight:400;color:var(--muted);margin-left:6px;font-size:.9rem">Playground</span></div>
         <div class="nav-links">
-            <a href="/">Docs</a>
-            <a href="dashboard.html">Docs</a>
-            <a href="docs.html">Dashboard</a>
-        <a href="chat.html">Chat Demo</a>
+            <a href="/">Home</a>
+            <a href="playground.html">Playground</a>
+            <a href="docs.html">Docs</a>
+            <a href="developer.html">Developer</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="chat.html">Chat Demo</a>
         </div>
     </nav>
 
