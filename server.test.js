@@ -536,3 +536,161 @@ describe('Claim Extraction', () => {
         expect(res.body.claims.length).toBe(0);
     });
 });
+
+// ── Beta Feedback Validation ─────────────────────────────────────────────────
+// Tests that mirror the EXACT scenarios the beta tester reported
+describe('Beta Feedback Validation', () => {
+    // FEEDBACK: "every response under General was marked as 100% confidence"
+    it('FEEDBACK: general context no longer gives 100% to clean text', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'JavaScript is a programming language commonly used for web development.', context: 'general' });
+        expect(res.body.confidence).toBeLessThan(1.0);
+    });
+
+    // FEEDBACK: "answers where the model explicitly says I don't have access to real-time information"
+    it('FEEDBACK: "I don\'t have access to real-time information" is NOT 100%', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "I don't have access to real-time information, so I can't tell you the current stock price of Apple. As of my last update, it was trading around $175.",
+                context: 'general'
+            });
+        expect(res.body.confidence).toBeLessThan(0.70);
+        expect(res.body.reasons.length).toBeGreaterThan(0);
+    });
+
+    // FEEDBACK: "switched to Security for one question and found 27% — response was decent"
+    it('FEEDBACK: security context applies significant penalty', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'To secure your server, you should use SSH key authentication instead of password-based login. Disable root login and use a firewall to restrict access.',
+                context: 'security'
+            });
+        expect(res.body.confidence).toBeLessThan(0.65);
+    });
+
+    // FEEDBACK: "md snippet in Security got 70%, switched to General got 100%"
+    it('FEEDBACK: same text scores differently across contexts (expected behavior)', async () => {
+        const text = 'The system architecture uses a microservices pattern with API gateway for routing and load balancing across service instances.';
+        const security = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text, context: 'security' });
+        const general = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text, context: 'general' });
+        expect(security.body.confidence).toBeLessThan(general.body.confidence);
+    });
+});
+
+// ── New Signal Pattern Tests ─────────────────────────────────────────────────
+describe('Expanded Signal Patterns', () => {
+    it('detects sycophantic responses', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "Great question! That's an excellent observation. You're absolutely right that this is a complex topic.",
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Sycophantic|Flattery|agreement/i)
+        ]));
+    });
+
+    it('detects ISBN/DOI fabrication risk', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'This concept was first described in "Advanced Neural Networks" (ISBN: 978-0-13-468599-1) published in 2019 by Dr. Smith.',
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/citation identifier|publication claim/i)
+        ]));
+    });
+
+    it('detects abandonment signals', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "Never mind, forget it. I'll just ask someone else who actually knows the answer.",
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Abandonment/i)
+        ]));
+    });
+
+    it('detects epistemic distancing', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'The company allegedly mishandled customer data, and supposedly failed to encrypt sensitive records properly.',
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Epistemic distancing/i)
+        ]));
+    });
+
+    it('detects staleness hedges', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'The API used to support XML format, but things may have changed since then. I would recommend checking the latest documentation.',
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Staleness|Verification/i)
+        ]));
+    });
+
+    it('detects suspiciously precise statistics', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: '73.6% of users prefer dark mode, and 42.8% of respondents said they would switch to a competitor product.',
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/precise statistic/i)
+        ]));
+    });
+
+    it('detects complexity deflection', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "It's complicated and there's no simple answer. The topic is nuanced and depends on many factors.",
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Complexity deflection/i)
+        ]));
+    });
+
+    it('auto-detects mental_health context', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: 'If you are experiencing thoughts of self-harm or suicide, please contact a crisis counselor or therapist immediately.',
+                context: 'general'
+            });
+        expect(res.body.detectedContext).toBe('mental_health');
+        expect(res.body.effectiveContext).toBe('mental_health');
+        expect(res.body.confidence).toBeLessThan(0.60);
+    });
+
+    it('detects position reversal as contradiction', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({
+                text: "Actually, on second thought, I've reconsidered my previous answer. Let me rephrase what I meant.",
+                context: 'general'
+            });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/Position reversal|Self-correction|Self-clarification/i)
+        ]));
+    });
+});
