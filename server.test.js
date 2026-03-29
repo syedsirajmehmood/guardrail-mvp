@@ -369,3 +369,94 @@ describe('Admin /api/keys', () => {
         expect(res.status).toBe(401);
     });
 });
+
+// ── Scoring Engine v2 ────────────────────────────────────────────────────────
+describe('Scoring Engine v2', () => {
+    it('does NOT give 100% confidence in general context anymore', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'The capital of France is Paris.', context: 'general' });
+        expect(res.status).toBe(200);
+        expect(res.body.confidence).toBeLessThan(1.0);
+        expect(res.body.confidence).toBeGreaterThanOrEqual(0.70);
+    });
+
+    it('detects knowledge cutoff disclaimers', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: "I don't have access to real-time information, so I can't tell you the current weather forecast for today.", context: 'general' });
+        expect(res.body.confidence).toBeLessThan(0.75);
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/real-time|Capability/i)
+        ]));
+    });
+
+    it('detects cannot-browse-internet as a warning signal', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: "I can't browse the internet to check current prices. However, as of my knowledge cutoff, typical prices were around $50.", context: 'general' });
+        expect(res.body.confidence).toBeLessThan(0.75);
+    });
+
+    it('returns excerpts array with signal details', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: "I think maybe the answer might be 42, but I'm not sure.", context: 'general' });
+        expect(Array.isArray(res.body.excerpts)).toBe(true);
+        expect(res.body.excerpts.length).toBeGreaterThan(0);
+        expect(res.body.excerpts[0]).toHaveProperty('signal');
+        expect(res.body.excerpts[0]).toHaveProperty('text');
+        expect(res.body.excerpts[0]).toHaveProperty('impact');
+        expect(res.body.excerpts[0].impact).toBeLessThan(0);
+    });
+
+    it('auto-detects medical context when user selects general', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'The recommended dosage for this medication is 500mg for adult patients with no prior diagnosis of the disease.', context: 'general' });
+        expect(res.body.detectedContext).toBe('medical');
+        expect(res.body.effectiveContext).toBe('medical');
+        expect(res.body.confidence).toBeLessThan(0.75);
+    });
+
+    it('penalizes extremely brief responses', async () => {
+        const brief = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'Yes.', context: 'general' });
+        const detailed = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'The answer is yes. Here is a detailed explanation with multiple supporting points, concrete numbers like 42 and dates like 2024, and proper nouns like Paris and London to provide context.', context: 'general' });
+        expect(brief.body.confidence).toBeLessThan(detailed.body.confidence);
+    });
+
+    it('gives quality bonus for well-structured text with specifics', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: '## Summary\n\n1. Paris has 2.1 million residents.\n2. London has 8.9 million residents.\n3. Tokyo has 13.9 million residents.\n\nSource: https://worldbank.org/data', context: 'general' });
+        expect(res.body.confidence).toBeGreaterThan(0.82);
+    });
+
+    it('detects AI identity deflection', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'As an AI language model, I cannot provide medical advice. You should consult a doctor for your specific condition regarding this medication and its dosage.', context: 'general' });
+        expect(res.body.reasons).toEqual(expect.arrayContaining([
+            expect.stringMatching(/AI identity|Professional referral/i)
+        ]));
+        expect(res.body.confidence).toBeLessThan(0.75);
+    });
+
+    it('returns effectiveContext in response', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'This is a simple statement about the weather today.', context: 'general' });
+        expect(res.body.effectiveContext).toBeDefined();
+    });
+
+    it('does not auto-detect context when user explicitly selects one', async () => {
+        const res = await request(app)
+            .post('/api/check').set('X-Guardrail-Key', userKey)
+            .send({ text: 'The recommended dosage for this medication is 500mg.', context: 'legal' });
+        expect(res.body.effectiveContext).toBe('legal');
+    });
+});

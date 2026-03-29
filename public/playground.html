@@ -710,41 +710,58 @@
             const m = DECISION_META[r.decision];
             const pct = (r.confidence * 100).toFixed(1);
 
+            // Excerpts: show the exact text that triggered each signal
+            let excerptHtml = '';
+            if (r.excerpts && r.excerpts.length) {
+                excerptHtml = '<div class="reasons-section" style="margin-top:16px">'
+                    + '<div class="reasons-title">📋 Evidence (what triggered each signal)</div>'
+                    + r.excerpts.map(e => 
+                        '<div style="background:#0a1929;border-radius:8px;padding:10px 14px;margin-bottom:6px;font-size:.8rem;display:flex;justify-content:space-between;align-items:center">'
+                        + '<div><span style="color:var(--amber);font-weight:600">' + e.signal + '</span>'
+                        + '<div style="color:var(--muted);font-size:.75rem;margin-top:2px">&ldquo;' + e.text + '&rdquo;</div></div>'
+                        + '<span style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:var(--coral);white-space:nowrap;margin-left:12px">'
+                        + (e.impact * 100).toFixed(0) + '%</span></div>'
+                    ).join('')
+                    + '</div>';
+            }
+
+            // Auto-context badge
+            let contextBadge = '';
+            if (r.detectedContext && r.effectiveContext !== r.context) {
+                contextBadge = '<div class="meta-chip" style="background:rgba(245,166,35,.15);color:var(--amber);border-color:rgba(245,166,35,.3)">'
+                    + '🔍 Auto-detected: ' + r.effectiveContext + '</div>';
+            }
+
             const reasonHtml = (r.reasons && r.reasons.length)
-                ? r.reasons.map(x => `<span class="reason-chip">⚡ ${x}</span>`).join('')
+                ? r.reasons.map(x => '<span class="reason-chip">⚡ ' + x + '</span>').join('')
                 : '<span class="reason-chip">No risk signals detected</span>';
 
-            document.getElementById('resultCard').innerHTML = `
-    <div class="result-card ${r.decision}">
-      <div class="decision-header">
-        <div class="decision-icon">${m.icon}</div>
-        <div>
-          <div class="decision-label">Guardrail Decision</div>
-          <div class="decision-val">${m.title}</div>
-        </div>
-      </div>
-
-      <div class="confidence-bar">
-        <div class="conf-label"><span>Confidence Score</span><span>${pct}%</span></div>
-        <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
-      </div>
-
-      <div class="reasons-section">
-        <div class="reasons-title">Signals Detected</div>
-        ${reasonHtml}
-      </div>
-
-      <div class="meta-row" style="margin-bottom:20px">
-        <div class="meta-chip">id: ${r.id.substring(0, 8)}…</div>
-        <div class="meta-chip">ctx: ${r.context}</div>
-        <div class="meta-chip">${new Date(r.timestamp).toLocaleTimeString()}</div>
-      </div>
-
-      <div class="action-block">
-        <div class="action-title">${m.action}</div>
-        <div class="action-desc">${m.actionDesc}</div>
-      </div>
-    </div>`;
+            document.getElementById('resultCard').innerHTML = 
+    '<div class="result-card ' + r.decision + '">'
+    + '<div class="decision-header">'
+    + '<div class="decision-icon">' + m.icon + '</div>'
+    + '<div>'
+    + '<div class="decision-label">Guardrail Decision</div>'
+    + '<div class="decision-val">' + m.title + '</div>'
+    + '</div></div>'
+    + '<div class="confidence-bar">'
+    + '<div class="conf-label"><span>Confidence Score</span><span>' + pct + '%</span></div>'
+    + '<div class="conf-track"><div class="conf-fill" style="width:' + pct + '%"></div></div>'
+    + '</div>'
+    + '<div class="reasons-section">'
+    + '<div class="reasons-title">Signals Detected</div>'
+    + reasonHtml + '</div>'
+    + excerptHtml
+    + '<div class="meta-row" style="margin-bottom:20px">'
+    + '<div class="meta-chip">id: ' + r.id.substring(0, 8) + '…</div>'
+    + '<div class="meta-chip">ctx: ' + r.effectiveContext + '</div>'
+    + contextBadge
+    + '<div class="meta-chip">' + new Date(r.timestamp).toLocaleTimeString() + '</div>'
+    + '</div>'
+    + '<div class="action-block">'
+    + '<div class="action-title">' + m.action + '</div>'
+    + '<div class="action-desc">' + m.actionDesc + '</div>'
+    + '</div></div>';
 
             document.getElementById('resultCard').style.display = 'block';
         }

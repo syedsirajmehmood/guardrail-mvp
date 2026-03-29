@@ -108,106 +108,178 @@ function requireMasterKey(req, res, next) {
     next();
 }
 
-// ── Confidence Scoring Engine ─────────────────────────────────────────────────
+// ── Confidence Scoring Engine v2 ──────────────────────────────────────────────
+// Redesigned: text must EARN confidence (base ~0.82), not start at 100%.
+
+// --- Signal patterns ---
 const UNCERTAINTY_SIGNALS = [
-    /\b(i (don'?t|do not) know|not sure|unclear|uncertain|i'm not certain|cannot say|hard to say)\b/i,
-    /\b(might|maybe|perhaps|possibly|could be|it depends|i think|i believe|i guess)\b/i,
-    /\b(no information|not sure|no data|limited information|beyond my knowledge)\b/i,
-    /\?{2,}/, // multiple question marks
+    { pat: /\b(i (don'?t|do not) know|not sure|unclear|uncertain|i'm not certain|cannot say|hard to say)\b/i, weight: 0.18, label: 'Uncertainty language' },
+    { pat: /\b(might|maybe|perhaps|possibly|could be|it depends|i think|i believe|i guess)\b/i, weight: 0.12, label: 'Hedged language' },
+    { pat: /\b(no information|no data|limited information|beyond my knowledge)\b/i, weight: 0.18, label: 'Knowledge gap admission' },
+    { pat: /\?{2,}/, weight: 0.08, label: 'Excessive question marks' },
+];
+
+const KNOWLEDGE_CUTOFF_SIGNALS = [
+    { pat: /\b(as of my (knowledge|training|last)( cutoff| update)?|my (knowledge|training) (cutoff|date|only goes))\b/i, weight: 0.20, label: 'Knowledge cutoff disclaimer' },
+    { pat: /\b(i (don'?t|do not|cannot|can't) have access to (real[- ]time|current|live|latest))\b/i, weight: 0.22, label: 'No real-time access disclaimer' },
+    { pat: /\b(i (can'?t|cannot|don'?t) (browse|search|access) (the )?(internet|web|real[- ]time))\b/i, weight: 0.22, label: 'Cannot browse internet' },
+    { pat: /\b(my (information|data|knowledge) (may|might|could) (be|not be) (up to date|current|accurate|outdated))\b/i, weight: 0.18, label: 'Outdated information warning' },
+    { pat: /\b(i (don'?t|do not) have (access|the ability) to)\b/i, weight: 0.15, label: 'Capability limitation' },
+    { pat: /\b(i (should note|must note|want to clarify) that i)\b/i, weight: 0.08, label: 'Model self-reference' },
 ];
 
 const CONTRADICTION_SIGNALS = [
-    /\b(however|but|on the other hand|contradicts|contrary to|although|yet)\b/i,
-    /\b(actually|in fact|wait|correction|let me correct)\b/i,
+    { pat: /\b(actually|in fact|wait|correction|let me correct|i made an error)\b/i, weight: 0.14, label: 'Self-correction' },
 ];
 
-const HIGH_STAKES_PATTERNS = {
-    medical: /\b(diagnosis|prescri|dosage|medication|treatment|symptom|disease|drug|surgery)\b/i,
-    legal: /\b(lawsuit|liability|legal advice|contract|court|attorney|regulation|compliance)\b/i,
-    financial: /\b(invest|portfolio|tax advice|financial advice|trade|stock|fund|pension)\b/i,
-    safety: /\b(danger|hazard|risk|emergency|explosion|toxic|harmful|fatal)\b/i,
-    security: /\b(password|credential|exploit|vulnerability|hack|breach|malware)\b/i,
-};
-
-const FRUSTRATION_SIGNALS = [
-    /\b(wrong|incorrect|mistake|error|that's not right|you're wrong|bad answer|useless)\b/i,
-    /\b(again|still|keep|repeatedly|always does this|never works)\b/i,
-    /!{2,}|:{2,}/,
+const EVASION_SIGNALS = [
+    { pat: /\b(i'?m (just )?an? (ai|language model|assistant|chatbot)|as an ai)\b/i, weight: 0.10, label: 'AI identity deflection' },
+    { pat: /\b(you should (consult|speak to|ask|see|contact) (a|an|your) (doctor|lawyer|financial|professional|expert|specialist))\b/i, weight: 0.08, label: 'Professional referral deflection' },
+    { pat: /\b(this is not (medical|legal|financial) advice)\b/i, weight: 0.06, label: 'Not-advice disclaimer' },
 ];
 
 const HALLUCINATION_SIGNALS = [
-    /\b(as of my (knowledge|training)|my (knowledge|training) (cutoff|date))\b/i,
-    /\b([A-Z][a-z]+ [A-Z][a-z]+), (born|died) in \d{4}\b/,
-    /\b(exact(ly)? \$?\d[\d,.]* (billion|million|thousand))\b/i,
-    /\b(studies show|research (shows|suggests|proves)|experts say)\b/i,
+    { pat: /\b([A-Z][a-z]+ [A-Z][a-z]+), (born|died|founded) in \d{4}\b/, weight: 0.12, label: 'Unverifiable biographical claim' },
+    { pat: /\b(exact(ly)? \$?\d[\d,.]* (billion|million|thousand))\b/i, weight: 0.10, label: 'Suspiciously precise number' },
+    { pat: /\b(studies show|research (shows|suggests|proves)|experts say|according to experts)\b/i, weight: 0.10, label: 'Unattributed authority claim' },
 ];
 
-const CONTEXT_RISK = {
-    medical: 0.30, legal: 0.30, financial: 0.25,
-    safety: 0.35, security: 0.30, general: 0.00,
+const FRUSTRATION_SIGNALS = [
+    { pat: /\b(wrong|incorrect|mistake|error|that's not right|you're wrong|bad answer|useless)\b/i, weight: 0.10, label: 'User frustration' },
+    { pat: /!{2,}|:{2,}/, weight: 0.06, label: 'Aggressive punctuation' },
+];
+
+const HIGH_STAKES_PATTERNS = {
+    medical: /\b(diagnosis|prescri|dosage|medication|treatment|symptom|disease|drug|surgery|patient)\b/i,
+    legal: /\b(lawsuit|liability|legal advice|contract|court|attorney|regulation|compliance|statute)\b/i,
+    financial: /\b(invest|portfolio|tax advice|financial advice|trade|stock|fund|pension|fiduciary)\b/i,
+    safety: /\b(danger|hazard|risk|emergency|explosion|toxic|harmful|fatal|lethal)\b/i,
+    security: /\b(password|credential|exploit|vulnerability|hack|breach|malware|phishing|encryption)\b/i,
 };
 
+const CONTEXT_RISK = {
+    medical: 0.25, legal: 0.25, financial: 0.20,
+    safety: 0.30, security: 0.25, general: 0.00,
+};
+
+// --- Auto-context detection ---
+function detectContext(text) {
+    const scores = {};
+    for (const [domain, pat] of Object.entries(HIGH_STAKES_PATTERNS)) {
+        const matches = text.match(new RegExp(pat, 'gi'));
+        if (matches) scores[domain] = matches.length;
+    }
+    if (Object.keys(scores).length === 0) return null;
+    return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+// --- Specificity & quality scoring ---
+function assessQuality(text) {
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    let qualityBonus = 0;
+    const qualitySignals = [];
+
+    const numbers = (text.match(/\b\d[\d,.]*\b/g) || []).length;
+    const urls = (text.match(/https?:\/\/\S+/g) || []).length;
+    const codeBlocks = (text.match(/```[\s\S]*?```|`[^`]+`/g) || []).length;
+    const properNouns = (text.match(/\b[A-Z][a-z]{2,}\b/g) || []).length;
+
+    if (numbers >= 2) { qualityBonus += 0.03; qualitySignals.push('Contains specific numbers'); }
+    if (urls >= 1) { qualityBonus += 0.03; qualitySignals.push('Contains URLs/references'); }
+    if (codeBlocks >= 1) { qualityBonus += 0.04; qualitySignals.push('Contains code examples'); }
+    if (properNouns >= 3) { qualityBonus += 0.02; qualitySignals.push('Contains proper nouns'); }
+
+    const hasBullets = /^[\s]*[-*]\s/m.test(text);
+    const hasNumberedList = /^[\s]*\d+[.)]\s/m.test(text);
+    const hasHeadings = /^#{1,3}\s/m.test(text);
+
+    if (hasBullets || hasNumberedList) { qualityBonus += 0.02; qualitySignals.push('Well-structured (lists)'); }
+    if (hasHeadings) { qualityBonus += 0.02; qualitySignals.push('Well-structured (headings)'); }
+
+    let shortPenalty = 0;
+    if (wordCount < 10) { shortPenalty = 0.12; qualitySignals.push('Extremely brief response'); }
+    else if (wordCount < 25) { shortPenalty = 0.06; qualitySignals.push('Brief response'); }
+
+    return { qualityBonus: Math.min(qualityBonus, 0.10), shortPenalty, qualitySignals };
+}
+
+// --- Main scoring function ---
 function scoreText(text, context) {
-    const reasons = [];
-    let confidencePenalty = 0;
+    const excerpts = [];
+    let totalPenalty = 0;
 
-    let uncertaintyHits = 0;
-    UNCERTAINTY_SIGNALS.forEach(pat => { if (pat.test(text)) uncertaintyHits++; });
-    if (uncertaintyHits > 0) {
-        confidencePenalty += 0.18 * uncertaintyHits;
-        reasons.push(`Uncertainty language detected (${uncertaintyHits} signal${uncertaintyHits > 1 ? 's' : ''})`);
+    function scanSignals(signals) {
+        signals.forEach(function(s) {
+            var match = text.match(s.pat);
+            if (match) {
+                totalPenalty += s.weight;
+                excerpts.push({ signal: s.label, text: match[0], impact: -s.weight });
+            }
+        });
     }
 
-    let contradictionHits = 0;
-    CONTRADICTION_SIGNALS.forEach(pat => { if (pat.test(text)) contradictionHits++; });
-    if (contradictionHits > 1) {
-        confidencePenalty += 0.12 * contradictionHits;
-        reasons.push('Potential contradictions in response');
+    scanSignals(UNCERTAINTY_SIGNALS);
+    scanSignals(KNOWLEDGE_CUTOFF_SIGNALS);
+    scanSignals(CONTRADICTION_SIGNALS);
+    scanSignals(EVASION_SIGNALS);
+    scanSignals(HALLUCINATION_SIGNALS);
+    scanSignals(FRUSTRATION_SIGNALS);
+
+    // Auto-context: detect domain even if user selected "general"
+    const autoContext = detectContext(text);
+    const effectiveContext = (context === 'general' && autoContext) ? autoContext : (context || 'general');
+    if (autoContext && context === 'general') {
+        excerpts.push({
+            signal: 'Auto-detected domain: ' + autoContext,
+            text: 'Text contains ' + autoContext + '-related terminology',
+            impact: -(CONTEXT_RISK[autoContext] || 0),
+        });
     }
 
-    let hallHits = 0;
-    HALLUCINATION_SIGNALS.forEach(pat => { if (pat.test(text)) hallHits++; });
-    if (hallHits > 0) {
-        confidencePenalty += 0.15 * hallHits;
-        reasons.push(`Hallucination risk patterns (${hallHits} detected)`);
-    }
+    const domainRisk = CONTEXT_RISK[effectiveContext] || 0;
+    if (domainRisk > 0) totalPenalty += domainRisk;
 
-    let frustHits = 0;
-    FRUSTRATION_SIGNALS.forEach(pat => { if (pat.test(text)) frustHits++; });
-    if (frustHits > 0) {
-        confidencePenalty += 0.10 * frustHits;
-        reasons.push('User frustration signals present');
-    }
-
-    const domainRisk = CONTEXT_RISK[context] || 0;
-    if (domainRisk > 0) {
-        confidencePenalty += domainRisk;
-        reasons.push(`High-stakes domain: ${context}`);
-    }
-    const ctx = context || 'general';
-    if (HIGH_STAKES_PATTERNS[ctx] && HIGH_STAKES_PATTERNS[ctx].test(text)) {
-        confidencePenalty += 0.15;
-        reasons.push(`Domain-specific risk content detected (${ctx})`);
-    }
-
-    if (text.split(' ').length < 15 && domainRisk > 0) {
-        confidencePenalty += 0.10;
-        reasons.push('Unusually brief response for high-stakes context');
+    if (HIGH_STAKES_PATTERNS[effectiveContext] && HIGH_STAKES_PATTERNS[effectiveContext].test(text)) {
+        totalPenalty += 0.10;
+        excerpts.push({
+            signal: 'High-stakes ' + effectiveContext + ' content',
+            text: (text.match(HIGH_STAKES_PATTERNS[effectiveContext]) || [''])[0],
+            impact: -0.10,
+        });
     }
 
     if (/[A-Z]{5,}/.test(text) || /[!?]{3,}/.test(text)) {
-        confidencePenalty += 0.08;
-        reasons.push('Unusual formatting detected');
+        totalPenalty += 0.06;
+        excerpts.push({ signal: 'Unusual formatting', text: (text.match(/[A-Z]{5,}|[!?]{3,}/) || [''])[0], impact: -0.06 });
     }
 
-    const confidence = Math.max(0, Math.min(1, 1 - confidencePenalty));
-    let decision;
+    const quality = assessQuality(text);
+    totalPenalty += quality.shortPenalty;
+    if (quality.shortPenalty > 0) {
+        excerpts.push({ signal: quality.qualitySignals[0] || 'Brief response', text: text.split(/\s+/).length + ' words', impact: -quality.shortPenalty });
+    }
+
+    // Base score: 0.82 — text must earn confidence through quality signals
+    const baseScore = 0.82 + quality.qualityBonus;
+    const confidence = Math.max(0, Math.min(1, baseScore - totalPenalty));
+
+    var decision;
     if (confidence >= 0.75) decision = 'deliver';
     else if (confidence >= 0.45) decision = 'flag';
     else decision = 'escalate';
 
-    return { confidence: parseFloat(confidence.toFixed(3)), decision, reasons };
+    const reasons = excerpts.map(function(e) { return e.signal; });
+
+    return {
+        confidence: parseFloat(confidence.toFixed(3)),
+        decision,
+        reasons,
+        excerpts,
+        detectedContext: autoContext,
+        effectiveContext: effectiveContext,
+    };
 }
+
 
 // ── Anthropic client ──────────────────────────────────────────────────────────
 // Pass overrideKey to use the caller's own Anthropic key (their tokens, not ours)
@@ -385,6 +457,17 @@ app.get('/api/events', requireKey, (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
     store.clients.push(res);
     req.on('close', () => { store.clients = store.clients.filter(c => c !== res); });
+});
+
+// MCP server download (public endpoint)
+app.get('/api/mcp-download', (req, res) => {
+    const mcpPath = require('path').join(__dirname, 'mcp', 'server.js');
+    if (!require('fs').existsSync(mcpPath)) {
+        return res.status(404).json({ error: 'MCP server file not found' });
+    }
+    res.setHeader('Content-Disposition', 'attachment; filename="guardrail-mcp-server.js"');
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(mcpPath);
 });
 
 // Health check (public)
