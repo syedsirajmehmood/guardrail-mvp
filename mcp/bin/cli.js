@@ -9,8 +9,6 @@
  */
 
 const args = process.argv.slice(2);
-const keyIdx = args.indexOf('--key');
-const endIdx = args.indexOf('--endpoint');
 
 if (args.includes('--help') || args.includes('-h')) {
     console.log(`
@@ -30,7 +28,7 @@ OPTIONS:
 
 SETUP:
   1. Get a free API key at https://guardrail-mvp-production.up.railway.app
-  2. Add to your Claude Desktop config:
+  2. Add to your Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 
      {
        "mcpServers": {
@@ -45,29 +43,37 @@ SETUP:
 
 TOOLS PROVIDED:
   • check_confidence  — Score any AI text for confidence (0-1)
-  • explain_signals   — See which signals fired and why
+  • get_my_stats      — View your usage statistics
+  • score_and_explain — Score + human-readable explanation
 
 DOCS: https://guardrail-mvp-production.up.railway.app/docs.html
 `);
     process.exit(0);
 }
 
+// Parse arguments
+const keyIdx = args.indexOf('--key');
+const endIdx = args.indexOf('--endpoint');
+
 if (keyIdx === -1 || !args[keyIdx + 1]) {
-    console.error('❌ Missing --key argument. Run with --help for usage.');
+    console.error('❌ Missing --key argument.');
+    console.error('   Usage: npx guardrail-mcp --key gr_live_xxx');
+    console.error('   Run with --help for full usage.');
     process.exit(1);
 }
 
-// Set environment variables for the MCP server
+// Set environment variables BEFORE loading the MCP server
 process.env.GUARDRAIL_API_KEY = args[keyIdx + 1];
-if (endIdx !== -1 && args[endIdx + 1]) {
-    process.env.GUARDRAIL_ENDPOINT = args[endIdx + 1];
-} else {
-    process.env.GUARDRAIL_ENDPOINT = 'https://guardrail-mvp-production.up.railway.app';
-}
+process.env.GUARDRAIL_ENDPOINT = (endIdx !== -1 && args[endIdx + 1])
+    ? args[endIdx + 1]
+    : 'https://guardrail-mvp-production.up.railway.app';
 
-console.log('🛡️ Starting Guardrail MCP server...');
-console.log(`   Key: ${process.env.GUARDRAIL_API_KEY.slice(0, 12)}...`);
-console.log(`   Endpoint: ${process.env.GUARDRAIL_ENDPOINT}`);
+const key = process.env.GUARDRAIL_API_KEY;
+const endpoint = process.env.GUARDRAIL_ENDPOINT;
 
-// Load the MCP server
+process.stderr.write(`🛡️  Guardrail MCP Server starting...\n`);
+process.stderr.write(`   Key: ${key.slice(0, 12)}...\n`);
+process.stderr.write(`   Endpoint: ${endpoint}\n`);
+
+// Load the self-contained MCP server (same directory)
 require('../server.js');
