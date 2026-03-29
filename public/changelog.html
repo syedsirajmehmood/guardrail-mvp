@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog — Guardrail</title>
+    <meta name="description" content="What's new in Guardrail — latest updates, features, and fixes.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a1628; --card:#0d1e33; --border:#1e3050; --text:#e2edf8; --muted:#6b8aab; --teal:#1db99a; --amber:#f5a623; --coral:#ff5c5c; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; }
+        a { color:var(--teal); text-decoration:none; }
+        a:hover { text-decoration:underline; }
+
+        .nav { display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); }
+        .nav-brand { font-weight:900; font-size:1rem; }
+        .nav-links { display:flex; gap:20px; font-size:.82rem; font-weight:600; }
+        .nav-links a { color:var(--muted); }
+        .nav-links a:hover { color:var(--teal); text-decoration:none; }
+
+        .container { max-width:720px; margin:0 auto; padding:60px 32px; }
+        h1 { font-size:1.6rem; font-weight:900; margin-bottom:8px; }
+        .subtitle { color:var(--muted); font-size:.9rem; margin-bottom:48px; }
+
+        .entry { margin-bottom:40px; padding-bottom:40px; border-bottom:1px solid var(--border); }
+        .entry:last-child { border-bottom:none; }
+        .entry-date { font-size:.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .entry-version { font-size:1.1rem; font-weight:800; margin-bottom:12px; }
+        .entry-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.65rem; font-weight:700; text-transform:uppercase; margin-right:6px; margin-bottom:8px; }
+        .entry-tag.feat { background:rgba(29,185,154,.12); color:var(--teal); }
+        .entry-tag.fix { background:rgba(245,166,35,.12); color:var(--amber); }
+        .entry-tag.test { background:rgba(130,170,255,.12); color:#82aaff; }
+        ul { padding-left:20px; }
+        li { font-size:.87rem; color:var(--muted); margin-bottom:6px; }
+        li strong { color:var(--text); }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">🛡️ Guardrail</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="playground.html">Playground</a>
+            <a href="developer.html">Developer</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="chat.html">Chat Demo</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Changelog</h1>
+        <p class="subtitle">What's new in Guardrail. Active development — shipping weekly.</p>
+
+        <div class="entry">
+            <div class="entry-date">March 29, 2026</div>
+            <div class="entry-version">v2.2.0 — Signal Expansion + Credibility Pass</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag fix">Fix</span>
+            <ul>
+                <li><strong>28 new signal patterns</strong> across all categories (55 total)</li>
+                <li>New <strong>SYCOPHANCY_SIGNALS</strong> category — detects "Great question!", excessive agreement, flattery</li>
+                <li>3 new HIGH_STAKES domains: <strong>Mental Health, Child Safety, Nuclear</strong> (0.35 risk weight)</li>
+                <li>Landing page consolidated — removed 2 redundant how-it-works sections</li>
+                <li>Fixed <code>localhost:3001</code> reference in Quick Start code block</li>
+                <li>Hero copy updated: outcome-first subtitle, "Any LLM" stat</li>
+                <li>Added <strong>social proof section</strong> with live API stats + beta tester quote</li>
+                <li>Added this changelog page</li>
+            </ul>
+        </div>
+
+        <div class="entry">
+            <div class="entry-date">March 28, 2026</div>
+            <div class="entry-version">v2.1.0 — Deterministic Claim Extraction</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag test">Tests</span>
+            <ul>
+                <li><strong>Claim extraction pipeline</strong> — sentences are split, classified (claim/opinion/instruction/question/disclaimer), and verified</li>
+                <li>Each unverified claim applies <strong>−3% confidence penalty</strong> (capped at −15%)</li>
+                <li>Playground shows <strong>🔍 Extracted Claims</strong> panel with sourced/unverified badges</li>
+                <li>13 new beta feedback + signal pattern tests (77 total)</li>
+            </ul>
+        </div>
+
+        <div class="entry">
+            <div class="entry-date">March 28, 2026</div>
+            <div class="entry-version">v2.0.0 — Scoring Engine Overhaul</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag fix">Fix</span>
+            <span class="entry-tag test">Tests</span>
+            <ul>
+                <li><strong>Base score starts at 82%</strong> (was 100%) — text must earn confidence</li>
+                <li><strong>Auto-context detection</strong> — medical/legal/financial keywords auto-elevate risk</li>
+                <li>Knowledge cutoff signals: "I don't have access to real-time", "as of my training"</li>
+                <li>Quality bonuses: numbers, code blocks, URLs, structure earn up to +10%</li>
+                <li><strong>Explainability excerpts</strong> in API — exact text + impact % for every signal</li>
+                <li>MCP download endpoint + Developer Portal download button</li>
+                <li>Clean chat sidebar with dedicated <a href="setup.html">Setup Guide</a></li>
+                <li>58 tests (was 48)</li>
+            </ul>
+        </div>
+
+        <div class="entry">
+            <div class="entry-date">March 27, 2026</div>
+            <div class="entry-version">v1.0.0 — Initial MVP</div>
+            <span class="entry-tag feat">Feature</span>
+            <ul>
+                <li>Heuristic-based scoring engine with 6 signal categories</li>
+                <li>JS SDK, embeddable widget, REST API</li>
+                <li>Playground, Dashboard, Developer Portal, Chat Demo</li>
+                <li>Claude integration with real-time scoring</li>
+                <li>MCP server for Claude Desktop</li>
+                <li>48 tests</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

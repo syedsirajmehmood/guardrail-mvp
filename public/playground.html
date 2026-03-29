@@ -515,6 +515,7 @@
         <div class="nav-links">
             <a href="/">Docs</a>
             <a href="dashboard.html">Dashboard</a>
+        <a href="chat.html">Chat Demo</a>
         </div>
     </nav>
 
@@ -688,9 +689,12 @@
             btn.classList.add('loading');
 
             try {
-                const res = await fetch(BASE + '/api/check', {
+                const endpoint = isDemo ? '/api/demo-check' : '/api/check';
+                const headers = { 'Content-Type': 'application/json' };
+                if (!isDemo) headers['X-Guardrail-Key'] = key;
+                const res = await fetch(BASE + endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Guardrail-Key': key },
+                    headers,
                     body: JSON.stringify({ text, context, userId: 'playground-user' })
                 });
                 if (!res.ok) {
@@ -701,7 +705,7 @@
                 renderResult(result, text);
                 addHistory(result, text);
             } catch (e) {
-                alert('Guardrail error: ' + e.message + '\n\nMake sure your gr_live_xxx key is valid.');
+                alert('Guardrail error: ' + e.message + (isDemo ? '\n\nSign up on the home page for unlimited access — it\'s free!' : '\n\nMake sure your gr_live_xxx key is valid.'));
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('loading');

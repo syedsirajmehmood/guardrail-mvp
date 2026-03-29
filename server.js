@@ -464,6 +464,33 @@ function getAnthropic(overrideKey) {
     return new Anthropic({ apiKey: key });
 }
 
+// ── Demo endpoint — keyless playground (rate-limited to 5/ip/hour) ────────────
+const demoLimits = {};
+app.post('/api/demo-check', (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    const now = Date.now();
+    if (!demoLimits[ip]) demoLimits[ip] = [];
+    demoLimits[ip] = demoLimits[ip].filter(t => now - t < 3600000); // 1 hour window
+    if (demoLimits[ip].length >= 5) {
+        return res.status(429).json({ error: 'Demo limit reached (5/hour). Sign up for unlimited access — it\'s free!' });
+    }
+    demoLimits[ip].push(now);
+
+    const { text, context } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) {
+        return res.status(400).json({ error: 'text is required' });
+    }
+    const result = scoreText(text, context || 'general');
+    res.json({
+        ...result,
+        id: 'demo_' + Date.now().toString(36),
+        context: result.effectiveContext,
+        timestamp: new Date().toISOString(),
+        demo: true,
+        remaining: 5 - demoLimits[ip].length,
+    });
+});
+
 // ── Public Signup ─────────────────────────────────────────────────────────────
 
 // POST /api/signup — self-serve key generation
