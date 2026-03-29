@@ -776,22 +776,22 @@
                 <div class="int-icon">🤖</div>
                 <div>
                     <div class="int-badge">Claude Desktop · Cursor · Windsurf</div>
-                    <div class="int-title">Claude Desktop MCP</div>
+                    <div class="int-title">MCP Server — One Command</div>
                 </div>
-                <div class="int-desc">Add Guardrail as an MCP server. Claude can then call <strong style="color:var(--teal)">check_confidence</strong>, <strong style="color:var(--teal)">score_and_explain</strong>, and <strong style="color:var(--teal)">get_my_stats</strong> as native tools — no proxy needed.</div>
-                <div class="int-code"><span class="c">// claude_desktop_config.json</span>
+                <div class="int-desc">Native MCP integration. Claude can call <strong style="color:var(--teal)">check_confidence</strong>, <strong style="color:var(--teal)">score_and_explain</strong>, and <strong style="color:var(--teal)">get_my_stats</strong> as built-in tools. Zero config beyond one line.</div>
+                <div class="int-code"><span class="c"># Install & run instantly</span>
+npx guardrail-mcp --key gr_live_xxx
+
+<span class="c">// Or add to claude_desktop_config.json</span>
 {
   <span class="s">"mcpServers"</span>: {
     <span class="s">"guardrail"</span>: {
-      <span class="s">"command"</span>: <span class="s">"node"</span>,
-      <span class="s">"args"</span>: [<span class="s">"mcp/server.js"</span>],
-      <span class="s">"env"</span>: {
-        <span class="s">"GUARDRAIL_API_KEY"</span>: <span class="s">"gr_live_xxx"</span>
-      }
+      <span class="s">"command"</span>: <span class="s">"npx"</span>,
+      <span class="s">"args"</span>: [<span class="s">"guardrail-mcp"</span>, <span class="s">"--key"</span>, <span class="s">"gr_live_xxx"</span>]
     }
   }
 }</div>
-                <a href="/developer.html" class="int-cta">Get MCP config →</a>
+                <a href="/docs.html#mcp" class="int-cta">Full MCP docs →</a>
             </div>
 
             <!-- 4. REST API -->
