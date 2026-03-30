@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guardrail AI — Pitch Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0a1a; color: #fff; overflow: hidden; }
+
+  /* Slide System */
+  .slide { width: 100vw; height: 100vh; display: none; flex-direction: column; justify-content: center; padding: 60px 100px; position: relative; overflow: hidden; }
+  .slide.active { display: flex; }
+  .slide-number { position: absolute; bottom: 24px; right: 40px; font-size: 13px; color: rgba(255,255,255,0.3); font-weight: 500; }
+  .slide-logo { position: absolute; top: 28px; left: 40px; font-size: 16px; font-weight: 800; color: rgba(255,255,255,0.15); letter-spacing: -0.5px; }
+
+  /* Navigation */
+  .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 100; }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s; border: none; }
+  .nav-dot.active { background: #00d2ff; width: 24px; border-radius: 4px; }
+  .nav-arrows { position: fixed; bottom: 20px; right: 40px; display: flex; gap: 8px; z-index: 100; }
+  .nav-arrows button { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.2s; }
+  .nav-arrows button:hover { background: rgba(255,255,255,0.2); }
+
+  /* Typography */
+  h1 { font-size: 52px; font-weight: 900; line-height: 1.1; letter-spacing: -2px; }
+  h2 { font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -1.5px; margin-bottom: 32px; }
+  h3 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .subtitle { font-size: 20px; font-weight: 300; color: #a0a0c0; margin-top: 16px; line-height: 1.5; }
+  .accent { background: linear-gradient(90deg, #00d2ff, #7b2ff7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .accent-pink { background: linear-gradient(90deg, #ff6b6b, #ff2d92); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .accent-green { background: linear-gradient(90deg, #2ecc71, #00d2ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+  /* Backgrounds */
+  .bg-dark { background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%); }
+  .bg-gradient { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+  .bg-problem { background: linear-gradient(135deg, #1a0a0a, #2e1015, #1a0a1a); }
+  .bg-solution { background: linear-gradient(135deg, #0a1a12, #0f2e1f, #0a1a1a); }
+
+  /* Glow effects */
+  .glow-blue { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(0,210,255,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+  .glow-purple { position: absolute; width: 500px; height: 500px; background: radial-gradient(circle, rgba(123,47,247,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+
+  /* Cards & Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+  .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; transition: all 0.3s; }
+  .card:hover { border-color: rgba(0,210,255,0.3); background: rgba(255,255,255,0.06); }
+
+  /* Stats */
+  .big-stat { font-size: 64px; font-weight: 900; line-height: 1; }
+  .stat-label { font-size: 14px; font-weight: 500; color: #a0a0c0; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Table */
+  .deck-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; font-size: 16px; }
+  .deck-table th { text-align: left; padding: 12px 20px; color: #a0a0c0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .deck-table td { padding: 14px 20px; background: rgba(255,255,255,0.03); }
+  .deck-table tr td:first-child { border-radius: 10px 0 0 10px; }
+  .deck-table tr td:last-child { border-radius: 0 10px 10px 0; }
+  .deck-table tr:hover td { background: rgba(255,255,255,0.06); }
+  .bar-mini { display: inline-block; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #e74c3c, #ff6b6b); }
+  .bar-safe { background: linear-gradient(90deg, #2ecc71, #00d2ff); }
+
+  /* Flow */
+  .flow-row { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 20px 0; }
+  .flow-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 20px 28px; text-align: center; min-width: 160px; }
+  .flow-box.highlight { border-color: #7b2ff7; background: rgba(123,47,247,0.1); box-shadow: 0 0 30px rgba(123,47,247,0.15); }
+  .flow-box .icon { font-size: 32px; margin-bottom: 8px; }
+  .flow-box .title { font-size: 14px; font-weight: 700; }
+  .flow-box .desc { font-size: 11px; color: #a0a0c0; margin-top: 4px; }
+  .flow-arrow { font-size: 24px; color: rgba(255,255,255,0.2); }
+
+  /* Code */
+  .code-block { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 28px 32px; font-family: 'SF Mono', 'Fira Code', Consolas, monospace; font-size: 15px; line-height: 1.7; }
+  .code-block .kw { color: #7b2ff7; }
+  .code-block .str { color: #2ecc71; }
+  .code-block .cm { color: #555; }
+
+  /* Bullet list */
+  .bullet-list { list-style: none; font-size: 18px; line-height: 2.2; }
+  .bullet-list li::before { content: '→'; margin-right: 12px; color: #00d2ff; font-weight: 700; }
+  .bullet-list.red li::before { color: #ff6b6b; content: '✕'; }
+
+  /* Tag */
+  .tag { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(0,210,255,0.1); color: #00d2ff; border: 1px solid rgba(0,210,255,0.2); }
+  .tag.red { background: rgba(255,107,107,0.1); color: #ff6b6b; border-color: rgba(255,107,107,0.2); }
+
+  /* Divider */
+  .gradient-line { height: 3px; background: linear-gradient(90deg, #00d2ff, #7b2ff7, #ff6b6b); border-radius: 2px; margin: 20px 0; width: 80px; }
+
+  @media print {
+    .slide { display: flex !important; page-break-after: always; height: 100vh; }
+    .nav, .nav-arrows { display: none; }
+    body { background: #0a0a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide bg-gradient active" id="s1">
+  <div class="glow-blue" style="top: -100px; right: -100px;"></div>
+  <div class="glow-purple" style="bottom: -200px; left: -100px;"></div>
+  <div style="max-width: 800px;">
+    <div class="gradient-line" style="margin-bottom: 32px;"></div>
+    <h1>Guardrail <span class="accent">AI</span></h1>
+    <p class="subtitle" style="font-size: 24px; margin-top: 24px;">Real-time confidence scoring for AI outputs.<br>Stop hallucinations before they reach your customers.</p>
+    <div style="margin-top: 48px; display: flex; gap: 16px; align-items: center;">
+      <span class="tag">28 Risk Signals</span>
+      <span class="tag">25K Responses/sec</span>
+      <span class="tag">&lt;50ms Latency</span>
+      <span class="tag">Context-Aware Scoring</span>
+      <span class="tag">Model-Agnostic</span>
+    </div>
+    <p style="margin-top: 48px; color: #666; font-size: 14px;">symehmoo@gmail.com &nbsp;•&nbsp; guardrail-mvp-production.up.railway.app</p>
+  </div>
+  <div class="slide-number">1 / 17</div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide bg-problem" id="s2">
+  <div class="glow-purple" style="top: -150px; right: -150px; background: radial-gradient(circle, rgba(255,107,107,0.08) 0%, transparent 70%);"></div>
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>The Problem:<br><span class="accent-pink">AI is confidently wrong.</span></h2>
+  <div class="grid-2" style="margin-top: 12px;">
+    <div>
+      <ul class="bullet-list red">
+        <li>LLMs fabricate citations, ISBNs, and study DOIs</li>
+        <li>Models give medical dosages, then add "I'm not a doctor"</li>
+        <li>No safety layer between the AI and your customer</li>
+        <li>A single bad response = lawsuit, lost trust, regulator attention</li>
+      </ul>
+    </div>
+    <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+      <div class="big-stat accent-pink">87%</div>
+      <div class="stat-label" style="font-size: 16px; margin-top: 16px;">of AI responses we tested<br>were too risky to deliver</div>
+      <p style="color: #666; font-size: 13px; margin-top: 16px;">Based on 100 real responses from 5 open-source LLMs</p>
+    </div>
+  </div>
+  <div class="slide-number">2 / 17</div>
+</div>
+
+<!-- SLIDE 3: THE SOLUTION -->
+<div class="slide bg-solution" id="s3">
+  <div class="glow-blue" style="bottom: -100px; right: -100px;"></div>
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>The Solution:<br><span class="accent-green">Score every response. Catch what models won't.</span></h2>
+  <div class="grid-3" style="margin-top: 12px;">
+    <div class="card">
+      <div style="font-size: 36px; margin-bottom: 12px;">🛡️</div>
+      <h3>Real-Time Scoring</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Every AI response gets scored across 23 risk signals before it reaches your user. Under 50ms.</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 36px; margin-bottom: 12px;">🔀</div>
+      <h3>Smart Routing</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Safe responses get delivered. Risky ones get routed to human reviewers. You set the thresholds.</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 36px; margin-bottom: 12px;">📋</div>
+      <h3>Audit Trail</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Every response scored, timestamped, and logged. Full compliance documentation for regulators.</p>
+    </div>
+  </div>
+  <div style="margin-top: 28px; padding: 16px 24px; background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.15); border-radius: 12px;">
+    <p style="font-size: 15px; color: #a0a0c0;">💡 <strong style="color: #2ecc71;">Key differentiator:</strong> Guardrail uses deterministic pattern matching — not another LLM. It's fast, it's predictable, and <em>it never hallucinates itself.</em></p>
+  </div>
+  <div class="slide-number">3 / 17</div>
+</div>
+
+<!-- SLIDE 4: HOW IT WORKS -->
+<div class="slide bg-dark" id="s4">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>How It Works</h2>
+  <div class="flow-row">
+    <div class="flow-box"><div class="icon">💬</div><div class="title">User Query</div><div class="desc">Customer asks your chatbot</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box"><div class="icon">🤖</div><div class="title">Your LLM</div><div class="desc">Any model generates response</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box highlight"><div class="icon">🛡️</div><div class="title">Guardrail Scores</div><div class="desc">Query + Response &bull; 28 signals &bull; &lt;50ms</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box"><div class="icon">✅</div><div class="title">Safe → Deliver</div><div class="desc">Confidence ≥ 75%</div></div>
+  </div>
+  <div class="flow-row" style="margin-top: -8px;">
+    <div style="width: 580px;"></div>
+    <div class="flow-arrow" style="transform: rotate(90deg);">→</div>
+  </div>
+  <div class="flow-row" style="margin-top: -8px;">
+    <div style="width: 580px;"></div>
+    <div class="flow-box" style="border-color: #ff6b6b;"><div class="icon">👤</div><div class="title">Risky → Human</div><div class="desc">Confidence &lt; 40%</div></div>
+  </div>
+  <p style="text-align: center; color: #666; margin-top: 20px; font-size: 14px;">🆕 <strong>Context-aware scoring:</strong> Pass the user's question alongside the AI response for question-type detection, relevance analysis, scope checking, and refusal auditing.</p>
+  <p style="text-align: center; color: #666; margin-top: 8px; font-size: 14px;">Works with any LLM — OpenAI, Claude, Gemini, Llama, Mistral, or your fine-tuned internal model.</p>
+  <div class="slide-number">4 / 17</div>
+</div>
+
+<!-- SLIDE 5: WHAT WE DETECT -->
+<div class="slide bg-gradient" id="s5">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>28 Signals We Detect</h2>
+  <div class="grid-3">
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">🔍</span>&nbsp;&nbsp; Hallucinated facts & claims</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">📎</span>&nbsp;&nbsp; Fabricated citations & ISBNs</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">🏥</span>&nbsp;&nbsp; Unsafe medical guidance</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">💰</span>&nbsp;&nbsp; Risky financial advice</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">⚖️</span>&nbsp;&nbsp; Unqualified legal opinions</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">🐑</span>&nbsp;&nbsp; Sycophantic agreement</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">⏰</span>&nbsp;&nbsp; Stale / outdated information</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">🎭</span>&nbsp;&nbsp; Disclaimer-then-advise pattern</div>
+    <div class="card" style="padding: 20px;"><span style="font-size: 22px;">🧪</span>&nbsp;&nbsp; Safety-critical content</div>
+    <div class="card" style="padding: 20px; border-color: rgba(0,210,255,0.3);"><span style="font-size: 22px;">🎯</span>&nbsp;&nbsp; <strong style="color:#00d2ff">Low relevance to query</strong></div>
+    <div class="card" style="padding: 20px; border-color: rgba(0,210,255,0.3);"><span style="font-size: 22px;">🚫</span>&nbsp;&nbsp; <strong style="color:#00d2ff">Dangerous Q — no refusal</strong></div>
+    <div class="card" style="padding: 20px; border-color: rgba(0,210,255,0.3);"><span style="font-size: 22px;">📏</span>&nbsp;&nbsp; <strong style="color:#00d2ff">Scope creep detection</strong></div>
+  </div>
+  <p style="text-align: center; color: #666; margin-top: 20px; font-size: 14px;">+ 16 more including knowledge cutoff, self-contradiction, question-type classification, query-context matching, and formatting anomalies</p>
+  <div class="slide-number">5 / 17</div>
+</div>
+
+<!-- SLIDE 6: AUDIT RESULTS OVERVIEW -->
+<div class="slide bg-dark" id="s6">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>We Tested 5 LLMs.<br><span class="accent-pink">87% of Responses Failed.</span></h2>
+  <p class="subtitle" style="margin-top: -16px; margin-bottom: 28px;">100 real responses • 20 adversarial prompts • 5 open-source models running locally via Ollama</p>
+  <div class="grid-4">
+    <div class="card" style="text-align: center;">
+      <div class="big-stat accent" style="font-size: 48px;">100</div>
+      <div class="stat-label">Real LLM Responses</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="big-stat accent-pink" style="font-size: 48px;">87%</div>
+      <div class="stat-label">Failed Safety Check</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="big-stat accent-pink" style="font-size: 48px;">100%</div>
+      <div class="stat-label">Medical/Legal/Financial Failed</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="big-stat" style="font-size: 48px; color: #ff6b6b;">4/5</div>
+      <div class="stat-label">Models Fabricated Citations</div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 17</div>
+</div>
+
+<!-- SLIDE 7: MODEL COMPARISON -->
+<div class="slide bg-dark" id="s7">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Model Safety Ranking</h2>
+  <table class="deck-table">
+    <tr><th>Model</th><th>Creator</th><th>Parameters</th><th>Safe to Deliver</th><th>Failure Rate</th></tr>
+    <tr><td>🏆 <strong>Mistral</strong></td><td>Mistral AI</td><td>7B</td><td>20%</td><td><span class="bar-mini" style="width: 160px;"></span> <strong>80%</strong></td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Phi-3</td><td>Microsoft</td><td>3.8B</td><td>15%</td><td><span class="bar-mini" style="width: 170px;"></span> 85%</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Llama 3.2</td><td>Meta</td><td>3B</td><td>15%</td><td><span class="bar-mini" style="width: 170px;"></span> 85%</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Gemma 2</td><td>Google</td><td>2B</td><td>10%</td><td><span class="bar-mini" style="width: 180px;"></span> 90%</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Qwen 2.5</td><td>Alibaba</td><td>3B</td><td>5%</td><td><span class="bar-mini" style="width: 190px;"></span> 95%</td></tr>
+  </table>
+  <p style="color: #666; margin-top: 24px; font-size: 14px; text-align: center;">Even the best model (Mistral 7B) failed 80% of safety checks. The "winner" is simply the least dangerous.</p>
+  <div class="slide-number">7 / 17</div>
+</div>
+
+<!-- SLIDE 8: KEY FINDINGS -->
+<div class="slide bg-gradient" id="s8">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Key Findings</h2>
+  <div class="grid-2" style="gap: 20px;">
+    <div class="card">
+      <h3 style="color: #ff6b6b;">🏥 "I'm not a doctor" doesn't help</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Every model added a medical disclaimer — then gave specific drug dosages anyway. Users act on the numbers, not the disclaimer.</p>
+    </div>
+    <div class="card">
+      <h3 style="color: #ff6b6b;">📎 4/5 models fabricated ISBNs</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Asked for a real book's ISBN — at least 2 models generated fake numbers with high confidence. Users would unknowingly cite fake references.</p>
+    </div>
+    <div class="card">
+      <h3 style="color: #00d2ff;">📊 More parameters ≠ safer</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Google's 2B model beat Meta's 3B model on several prompts. Shorter responses = fewer unverified claims = higher safety score.</p>
+    </div>
+    <div class="card">
+      <h3 style="color: #00d2ff;">📝 Verbose = dangerous</h3>
+      <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Models that gave longer responses scored lower. Every additional sentence is another opportunity to hallucinate.</p>
+    </div>
+  </div>
+  <div class="slide-number">8 / 17</div>
+</div>
+
+<!-- SLIDE 9: INTEGRATION -->
+<div class="slide bg-dark" id="s9">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Integration: <span class="accent">3 Lines of Code</span></h2>
+  <div class="grid-2" style="align-items: start;">
+    <div>
+      <p style="color: #ff6b6b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Before — No Safety Layer</p>
+      <div class="code-block" style="border-color: rgba(255,107,107,0.2);">
+        <span class="kw">const</span> answer = <span class="kw">await</span> llm.chat(question);<br>
+        res.send(answer); <span class="cm">// 🚨 no check</span>
+      </div>
+    </div>
+    <div>
+      <p style="color: #2ecc71; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">After — With Guardrail (context-aware)</p>
+      <div class="code-block" style="border-color: rgba(46,204,113,0.2);">
+        <span class="kw">const</span> answer = <span class="kw">await</span> llm.chat(question);<br>
+        <span class="kw">const</span> score = <span class="kw">await</span> guardrail.check({<br>
+        &nbsp;&nbsp;text: answer,<br>
+        &nbsp;&nbsp;userQuery: question <span class="cm">// 🆕 context-aware</span><br>
+        });<br><br>
+        <span class="kw">if</span> (score.decision === <span class="str">'deliver'</span>)<br>
+        &nbsp;&nbsp;res.send(answer); <span class="cm">// ✅ safe</span><br>
+        <span class="kw">if</span> (score.decision === <span class="str">'escalate'</span>)<br>
+        &nbsp;&nbsp;escalate(answer); <span class="cm">// 🚨 human review</span>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 28px; display: flex; gap: 24px; justify-content: center;">
+    <span class="tag">REST API — any language</span>
+    <span class="tag">JavaScript SDK</span>
+    <span class="tag">npx guardrail-mcp-server</span>
+    <span class="tag">PostgreSQL Persistence</span>
+    <span class="tag">Self-hosted option</span>
+  </div>
+  <div class="slide-number">9 / 17</div>
+</div>
+
+<!-- SLIDE 10: USE CASES -->
+<div class="slide bg-gradient" id="s10">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Who Needs This</h2>
+  <div class="grid-3">
+    <div class="card" style="text-align: center; padding: 32px 24px;">
+      <div style="font-size: 40px; margin-bottom: 16px;">🏥</div>
+      <h3>Healthcare & Pharma</h3>
+      <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">AI patient triage, drug interaction checkers, symptom chatbots. Block unsafe dosage advice before it reaches patients.</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px;">
+      <div style="font-size: 40px; margin-bottom: 16px;">🏦</div>
+      <h3>Financial Services</h3>
+      <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">Robo-advisors, loan chatbots, trading copilots. Prevent unqualified investment advice from reaching customers.</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px;">
+      <div style="font-size: 40px; margin-bottom: 16px;">⚖️</div>
+      <h3>Legal Tech</h3>
+      <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">Contract analysis, legal research assistants. Ensure AI outputs carry proper disclaimers and don't fabricate case law.</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px;">
+      <div style="font-size: 40px; margin-bottom: 16px;">🛒</div>
+      <h3>E-Commerce</h3>
+      <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">Shopping assistants, product chatbots. Block hallucinated product specs and fake reviews from AI-generated content.</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px;">
+      <div style="font-size: 40px; margin-bottom: 16px;">📚</div>
+      <h3>EdTech</h3>
+      <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">AI tutors, homework helpers. Prevent factually wrong answers from reaching students at scale.</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px;">
+      <div style="font-size: 40px; margin-bottom: 16px;">🏢</div>
+      <h3>Enterprise SaaS</h3>
+      <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">Any company adding "AI features" to their product. Add a safety net before shipping AI to customers.</p>
+    </div>
+  </div>
+  <div class="slide-number">10 / 17</div>
+</div>
+
+<!-- SLIDE 11: WHAT WE'VE BUILT -->
+<div class="slide bg-dark" id="s11">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>What We've Built</h2>
+  <div class="grid-2">
+    <div>
+      <h3 style="color: #00d2ff; margin-bottom: 20px;">Product</h3>
+      <ul class="bullet-list" style="font-size: 16px;">
+        <li>Scoring API — Railway + PostgreSQL (production)</li>
+        <li>Context-aware scoring with <code>userQuery</code></li>
+        <li><code>npx guardrail-mcp-server</code> — zero-setup MCP</li>
+        <li>JavaScript SDK — npm installable</li>
+        <li>Interactive Playground — live demo</li>
+        <li>Audit Toolkit — open-sourced on GitHub</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color: #00d2ff; margin-bottom: 20px;">Validation</h3>
+      <ul class="bullet-list" style="font-size: 16px;">
+        <li>100 real LLM responses audited across 5 models</li>
+        <li>28 detection signals (5 context-aware)</li>
+        <li>22-point E2E test suite — 21/22 passing</li>
+        <li>25,000 req/sec throughput (benchmarked)</li>
+        <li>124 API keys migrated to PostgreSQL</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top: 32px; padding: 16px 28px; background: rgba(0,210,255,0.04); border: 1px solid rgba(0,210,255,0.12); border-radius: 12px; display: flex; justify-content: space-around;">
+    <div style="text-align: center;"><strong style="font-size: 24px;">Node.js</strong><br><span style="font-size: 13px; color: #a0a0c0;">Runtime</span></div>
+    <div style="text-align: center;"><strong style="font-size: 24px;">PostgreSQL</strong><br><span style="font-size: 13px; color: #a0a0c0;">Persistence</span></div>
+    <div style="text-align: center;"><strong style="font-size: 24px;">Railway</strong><br><span style="font-size: 13px; color: #a0a0c0;">CI/CD</span></div>
+    <div style="text-align: center;"><strong style="font-size: 24px;">Heuristic</strong><br><span style="font-size: 13px; color: #a0a0c0;">No LLM dependency</span></div>
+  </div>
+  <div class="slide-number">11 / 17</div>
+</div>
+
+<!-- SLIDE 12: CURRENT PHASE — HARDENING -->
+<div class="slide bg-gradient" id="s12">
+  <div class="glow-blue" style="top: -150px; left: -100px;"></div>
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Current Phase: <span class="accent">Hardening</span></h2>
+  <p class="subtitle" style="margin-top: -20px; margin-bottom: 32px;">We're battle-testing the engine before scaling. Here's what we're actively working on.</p>
+  <div class="grid-3">
+    <div class="card" style="border-color: rgba(46,204,113,0.3); background: rgba(46,204,113,0.04);">
+      <div style="font-size: 28px; margin-bottom: 10px;">✅</div>
+      <h3 style="font-size: 16px; color: #2ecc71;">PostgreSQL — DONE</h3>
+      <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">Migrated from JSON to PostgreSQL on Railway. 124 keys imported. Full persistence for keys, usage, and audit logs.</p>
+    </div>
+    <div class="card" style="border-color: rgba(46,204,113,0.3); background: rgba(46,204,113,0.04);">
+      <div style="font-size: 28px; margin-bottom: 10px;">✅</div>
+      <h3 style="font-size: 16px; color: #2ecc71;">Context-Aware Scoring — DONE</h3>
+      <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">New <code>userQuery</code> field enables question-type detection, relevance scoring, scope checking, and refusal auditing. 5 new signals.</p>
+    </div>
+    <div class="card" style="border-color: rgba(46,204,113,0.3); background: rgba(46,204,113,0.04);">
+      <div style="font-size: 28px; margin-bottom: 10px;">✅</div>
+      <h3 style="font-size: 16px; color: #2ecc71;">NPM MCP Server — DONE</h3>
+      <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">Zero-setup MCP server: <code>npx guardrail-mcp-server --key gr_live_xxx</code>. Works with Claude Desktop and Cursor.</p>
+    </div>
+    <div class="card" style="border-color: rgba(0,210,255,0.3);">
+      <div style="font-size: 28px; margin-bottom: 10px;">🔬</div>
+      <h3 style="font-size: 16px;">Scoring Precision</h3>
+      <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">Tuning 60+ heuristic weights using adversarial benchmarks. Targeting &lt;5% false positive rate.</p>
+    </div>
+    <div class="card" style="border-color: rgba(0,210,255,0.3);">
+      <div style="font-size: 28px; margin-bottom: 10px;">📊</div>
+      <h3 style="font-size: 16px;">Larger Model Audits</h3>
+      <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">Expanding from 2–7B to 70B+ models. Testing 500+ prompts across 10+ models including GPT-4, Claude, Gemini.</p>
+    </div>
+    <div class="card" style="border-color: rgba(0,210,255,0.3);">
+      <div style="font-size: 28px; margin-bottom: 10px;">🔐</div>
+      <h3 style="font-size: 16px;">Enterprise Auth</h3>
+      <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">API key rotation, rate limiting, usage dashboards, and team management for enterprise customers.</p>
+    </div>
+  </div>
+  <div class="slide-number">12 / 17</div>
+</div>
+
+<!-- SLIDE 13: PRODUCT ROADMAP -->
+<div class="slide bg-dark" id="s13">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Product Roadmap</h2>
+  <div style="position: relative; margin-top: 8px;">
+    <!-- Timeline line -->
+    <div style="position: absolute; top: 28px; left: 60px; right: 60px; height: 3px; background: linear-gradient(90deg, #2ecc71, #00d2ff, #7b2ff7, #ff6b6b); border-radius: 2px;"></div>
+    <!-- Timeline items -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative;">
+      <!-- Q2 2026 -->
+      <div style="text-align: center;">
+        <div style="width: 16px; height: 16px; background: #2ecc71; border-radius: 50%; margin: 20px auto 16px; border: 3px solid #0a0a1a; position: relative; z-index: 1; box-shadow: 0 0 12px rgba(46,204,113,0.5);"></div>
+        <div class="card" style="padding: 20px 16px; border-color: rgba(46,204,113,0.3);">
+          <span class="tag" style="background: rgba(46,204,113,0.15); color: #2ecc71; border-color: rgba(46,204,113,0.3); margin-bottom: 12px;">Q2 2026 • NOW</span>
+          <h3 style="font-size: 15px; margin-top: 12px;">Hardening & Partners</h3>
+          <ul style="text-align: left; color: #a0a0c0; font-size: 12px; line-height: 1.8; list-style: none;">
+            <li style="color: #2ecc71;">✅ PostgreSQL migration (124 keys)</li>
+            <li style="color: #2ecc71;">✅ Context-aware scoring (userQuery)</li>
+            <li style="color: #2ecc71;">✅ NPM MCP server packaging</li>
+            <li style="color: #2ecc71;">✅ 22-point E2E test suite</li>
+            <li>→ 3–5 design partners onboarded</li>
+            <li>→ Publish Medium + audit report</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Q3 2026 -->
+      <div style="text-align: center;">
+        <div style="width: 16px; height: 16px; background: #00d2ff; border-radius: 50%; margin: 20px auto 16px; border: 3px solid #0a0a1a; position: relative; z-index: 1; box-shadow: 0 0 12px rgba(0,210,255,0.5);"></div>
+        <div class="card" style="padding: 20px 16px; border-color: rgba(0,210,255,0.3);">
+          <span class="tag" style="margin-bottom: 12px;">Q3 2026</span>
+          <h3 style="font-size: 15px; margin-top: 12px;">Scale & Integrations</h3>
+          <ul style="text-align: left; color: #a0a0c0; font-size: 12px; line-height: 1.8; list-style: none;">
+            <li>→ Python SDK</li>
+            <li>→ Webhook & Slack alerts</li>
+            <li>→ Dashboard analytics v1</li>
+            <li>→ 10+ model audit expansion</li>
+            <li>→ Self-hosted Docker image</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Q4 2026 -->
+      <div style="text-align: center;">
+        <div style="width: 16px; height: 16px; background: #7b2ff7; border-radius: 50%; margin: 20px auto 16px; border: 3px solid #0a0a1a; position: relative; z-index: 1; box-shadow: 0 0 12px rgba(123,47,247,0.5);"></div>
+        <div class="card" style="padding: 20px 16px; border-color: rgba(123,47,247,0.3);">
+          <span class="tag" style="background: rgba(123,47,247,0.15); color: #7b2ff7; border-color: rgba(123,47,247,0.3); margin-bottom: 12px;">Q4 2026</span>
+          <h3 style="font-size: 15px; margin-top: 12px;">Enterprise Ready</h3>
+          <ul style="text-align: left; color: #a0a0c0; font-size: 12px; line-height: 1.8; list-style: none;">
+            <li>→ Multi-tenant architecture</li>
+            <li>→ SOC 2 compliance prep</li>
+            <li>→ Custom signal configuration</li>
+            <li>→ Team management & RBAC</li>
+            <li>→ SLA & dedicated support tier</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Q1 2027 -->
+      <div style="text-align: center;">
+        <div style="width: 16px; height: 16px; background: #ff6b6b; border-radius: 50%; margin: 20px auto 16px; border: 3px solid #0a0a1a; position: relative; z-index: 1; box-shadow: 0 0 12px rgba(255,107,107,0.5);"></div>
+        <div class="card" style="padding: 20px 16px; border-color: rgba(255,107,107,0.3);">
+          <span class="tag red" style="margin-bottom: 12px;">Q1 2027</span>
+          <h3 style="font-size: 15px; margin-top: 12px;">Intelligence Layer</h3>
+          <ul style="text-align: left; color: #a0a0c0; font-size: 12px; line-height: 1.8; list-style: none;">
+            <li>→ ML-enhanced scoring (hybrid)</li>
+            <li>→ Industry-specific signal packs</li>
+            <li>→ Real-time threat intelligence</li>
+            <li>→ Competitor benchmarking tool</li>
+            <li>→ Regulatory compliance reports</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 17</div>
+</div>
+
+<!-- SLIDE 14: DESIGN PARTNER PROGRAM -->
+<div class="slide bg-gradient" id="s14">
+  <div class="glow-purple" style="top: -200px; right: -100px;"></div>
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Design Partner <span class="accent">Program</span></h2>
+  <p class="subtitle" style="margin-top: -20px; margin-bottom: 28px;">We're selecting 3–5 companies to shape the product with us.</p>
+  <div class="grid-2" style="gap: 32px;">
+    <div>
+      <h3 style="color: #00d2ff; margin-bottom: 16px;">What You Get</h3>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px;">
+        <span style="font-size: 20px;">🆓</span>&nbsp;&nbsp; <strong>Free access</strong> during the entire partner period (6 months)
+      </div>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px;">
+        <span style="font-size: 20px;">🎯</span>&nbsp;&nbsp; <strong>Custom signals</strong> tuned to your specific domain and use case
+      </div>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px;">
+        <span style="font-size: 20px;">🔧</span>&nbsp;&nbsp; <strong>Direct engineering access</strong> — weekly syncs, priority support
+      </div>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px;">
+        <span style="font-size: 20px;">📋</span>&nbsp;&nbsp; <strong>Custom audit report</strong> on your internal model's safety profile
+      </div>
+      <div class="card" style="padding: 16px 20px;">
+        <span style="font-size: 20px;">💰</span>&nbsp;&nbsp; <strong>Locked-in pricing</strong> — 50% discount on launch pricing, forever
+      </div>
+    </div>
+    <div>
+      <h3 style="color: #7b2ff7; margin-bottom: 16px;">What We Ask</h3>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px; border-color: rgba(123,47,247,0.2);">
+        <span style="font-size: 20px;">💬</span>&nbsp;&nbsp; <strong>Bi-weekly feedback</strong> — 30-min calls on what's working, what isn't
+      </div>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px; border-color: rgba(123,47,247,0.2);">
+        <span style="font-size: 20px;">🏭</span>&nbsp;&nbsp; <strong>Real production traffic</strong> — run Guardrail on your actual AI pipeline
+      </div>
+      <div class="card" style="margin-bottom: 12px; padding: 16px 20px; border-color: rgba(123,47,247,0.2);">
+        <span style="font-size: 20px;">📣</span>&nbsp;&nbsp; <strong>Case study permission</strong> — let us share (anonymized) results
+      </div>
+      <div class="card" style="padding: 16px 20px; border-color: rgba(123,47,247,0.2);">
+        <span style="font-size: 20px;">🤝</span>&nbsp;&nbsp; <strong>Co-development</strong> — help prioritize the next detection signals
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 24px; text-align: center;">
+    <span class="tag" style="font-size: 14px; padding: 8px 20px;">🎯 Ideal partners: Companies with live AI chatbots in healthcare, finance, legal, or customer support</span>
+  </div>
+  <div class="slide-number">14 / 17</div>
+</div>
+
+<!-- SLIDE 15: BUSINESS MODEL -->
+<div class="slide bg-dark" id="s15">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Business Model</h2>
+  <div class="grid-3" style="gap: 24px; margin-top: 8px;">
+    <div class="card" style="text-align: center; padding: 32px 24px; border-color: rgba(255,255,255,0.1);">
+      <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #a0a0c0; margin-bottom: 16px;">Starter</div>
+      <div style="font-size: 36px; font-weight: 900; color: #fff;">Free</div>
+      <div style="font-size: 13px; color: #666; margin-top: 4px;">forever</div>
+      <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0;"></div>
+      <ul style="text-align: left; list-style: none; font-size: 14px; color: #a0a0c0; line-height: 2;">
+        <li>✓ 1,000 checks / month</li>
+        <li>✓ 23 detection signals</li>
+        <li>✓ REST API access</li>
+        <li>✓ Community support</li>
+        <li style="color: #444;">✕ Custom signals</li>
+        <li style="color: #444;">✕ Analytics dashboard</li>
+      </ul>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px; border-color: rgba(0,210,255,0.4); background: rgba(0,210,255,0.03); position: relative;">
+      <div style="position: absolute; top: -1px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #00d2ff, #7b2ff7); padding: 3px 16px; border-radius: 0 0 8px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Popular</div>
+      <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #00d2ff; margin-bottom: 16px;">Pro</div>
+      <div style="font-size: 36px; font-weight: 900; color: #fff;">$99</div>
+      <div style="font-size: 13px; color: #666; margin-top: 4px;">/ month</div>
+      <div style="height: 1px; background: rgba(0,210,255,0.2); margin: 20px 0;"></div>
+      <ul style="text-align: left; list-style: none; font-size: 14px; color: #a0a0c0; line-height: 2;">
+        <li>✓ 50,000 checks / month</li>
+        <li>✓ 23 detection signals</li>
+        <li>✓ REST API + SDK</li>
+        <li>✓ Analytics dashboard</li>
+        <li>✓ Webhook alerts</li>
+        <li>✓ Priority support</li>
+      </ul>
+    </div>
+    <div class="card" style="text-align: center; padding: 32px 24px; border-color: rgba(123,47,247,0.3);">
+      <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #7b2ff7; margin-bottom: 16px;">Enterprise</div>
+      <div style="font-size: 36px; font-weight: 900; color: #fff;">Custom</div>
+      <div style="font-size: 13px; color: #666; margin-top: 4px;">annual contract</div>
+      <div style="height: 1px; background: rgba(123,47,247,0.2); margin: 20px 0;"></div>
+      <ul style="text-align: left; list-style: none; font-size: 14px; color: #a0a0c0; line-height: 2;">
+        <li>✓ Unlimited checks</li>
+        <li>✓ Custom detection signals</li>
+        <li>✓ Self-hosted deployment</li>
+        <li>✓ SOC 2 compliance bundle</li>
+        <li>✓ SLA & dedicated support</li>
+        <li>✓ Team management & RBAC</li>
+      </ul>
+    </div>
+  </div>
+  <p style="text-align: center; color: #666; margin-top: 24px; font-size: 14px;">Design partners receive 50% off Pro / Enterprise pricing for life.</p>
+  <div class="slide-number">15 / 17</div>
+</div>
+
+<!-- SLIDE 16: COMPETITIVE EDGE -->
+<div class="slide bg-gradient" id="s16">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Why <span class="accent">Guardrail AI</span></h2>
+  <table class="deck-table" style="font-size: 14px;">
+    <tr>
+      <th style="width: 25%;"></th>
+      <th style="text-align: center; color: #00d2ff;">Guardrail AI</th>
+      <th style="text-align: center;">LLM-as-Judge</th>
+      <th style="text-align: center;">Manual Review</th>
+      <th style="text-align: center;">Prompt Engineering</th>
+    </tr>
+    <tr>
+      <td><strong>Latency</strong></td>
+      <td style="text-align: center; color: #2ecc71;">✓ &lt;50ms</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ 2–10 sec</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ Hours/days</td>
+      <td style="text-align: center; color: #ffaa00;">~ Varies</td>
+    </tr>
+    <tr>
+      <td><strong>Deterministic</strong></td>
+      <td style="text-align: center; color: #2ecc71;">✓ Always</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ Non-deterministic</td>
+      <td style="text-align: center; color: #2ecc71;">✓ Yes</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ No</td>
+    </tr>
+    <tr>
+      <td><strong>Cost per Check</strong></td>
+      <td style="text-align: center; color: #2ecc71;">✓ $0.002</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ $0.01–0.05</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ $0.50–2.00</td>
+      <td style="text-align: center; color: #2ecc71;">✓ Free</td>
+    </tr>
+    <tr>
+      <td><strong>Audit Trail</strong></td>
+      <td style="text-align: center; color: #2ecc71;">✓ Full</td>
+      <td style="text-align: center; color: #ffaa00;">~ Partial</td>
+      <td style="text-align: center; color: #2ecc71;">✓ Full</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ None</td>
+    </tr>
+    <tr>
+      <td><strong>Scalability</strong></td>
+      <td style="text-align: center; color: #2ecc71;">✓ 25K/sec</td>
+      <td style="text-align: center; color: #ffaa00;">~ Limited by API</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ Not scalable</td>
+      <td style="text-align: center; color: #2ecc71;">✓ Infinite</td>
+    </tr>
+    <tr>
+      <td><strong>Can Hallucinate</strong></td>
+      <td style="text-align: center; color: #2ecc71;">✓ Never</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ Yes — it's an LLM</td>
+      <td style="text-align: center; color: #2ecc71;">✓ No</td>
+      <td style="text-align: center; color: #ff6b6b;">✕ Yes</td>
+    </tr>
+  </table>
+  <div style="margin-top: 24px; padding: 14px 24px; background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.15); border-radius: 12px; text-align: center;">
+    <p style="font-size: 15px; color: #a0a0c0;">💡 <strong style="color: #2ecc71;">The key insight:</strong> You can't trust an LLM to judge another LLM. Guardrail uses deterministic pattern matching — it's fast, cheap, and <em>never wrong about being wrong.</em></p>
+  </div>
+  <div class="slide-number">16 / 17</div>
+</div>
+
+<!-- SLIDE 17: CONTACT / CTA -->
+<div class="slide bg-gradient" id="s17">
+  <div class="glow-blue" style="top: -200px; right: -200px;"></div>
+  <div class="glow-purple" style="bottom: -200px; left: -200px;"></div>
+  <div style="text-align: center; max-width: 700px; margin: 0 auto;">
+    <div class="gradient-line" style="margin: 0 auto 32px;"></div>
+    <h1 style="font-size: 44px;">Become a Design Partner.<br>Shape the future of <span class="accent">AI safety.</span></h1>
+    <p class="subtitle" style="font-size: 18px; margin-top: 20px;">We're selecting 3–5 companies to build with.<br>Free access. Direct engineering support. Locked-in pricing forever.</p>
+    <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 12px; align-items: center;">
+      <p style="font-size: 22px; font-weight: 700;">symehmoo@gmail.com</p>
+      <div style="margin-top: 12px; display: flex; gap: 16px;">
+        <span class="tag" style="font-size: 13px; padding: 8px 18px;">🎮 Live Playground → <a href="https://guardrail-mvp-production.up.railway.app/playground.html" style="color: #00d2ff; text-decoration: none;">Try it now</a></span>
+        <span class="tag" style="font-size: 13px; padding: 8px 18px;">📖 Audit Report → <a href="https://github.com/saifsysim/guardrail-audit" style="color: #00d2ff; text-decoration: none;">GitHub</a></span>
+      </div>
+    </div>
+    <p style="margin-top: 40px; color: #444; font-size: 13px;">The question isn't whether your AI will make mistakes.<br>It's whether you'll catch them before your users do.</p>
+  </div>
+  <div class="slide-number">17 / 17</div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav" id="nav"></div>
+<div class="nav-arrows">
+  <button onclick="navigate(-1)">←</button>
+  <button onclick="navigate(1)">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  // Build nav dots
+  const nav = document.getElementById('nav');
+  slides.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    nav.appendChild(dot);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    nav.children[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, slides.length - 1));
+    slides[current].classList.add('active');
+    nav.children[current].classList.add('active');
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End') goTo(slides.length - 1);
+  });
+</script>
+
+</body>
+</html>

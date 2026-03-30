@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guardrail AI — One Pager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page { size: letter; margin: 0; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; color: #1a1a2e; background: #fff; width: 8.5in; max-height: 11in; margin: 0 auto; position: relative; overflow: hidden; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: #fff; padding: 24px 40px 18px; position: relative; }
+  .header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #00d2ff, #7b2ff7, #ff6b6b); }
+  .logo { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+  .logo span { background: linear-gradient(90deg, #00d2ff, #7b2ff7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .tagline { font-size: 11px; font-weight: 300; color: #a0a0c0; margin-top: 2px; letter-spacing: 0.5px; }
+  .headline { font-size: 16px; font-weight: 700; margin-top: 10px; line-height: 1.3; }
+  .headline em { font-style: normal; color: #00d2ff; }
+
+  /* Body */
+  .content { padding: 14px 40px 10px; }
+
+  /* Problem/Solution */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  .card { border-radius: 8px; padding: 10px 14px; }
+  .card-problem { background: #fff0f0; border: 1px solid #ffccd5; }
+  .card-solution { background: #f0fff4; border: 1px solid #b2f5c0; }
+  .card h3 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .card-problem h3 { color: #c0392b; }
+  .card-solution h3 { color: #27ae60; }
+  .card ul { list-style: none; font-size: 11px; line-height: 1.5; }
+  .card ul li::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; position: relative; top: -1px; }
+  .card-problem ul li::before { background: #e74c3c; }
+  .card-solution ul li::before { background: #2ecc71; }
+
+  /* Stats bar */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .stat { text-align: center; background: linear-gradient(135deg, #f8f9ff, #eef0ff); border-radius: 8px; padding: 8px 6px; border: 1px solid #e0e4f5; }
+  .stat .num { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #302b63, #7b2ff7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat .label { font-size: 9px; font-weight: 500; color: #666; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* How it works */
+  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #302b63; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .section-title::before { content: ''; width: 16px; height: 2px; background: linear-gradient(90deg, #00d2ff, #7b2ff7); border-radius: 2px; }
+
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 12px; align-items: center; }
+  .flow-step { text-align: center; background: #f8f9ff; border-radius: 8px; padding: 8px 4px; border: 1px solid #e0e4f5; }
+  .flow-step .icon { font-size: 18px; margin-bottom: 2px; }
+  .flow-step .step-title { font-size: 9px; font-weight: 700; color: #302b63; }
+  .flow-step .step-desc { font-size: 8px; color: #888; margin-top: 1px; }
+  .flow-arrow { text-align: center; font-size: 16px; color: #7b2ff7; font-weight: 700; }
+
+  /* Signals grid */
+  .signals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 12px; }
+  .signal { background: #fafbff; border: 1px solid #eef0f8; border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; }
+  .signal .sig-icon { font-size: 13px; flex-shrink: 0; }
+  .signal .sig-text { font-size: 9.5px; font-weight: 500; color: #333; }
+
+  /* Integration */
+  .code-box { background: #1a1a2e; color: #e0e0e0; border-radius: 8px; padding: 10px 14px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 9.5px; line-height: 1.5; margin-bottom: 12px; position: relative; overflow: hidden; }
+  .code-box::before { content: 'INTEGRATION — 3 lines of code'; position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #302b63, #7b2ff7); color: #fff; font-family: 'Inter', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 14px; }
+  .code-box code { display: block; margin-top: 14px; }
+  .kw { color: #7b2ff7; }
+  .str { color: #2ecc71; }
+  .cm { color: #666; }
+
+  /* Audit results */
+  .audit-results { margin-bottom: 10px; }
+  .audit-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .audit-table th { background: #302b63; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .audit-table th:first-child { border-radius: 4px 0 0 0; }
+  .audit-table th:last-child { border-radius: 0 4px 0 0; }
+  .audit-table td { padding: 4px 10px; border-bottom: 1px solid #f0f0f5; }
+  .audit-table tr:nth-child(even) { background: #fafbff; }
+  .audit-table tr:first-child td { font-weight: 600; background: #f0fff4; }
+  .bar { display: inline-block; height: 8px; border-radius: 4px; }
+  .bar-deliver { background: #2ecc71; }
+  .bar-fail { background: #e74c3c; }
+
+  /* Footer CTA */
+  .footer { background: linear-gradient(135deg, #0f0c29, #302b63); color: #fff; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; }
+  .footer::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #00d2ff, #7b2ff7, #ff6b6b); }
+  .cta-text { font-size: 13px; font-weight: 600; }
+  .cta-text span { color: #00d2ff; }
+  .cta-details { text-align: right; font-size: 10px; color: #a0a0c0; line-height: 1.6; }
+  .cta-details a { color: #00d2ff; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">Guardrail <span>AI</span></div>
+  <div class="tagline">Real-time confidence scoring for AI outputs</div>
+  <div class="headline">Stop AI hallucinations before they reach your customers.<br>Score every response. <em>Catch what models won't.</em></div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- Problem / Solution -->
+  <div class="two-col">
+    <div class="card card-problem">
+      <h3>🚨 The Problem</h3>
+      <ul>
+        <li>LLMs fabricate citations, ISBNs, and study DOIs</li>
+        <li>Models give medical dosages then add "I'm not a doctor"</li>
+        <li>87% of AI responses are too risky for direct delivery</li>
+        <li>No audit trail = no compliance defense</li>
+      </ul>
+    </div>
+    <div class="card card-solution">
+      <h3>✅ The Solution</h3>
+      <ul>
+        <li>Score every AI response across 28 risk signals</li>
+        <li>Auto-route unsafe responses to human reviewers</li>
+        <li>Works with any model — internal, open-source, or cloud</li>
+        <li>Full compliance audit trail on every response</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat"><div class="num">28</div><div class="label">Risk Signals</div></div>
+    <div class="stat"><div class="num">25K</div><div class="label">Responses / Sec</div></div>
+    <div class="stat"><div class="num">&lt;50ms</div><div class="label">Latency</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">LLM Dependencies</div></div>
+  </div>
+
+  <!-- How It Works -->
+  <h2 class="section-title">How It Works</h2>
+  <div class="flow">
+    <div class="flow-step"><div class="icon">💬</div><div class="step-title">User Query</div><div class="step-desc">Customer asks your chatbot</div></div>
+    <div class="flow-step"><div class="icon">🤖</div><div class="step-title">LLM Response</div><div class="step-desc">Your model generates answer</div></div>
+    <div class="flow-step" style="border-color: #7b2ff7; border-width: 2px; background: #f0edff;"><div class="icon">🛡️</div><div class="step-title" style="color: #7b2ff7;">Guardrail Scores</div><div class="step-desc">28 signals + context in &lt;50ms</div></div>
+    <div class="flow-step"><div class="icon">✅</div><div class="step-title">Safe? Deliver</div><div class="step-desc">Confident → show to user</div></div>
+    <div class="flow-step"><div class="icon">👤</div><div class="step-title">Risky? Route</div><div class="step-desc">Flagged → human reviewer</div></div>
+  </div>
+
+  <!-- What We Detect -->
+  <h2 class="section-title">What We Detect</h2>
+  <div class="signals">
+    <div class="signal"><span class="sig-icon">🔍</span><span class="sig-text">Hallucinated facts & claims</span></div>
+    <div class="signal"><span class="sig-icon">📎</span><span class="sig-text">Fabricated citations & ISBNs</span></div>
+    <div class="signal"><span class="sig-icon">🏥</span><span class="sig-text">Unsafe medical guidance</span></div>
+    <div class="signal"><span class="sig-icon">💰</span><span class="sig-text">Risky financial advice</span></div>
+    <div class="signal"><span class="sig-icon">⚖️</span><span class="sig-text">Unqualified legal opinions</span></div>
+    <div class="signal"><span class="sig-icon">🐑</span><span class="sig-text">Sycophantic agreement</span></div>
+    <div class="signal"><span class="sig-icon">⏰</span><span class="sig-text">Stale/outdated information</span></div>
+    <div class="signal"><span class="sig-icon">🎭</span><span class="sig-text">Disclaimer-then-advise pattern</span></div>
+    <div class="signal"><span class="sig-icon">🧪</span><span class="sig-text">Safety-critical content</span></div>
+  </div>
+
+  <!-- Integration -->
+  <div class="code-box">
+    <code>
+<span class="cm">// Your existing chatbot code — add 3 lines</span>
+<span class="kw">const</span> answer = <span class="kw">await</span> llm.chat(userQuestion);
+<span class="kw">const</span> score = <span class="kw">await</span> fetch(<span class="str">'https://api.guardrail.ai/check'</span>, {
+  method: <span class="str">'POST'</span>, body: JSON.stringify({ text: answer })
+});
+<span class="kw">const</span> { confidence, decision } = <span class="kw">await</span> score.json();
+<span class="kw">if</span> (decision === <span class="str">'deliver'</span>) send(answer);  <span class="cm">// ✅ safe to show</span>
+<span class="kw">if</span> (decision === <span class="str">'escalate'</span>) escalateToHuman(answer); <span class="cm">// 🚨 needs review</span>
+    </code>
+  </div>
+
+  <!-- Real Audit Results -->
+  <h2 class="section-title">Real Audit Results — 5 LLMs, 100 Responses</h2>
+  <table class="audit-table">
+    <tr><th>Model</th><th>Creator</th><th>Params</th><th>Safe to Deliver</th><th>Failure Rate</th></tr>
+    <tr><td>🏆 Mistral</td><td>Mistral AI</td><td>7B</td><td>20%</td><td><span class="bar bar-fail" style="width: 80px;"></span> 80%</td></tr>
+    <tr><td>Phi-3</td><td>Microsoft</td><td>3.8B</td><td>15%</td><td><span class="bar bar-fail" style="width: 85px;"></span> 85%</td></tr>
+    <tr><td>Llama 3.2</td><td>Meta</td><td>3B</td><td>15%</td><td><span class="bar bar-fail" style="width: 85px;"></span> 85%</td></tr>
+    <tr><td>Gemma 2</td><td>Google</td><td>2B</td><td>10%</td><td><span class="bar bar-fail" style="width: 90px;"></span> 90%</td></tr>
+    <tr><td>Qwen 2.5</td><td>Alibaba</td><td>3B</td><td>5%</td><td><span class="bar bar-fail" style="width: 95px;"></span> 95%</td></tr>
+  </table>
+
+</div>
+
+<!-- FOOTER CTA -->
+<div class="footer">
+  <div class="cta-text">Ready to secure your AI? <span>Let's talk.</span></div>
+  <div class="cta-details">
+    <a href="https://guardrail-mvp-production.up.railway.app/playground.html">Live Playground →</a><br>
+    <a href="mailto:symehmoo@gmail.com">symehmoo@gmail.com</a>
+  </div>
+</div>
+
+</body>
+</html>
