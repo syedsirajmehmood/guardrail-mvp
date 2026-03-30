@@ -188,7 +188,7 @@
 
 <p>The answer, for most deployed AI products today, is: nothing. The response goes straight to the user. Nobody checks.</p>
 
-<p>That's what motivated me to build Guardrail. It's a middleware layer that sits between your LLM and your user, scoring every response in real-time across 23 signals. Responses that score above threshold get delivered. Everything else gets routed to a human reviewer.</p>
+<p>That's what motivated me to build Guardrail. It's a middleware layer that sits between your LLM and your user, scoring every response in real-time across 28 signals — including 5 new context-aware signals that analyze the user's question alongside the AI response. Responses that score above threshold get delivered. Everything else gets routed to a human reviewer.</p>
 
 <p>The scoring runs at 25,000 responses per second. It doesn't call another LLM (no LLM-as-judge). It's pure pattern detection — which means it's fast, deterministic, and doesn't hallucinate itself.</p>
 

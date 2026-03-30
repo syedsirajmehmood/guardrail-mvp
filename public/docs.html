@@ -145,6 +145,7 @@
             <table>
                 <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
                 <tr><td><code>text</code></td><td>string</td><td><span class="badge required">Required</span></td><td>The AI-generated response text to score</td></tr>
+                <tr><td><code>userQuery</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>The original user question. Enables context-aware scoring: question-type detection, relevance analysis, scope checking, and refusal auditing</td></tr>
                 <tr><td><code>context</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Domain context: <code>general</code>, <code>medical</code>, <code>legal</code>, <code>financial</code>, <code>security</code>, <code>safety</code>, <code>mental_health</code>, <code>child_safety</code>, <code>nuclear</code>. Default: <code>general</code></td></tr>
                 <tr><td><code>userId</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Your internal user ID for tracking</td></tr>
             </table>
@@ -155,6 +156,7 @@
   -H "X-Guardrail-Key: gr_live_your_key" \
   -d '{
     "text": "The capital of France is Paris.",
+    "userQuery": "What is the capital of France?",
     "context": "general"
   }'</pre>
 
@@ -196,6 +198,7 @@
                 <tr><td><code>detectedContext</code></td><td>string?</td><td>Auto-detected domain (null if none detected)</td></tr>
                 <tr><td><code>excerpts</code></td><td>object[]</td><td>Exact text matches + impact percentage per signal</td></tr>
                 <tr><td><code>claims</code></td><td>object[]</td><td>Extracted statements with type + verification status</td></tr>
+                <tr><td><code>queryAnalysis</code></td><td>object?</td><td>Present when <code>userQuery</code> is provided. Contains <code>questionType</code>, <code>relevanceScore</code>, <code>scopeRatio</code>, and <code>signals</code> array</td></tr>
             </table>
 
             <h3>Claim Types</h3>
@@ -306,28 +309,24 @@ const result = await gr.check(aiResponse);</pre>
 
             <!-- ═══ MCP ═══ -->
             <h2 id="mcp">MCP Server (Claude Desktop)</h2>
-            <p>Guardrail has a native MCP server for use with Claude Desktop and other MCP-compatible clients.</p>
+            <p>Guardrail has a native MCP server for use with Claude Desktop and other MCP-compatible clients. Now supports <code>userQuery</code> for context-aware scoring.</p>
 
-            <h3>Install via npx</h3>
-<pre>npx guardrail-mcp --key gr_live_xxx</pre>
+            <h3>Install via npx (recommended)</h3>
+<pre>npx guardrail-mcp-server --key gr_live_xxx</pre>
+
+            <h3>Claude Desktop config (zero-setup)</h3>
+<pre>{
+  "mcpServers": {
+    "guardrail": {
+      "command": "npx",
+      "args": ["guardrail-mcp-server", "--key", "gr_live_xxx"]
+    }
+  }
+}</pre>
 
             <h3>Or download directly</h3>
             <p>Visit <a href="developer.html">Developer Portal</a> → "Download MCP Server" button, or:</p>
 <pre>curl -o guardrail-mcp.js https://guardrail-mvp-production.up.railway.app/api/mcp-download</pre>
-
-            <h3>Claude Desktop config</h3>
-<pre>{
-  "mcpServers": {
-    "guardrail": {
-      "command": "node",
-      "args": ["guardrail-mcp.js"],
-      "env": {
-        "GUARDRAIL_API_KEY": "gr_live_xxx",
-        "GUARDRAIL_ENDPOINT": "https://guardrail-mvp-production.up.railway.app"
-      }
-    }
-  }
-}</pre>
 
             <!-- ═══ WEBHOOKS ═══ -->
             <h2 id="webhooks">Webhooks <span class="badge coming">Coming Soon</span></h2>
@@ -369,7 +368,7 @@ const result = await gr.check(aiResponse);</pre>
             </table>
 
             <!-- ═══ SIGNAL CATEGORIES ═══ -->
-            <h2 id="signals">Signal Categories (55 patterns)</h2>
+            <h2 id="signals">Signal Categories (60+ patterns)</h2>
             <table>
                 <tr><th>Category</th><th>Patterns</th><th>Weight Range</th><th>Examples</th></tr>
                 <tr><td>Uncertainty</td><td>8</td><td>0.08–0.18</td><td>hedged language, epistemic distancing, partial uncertainty</td></tr>
