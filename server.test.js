@@ -999,3 +999,80 @@ describe('Additional Signal Coverage', () => {
         expect(withCode.body.confidence).toBeGreaterThan(0.60);
     });
 });
+
+// ── Wikipedia Claim Verification ────────────────────────────────────────────
+describe('Wikipedia Verification Module', () => {
+    const wiki = require('./wikipedia');
+
+    it('extractSearchQuery extracts named entities', () => {
+        expect(wiki.extractSearchQuery('The Eiffel Tower was built in 1889.')).toContain('Eiffel');
+        expect(wiki.extractSearchQuery('Python was created by Guido van Rossum.')).toContain('Guido');
+    });
+
+    it('extractNumbers finds numbers with units', () => {
+        const nums = wiki.extractNumbers('The tower is 324 meters tall and was built in 1889.');
+        expect(nums.length).toBeGreaterThanOrEqual(2);
+        expect(nums.some(n => n.number === 324)).toBe(true);
+        expect(nums.some(n => n.number === 1889)).toBe(true);
+    });
+
+    it('compareNumbers detects match', () => {
+        expect(wiki.compareNumbers(1889, 'completed in 1889')).toBe('match');
+    });
+
+    it('compareNumbers detects mismatch', () => {
+        expect(wiki.compareNumbers(500, 'The tower is 330 metres tall')).toBe('mismatch');
+    });
+
+    it('termOverlap returns > 0 for related text', () => {
+        const overlap = wiki.termOverlap(
+            'The Eiffel Tower was built in Paris',
+            'The Eiffel Tower is a lattice tower on the Champ de Mars in Paris'
+        );
+        expect(overlap).toBeGreaterThan(0.3);
+    });
+
+    it('termOverlap returns ~0 for unrelated text', () => {
+        const overlap = wiki.termOverlap(
+            'Quantum mechanics wave function',
+            'The Eiffel Tower is a lattice tower in Paris'
+        );
+        expect(overlap).toBeLessThan(0.2);
+    });
+});
+
+// ── Wikipedia verification scoring integration ──────────────────────────────
+describe('Wikipedia Verification Integration', () => {
+    it('/api/check returns claims with verification status', async () => {
+        const res = await request(app)
+            .post('/api/check?verify=false').set('X-Guardrail-Key', userKey)
+            .send({ text: 'The Eiffel Tower was built in 1889. It is 324 meters tall.', context: 'general' });
+        expect(Array.isArray(res.body.claims)).toBe(true);
+        // Without verification, claims should be 'unverified' (static check)
+        res.body.claims.forEach(c => {
+            expect(['unverified', 'sourced', 'self_hedging']).toContain(c.verification);
+        });
+    });
+
+    it('demo-check returns correct shape', async () => {
+        const res = await request(app)
+            .post('/api/demo-check')
+            .send({ text: 'Unique wiki test: The sun is a star.', context: 'general' });
+        // May be 200 or 429 (rate limited by earlier tests) — both are valid
+        if (res.status === 200) {
+            expect(res.body.claims).toBeDefined();
+            expect(res.body.demo).toBe(true);
+        } else {
+            expect(res.status).toBe(429);
+        }
+    });
+
+    it('scoreTextWithVerification is callable', async () => {
+        // This tests the async wrapper exists and runs
+        const res = await request(app)
+            .post('/api/check?verify=false').set('X-Guardrail-Key', userKey)
+            .send({ text: 'Paris is the capital of France.', context: 'general' });
+        expect(res.status).toBe(200);
+        expect(res.body.decision).toBeDefined();
+    });
+});

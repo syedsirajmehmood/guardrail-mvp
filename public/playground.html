@@ -767,14 +767,25 @@
                 claimsHtml = '<div class="reasons-section" style="margin-top:16px">'
                     + '<div class="reasons-title">🔍 Extracted Claims</div>'
                     + r.claims.map(function(cl) {
-                        var icon = cl.verification === 'sourced' ? '✅' : cl.verification === 'self_hedging' ? '⚡' : '⚠️';
-                        var color = cl.verification === 'sourced' ? 'var(--teal)' : cl.verification === 'self_hedging' ? 'var(--amber)' : 'var(--coral)';
-                        var label = cl.verification === 'sourced' ? 'Sourced' : cl.verification === 'self_hedging' ? 'Disclaimer' : 'Unverified';
+                        var icons = { verified: '✅', contradicted: '❌', sourced: '📎', self_hedging: '⚡', unverified: '⚪' };
+                        var colors = { verified: '#34d399', contradicted: '#f87171', sourced: 'var(--teal)', self_hedging: 'var(--amber)', unverified: 'var(--muted)' };
+                        var labels = { verified: 'Verified', contradicted: 'Contradicted', sourced: 'Sourced', self_hedging: 'Disclaimer', unverified: 'Unverified' };
+                        var icon = icons[cl.verification] || '⚪';
+                        var color = colors[cl.verification] || 'var(--muted)';
+                        var label = labels[cl.verification] || 'Unverified';
+                        var wikiLine = '';
+                        if (cl.source === 'Wikipedia' && cl.snippet) {
+                            wikiLine = '<div style="margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.04);border-radius:4px;font-size:.7rem;color:var(--muted);line-height:1.4">'
+                                + '<span style="color:' + color + ';font-weight:600">Wikipedia:</span> ' + cl.snippet.substring(0, 140) + '…'
+                                + (cl.wikiUrl ? ' <a href="' + cl.wikiUrl + '" target="_blank" style="color:var(--teal);text-decoration:none">→ source</a>' : '')
+                                + '</div>';
+                        }
                         return '<div style="background:#0a1929;border-left:3px solid ' + color + ';border-radius:6px;padding:10px 14px;margin-bottom:6px;font-size:.8rem">'
                             + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
-                            + '<span style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:' + color + '">' + icon + ' ' + label + '</span>'
+                            + '<span style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:' + color + '">' + icon + ' ' + label + (cl.source ? ' (' + cl.source + ')' : '') + '</span>'
                             + '<span style="font-size:.65rem;color:var(--muted);text-transform:uppercase">' + cl.type + '</span></div>'
                             + '<div style="color:var(--muted);font-size:.78rem;line-height:1.5">&ldquo;' + cl.text + '&rdquo;</div>'
+                            + wikiLine
                             + '</div>';
                     }).join('')
                     + '</div>';

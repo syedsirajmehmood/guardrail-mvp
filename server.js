@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Anthropic = require('@anthropic-ai/sdk');
+const { verifyAllClaims } = require('./wikipedia');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -455,6 +456,53 @@ function scoreText(text, context) {
     };
 }
 
+// Async wrapper: runs Wikipedia verification on extracted claims
+async function scoreTextWithVerification(text, context) {
+    const result = scoreText(text, context);
+    if (result.claims && result.claims.length > 0) {
+        // Verify claims against Wikipedia (parallel, with timeout)
+        const verifiedClaims = await verifyAllClaims(result.claims);
+        result.claims = verifiedClaims;
+
+        // Recalculate claim impact on confidence
+        const verified = verifiedClaims.filter(c => c.verification === 'verified').length;
+        const contradicted = verifiedClaims.filter(c => c.verification === 'contradicted').length;
+        const unverified = verifiedClaims.filter(c => c.verification === 'unverified').length;
+
+        // Remove old claim excerpt and recalculate
+        result.excerpts = result.excerpts.filter(e => !/unverified claim/.test(e.signal));
+
+        let claimAdjustment = 0;
+        if (verified > 0) {
+            const bonus = Math.min(verified * 0.02, 0.10);
+            claimAdjustment -= bonus; // negative penalty = bonus
+            result.excerpts.push({ signal: verified + ' claim' + (verified > 1 ? 's' : '') + ' verified (Wikipedia)', text: 'Matched against Wikipedia', impact: bonus });
+        }
+        if (contradicted > 0) {
+            const penalty = Math.min(contradicted * 0.08, 0.20);
+            claimAdjustment += penalty;
+            result.excerpts.push({ signal: contradicted + ' claim' + (contradicted > 1 ? 's' : '') + ' contradicted (Wikipedia)', text: 'Wikipedia data disagrees', impact: -penalty });
+        }
+        if (unverified > 0) {
+            const penalty = Math.min(unverified * 0.03, 0.15);
+            claimAdjustment += penalty;
+            result.excerpts.push({ signal: unverified + ' unverified claim' + (unverified > 1 ? 's' : '') + ' detected', text: 'Factual statements without citations or sources', impact: -penalty });
+        }
+
+        // Recalculate confidence with new claim data
+        const newConf = Math.max(0, Math.min(1, result.confidence + (verified * 0.02) - (contradicted * 0.08)));
+        result.confidence = parseFloat(newConf.toFixed(3));
+
+        // Recalculate decision
+        if (result.confidence >= 0.75) result.decision = 'deliver';
+        else if (result.confidence >= 0.45) result.decision = 'flag';
+        else result.decision = 'escalate';
+
+        result.reasons = result.excerpts.map(e => e.signal);
+    }
+    return result;
+}
+
 
 // ── Anthropic client ──────────────────────────────────────────────────────────
 // Pass overrideKey to use the caller's own Anthropic key (their tokens, not ours)
@@ -466,7 +514,7 @@ function getAnthropic(overrideKey) {
 
 // ── Demo endpoint — keyless playground (rate-limited to 5/ip/hour) ────────────
 const demoLimits = {};
-app.post('/api/demo-check', (req, res) => {
+app.post('/api/demo-check', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
     const now = Date.now();
     if (!demoLimits[ip]) demoLimits[ip] = [];
@@ -480,7 +528,11 @@ app.post('/api/demo-check', (req, res) => {
     if (!text || typeof text !== 'string' || !text.trim()) {
         return res.status(400).json({ error: 'text is required' });
     }
-    const result = scoreText(text, context || 'general');
+    // Demo mode: verify only if ?verify=true (keeps default fast)
+    const shouldVerify = req.query.verify === 'true';
+    const result = shouldVerify
+        ? await scoreTextWithVerification(text, context || 'general')
+        : scoreText(text, context || 'general');
     res.json({
         ...result,
         id: 'demo_' + Date.now().toString(36),
@@ -659,11 +711,15 @@ app.post('/api/chat', requireKey, async (req, res) => {
 });
 
 // POST /api/check — main scoring endpoint
-app.post('/api/check', requireKey, (req, res) => {
+app.post('/api/check', requireKey, async (req, res) => {
     const { text, context, userId, metadata } = req.body;
     if (!text) return res.status(400).json({ error: 'text is required' });
 
-    const scored = scoreText(text, context || 'general');
+    // Use Wikipedia verification by default; skip with ?verify=false
+    const shouldVerify = req.query.verify !== 'false';
+    const scored = shouldVerify
+        ? await scoreTextWithVerification(text, context || 'general')
+        : scoreText(text, context || 'general');
     const record = {
         id: uuidv4(),
         timestamp: new Date().toISOString(),
