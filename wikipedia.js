@@ -72,8 +72,8 @@ function extractSearchQuery(claim) {
  */
 function extractNumbers(claim) {
     const results = [];
-    // Match numbers with optional commas, decimals, and units
-    const numRe = /(\d[\d,]*\.?\d*)\s*(percent|%|million|billion|thousand|meters?|metres?|feet|ft|km|miles?|kg|mg|lbs?|dollars?|USD|EUR|years?|days?|hours?|minutes?|seconds?|people|residents|inhabitants)?/gi;
+    // Match numbers with optional negation, commas, decimals, and units
+    const numRe = /(-?\d[\d,]*\.?\d*)\s*(percent|%|million|billion|thousand|meters?|metres?|feet|ft|km|miles?|kg|mg|lbs?|dollars?|USD|EUR|years?|days?|hours?|minutes?|seconds?|people|residents|inhabitants|degrees?)?/gi;
     let m;
     while ((m = numRe.exec(claim)) !== null) {
         const num = parseFloat(m[1].replace(/,/g, ''));
@@ -193,7 +193,7 @@ function compareNumbers(claimNum, wikiText) {
     for (const wn of wikiNumbers) {
         if (claimNum > 0 && wn.number > 0) {
             const ratio = claimNum / wn.number;
-            if (ratio > 0.1 && ratio < 10) return 'mismatch'; // same order of magnitude but wrong
+            if (ratio >= 0.1 && ratio < 10) return 'mismatch'; // same order of magnitude but wrong
         }
     }
 
