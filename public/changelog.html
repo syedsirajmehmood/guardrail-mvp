@@ -54,6 +54,40 @@
         <p class="subtitle">What's new in Guardrail. Active development — shipping weekly.</p>
 
         <div class="entry">
+            <div class="entry-date">March 30, 2026</div>
+            <div class="entry-version">v3.0.0 — PostgreSQL Persistence + E2E Testing</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag test">Tests</span>
+            <ul>
+                <li><strong>PostgreSQL integration</strong> — keys, usage counts, and audit logs now persist across Railway deploys</li>
+                <li>New <strong>db.js</strong> abstraction layer with graceful fallback to in-memory mode for local dev</li>
+                <li><strong>usage_logs</strong> table records every scored response — score, decision, flags, context, response length</li>
+                <li>Migration script (<code>init_db.js</code>) auto-imports existing keys from <code>data/keys.json</code></li>
+                <li><strong>124 API keys</strong> migrated to PostgreSQL</li>
+                <li><strong>22-point E2E test suite</strong> against production — 21/22 passing (signup, auth, scoring, admin CRUD, stats, demo)</li>
+                <li>All key management routes converted to async with proper error handling</li>
+                <li>Database indexes on <code>email</code>, <code>api_key</code>, and <code>created_at</code> for fast lookups</li>
+            </ul>
+        </div>
+
+        <div class="entry">
+            <div class="entry-date">March 30, 2026</div>
+            <div class="entry-version">v2.3.0 — Multi-Model Audit + Sales Assets</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag test">Tests</span>
+            <ul>
+                <li><strong>Multi-model audit</strong> — tested 5 LLMs (Llama 3.2, Mistral, Phi-3, Gemma 2, Qwen 2.5) with 100 real responses</li>
+                <li><strong>87% failure rate</strong> — only 13/100 responses safe to deliver</li>
+                <li>Direct function access (<code>scoreText()</code>) for <strong>25,000 req/sec</strong> audit throughput</li>
+                <li><strong>Repository split</strong> — public <a href="https://github.com/saifsysim/guardrail-audit">guardrail-audit</a> for audit scripts, private guardrail-mvp for scoring engine</li>
+                <li>Professional <strong>one-pager brochure</strong> (HTML + downloadable PDF)</li>
+                <li><strong>17-slide pitch deck</strong> (HTML + PowerPoint) — problem, solution, audit data, roadmap, design partner program, business model, competitive edge</li>
+                <li>Support for <strong>Cloud APIs</strong> (OpenAI, Claude, Gemini) + local Ollama models in audit runner</li>
+                <li>Medium article draft for publication</li>
+            </ul>
+        </div>
+
+        <div class="entry">
             <div class="entry-date">March 29, 2026</div>
             <div class="entry-version">v2.2.0 — Signal Expansion + Credibility Pass</div>
             <span class="entry-tag feat">Feature</span>
