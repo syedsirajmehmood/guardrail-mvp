@@ -2,8 +2,8 @@
 'use strict';
 
 /**
- * guardrail-mcp CLI
- * Usage: npx guardrail-mcp --key gr_live_xxx [--endpoint https://...]
+ * guardrail-mcp-server CLI
+ * Usage: npx guardrail-mcp-server --key gr_live_xxx [--endpoint https://...]
  *
  * Starts a Guardrail MCP server that connects to Claude Desktop.
  */
@@ -15,7 +15,7 @@ if (args.includes('--help') || args.includes('-h')) {
 🛡️  Guardrail MCP Server — AI Confidence Scoring for Claude Desktop
 
 USAGE:
-  npx guardrail-mcp --key <your-api-key> [--endpoint <url>]
+  npx guardrail-mcp-server --key <your-api-key> [--endpoint <url>]
 
 OPTIONS:
   --key <key>       Your Guardrail API key (required). Get one free at:
@@ -26,25 +26,27 @@ OPTIONS:
 
   --help, -h        Show this help message
 
-SETUP:
-  1. Get a free API key at https://guardrail-mvp-production.up.railway.app
-  2. Add to your Claude Desktop config (~/.config/claude/claude_desktop_config.json):
+SETUP (CLAUDE DESKTOP):
+  Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
 
      {
        "mcpServers": {
          "guardrail": {
            "command": "npx",
-           "args": ["guardrail-mcp", "--key", "gr_live_xxx"]
+           "args": ["guardrail-mcp-server", "--key", "gr_live_xxx"]
          }
        }
      }
 
-  3. Restart Claude Desktop — Guardrail tools will appear automatically.
+  Then restart Claude Desktop — Guardrail tools will appear automatically.
 
 TOOLS PROVIDED:
   • check_confidence  — Score any AI text for confidence (0-1)
   • get_my_stats      — View your usage statistics
   • score_and_explain — Score + human-readable explanation
+
+  All tools now support an optional 'userQuery' parameter for
+  context-aware scoring (question type, relevance, scope analysis).
 
 DOCS: https://guardrail-mvp-production.up.railway.app/docs.html
 `);
@@ -57,7 +59,7 @@ const endIdx = args.indexOf('--endpoint');
 
 if (keyIdx === -1 || !args[keyIdx + 1]) {
     console.error('❌ Missing --key argument.');
-    console.error('   Usage: npx guardrail-mcp --key gr_live_xxx');
+    console.error('   Usage: npx guardrail-mcp-server --key gr_live_xxx');
     console.error('   Run with --help for full usage.');
     process.exit(1);
 }
@@ -71,9 +73,9 @@ process.env.GUARDRAIL_ENDPOINT = (endIdx !== -1 && args[endIdx + 1])
 const key = process.env.GUARDRAIL_API_KEY;
 const endpoint = process.env.GUARDRAIL_ENDPOINT;
 
-process.stderr.write(`🛡️  Guardrail MCP Server starting...\n`);
+process.stderr.write(`🛡️  Guardrail MCP Server v1.1.0 starting...\n`);
 process.stderr.write(`   Key: ${key.slice(0, 12)}...\n`);
 process.stderr.write(`   Endpoint: ${endpoint}\n`);
 
-// Load the self-contained MCP server (same directory)
+// Load the MCP server
 require('../server.js');

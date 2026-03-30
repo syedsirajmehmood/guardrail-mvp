@@ -331,8 +331,93 @@ function extractClaims(text) {
 }
 
 
+// ── Query Analysis — context-aware scoring ───────────────────────────────────
+// When userQuery is provided, we can score the response in relation to the question.
+
+const QUESTION_TYPE_PATTERNS = {
+    fact: /^(what|who|when|where|which|how many|how much|how old|how long|how far|is |are |was |were |does |do |did |has |have |had )/i,
+    opinion: /\b(should|recommend|suggest|think|best|prefer|better|worst|opinion|advice|would you|your (favorite|view|take|thoughts))\b/i,
+    instruction: /\b(how (to|do|can|should)|steps? (to|for)|guide|tutorial|explain how|walk me through|show me how)\b/i,
+    dangerous: /\b(dosage|medication|prescri(be|ption)|invest|buy (stock|crypto)|sue|lawsuit|file (a |for )?(claim|lawsuit)|self[- ]harm|suicid|kill|weapon|hack|exploit|bypass)\b/i,
+};
+
+function classifyQuestion(query) {
+    if (!query) return { type: 'unknown', signals: [] };
+    const q = query.trim();
+    const signals = [];
+
+    // Check for dangerous queries first (highest priority)
+    if (QUESTION_TYPE_PATTERNS.dangerous.test(q)) {
+        signals.push('dangerous-query');
+        // Also classify the sub-type
+        if (QUESTION_TYPE_PATTERNS.instruction.test(q)) return { type: 'dangerous-instruction', signals };
+        if (QUESTION_TYPE_PATTERNS.fact.test(q)) return { type: 'dangerous-fact', signals };
+        return { type: 'dangerous', signals };
+    }
+
+    if (QUESTION_TYPE_PATTERNS.instruction.test(q)) return { type: 'instruction', signals };
+    if (QUESTION_TYPE_PATTERNS.opinion.test(q)) return { type: 'opinion', signals };
+    if (QUESTION_TYPE_PATTERNS.fact.test(q)) return { type: 'fact', signals };
+
+    return { type: 'general', signals };
+}
+
+function computeRelevance(query, response) {
+    if (!query || !response) return 1.0; // no query = assume relevant
+    // Extract meaningful words (>3 chars, not stopwords)
+    const STOPWORDS = new Set(['this', 'that', 'with', 'from', 'they', 'them', 'their', 'what', 'when', 'where', 'which', 'about', 'have', 'been', 'will', 'would', 'could', 'should', 'your', 'some', 'more', 'very', 'just', 'also', 'into', 'than', 'then', 'only', 'most', 'such', 'each', 'much', 'well', 'here', 'there']);
+    const queryWords = query.toLowerCase().split(/\W+/).filter(w => w.length > 3 && !STOPWORDS.has(w));
+    if (queryWords.length === 0) return 1.0;
+
+    const responseLower = response.toLowerCase();
+    const found = queryWords.filter(w => responseLower.includes(w)).length;
+    return found / queryWords.length;
+}
+
+function analyzeQueryContext(userQuery, responseText) {
+    if (!userQuery) return null;
+
+    const questionType = classifyQuestion(userQuery);
+    const relevanceScore = computeRelevance(userQuery, responseText);
+
+    // Scope analysis — is the response proportionate?
+    const queryWordCount = userQuery.split(/\s+/).length;
+    const responseWordCount = responseText.split(/\s+/).length;
+    const scopeRatio = responseWordCount / Math.max(queryWordCount, 1);
+
+    const analysis = {
+        questionType: questionType.type,
+        relevanceScore: parseFloat(relevanceScore.toFixed(2)),
+        scopeRatio: parseFloat(scopeRatio.toFixed(1)),
+        queryLength: queryWordCount,
+        responseLength: responseWordCount,
+        signals: [...questionType.signals],
+    };
+
+    // Flag low relevance
+    if (relevanceScore < 0.25) {
+        analysis.signals.push('low-relevance');
+    }
+
+    // Flag scope creep (response is 10x+ longer than question and question is short)
+    if (scopeRatio > 10 && queryWordCount < 15) {
+        analysis.signals.push('scope-creep');
+    }
+
+    // Flag dangerous query + free answer (no refusal detected)
+    if (questionType.type.startsWith('dangerous')) {
+        const hasRefusal = /\b(i (can'?t|cannot|won'?t|will not)|i'?m not (able|qualified|in a position)|not (medical|legal|financial) advice|consult (a|your) (doctor|lawyer|financial|professional))\b/i.test(responseText);
+        if (!hasRefusal) {
+            analysis.signals.push('no-refusal-on-dangerous');
+        }
+    }
+
+    return analysis;
+}
+
+
 // --- Main scoring function ---
-function scoreText(text, context) {
+function scoreText(text, context, userQuery) {
     const excerpts = [];
     let totalPenalty = 0;
 
@@ -401,6 +486,52 @@ function scoreText(text, context) {
         });
     }
 
+    // ── Query-aware scoring (when userQuery is provided) ─────────────────────
+    let queryAnalysis = null;
+    if (userQuery) {
+        queryAnalysis = analyzeQueryContext(userQuery, text);
+
+        // Relevance gap: response doesn't address the question
+        if (queryAnalysis.relevanceScore < 0.25) {
+            totalPenalty += 0.08;
+            excerpts.push({
+                signal: 'Low relevance to user query',
+                text: `Only ${(queryAnalysis.relevanceScore * 100).toFixed(0)}% keyword overlap with question`,
+                impact: -0.08,
+            });
+        }
+
+        // Scope creep: response vastly exceeds the question scope
+        if (queryAnalysis.signals.includes('scope-creep')) {
+            totalPenalty += 0.04;
+            excerpts.push({
+                signal: 'Scope creep — response disproportionately long',
+                text: `${queryAnalysis.responseLength} words for a ${queryAnalysis.queryLength}-word question`,
+                impact: -0.04,
+            });
+        }
+
+        // Dangerous question with no refusal
+        if (queryAnalysis.signals.includes('no-refusal-on-dangerous')) {
+            totalPenalty += 0.10;
+            excerpts.push({
+                signal: 'Dangerous query answered without appropriate refusal',
+                text: `Question classified as ${queryAnalysis.questionType}`,
+                impact: -0.10,
+            });
+        }
+
+        // Bonus: when query is provided and response is relevant, slight confidence boost
+        if (queryAnalysis.relevanceScore >= 0.5 && !queryAnalysis.signals.includes('no-refusal-on-dangerous')) {
+            totalPenalty -= 0.03; // boost (negative penalty = positive)
+            excerpts.push({
+                signal: 'Query-context match — response addresses user question',
+                text: `${(queryAnalysis.relevanceScore * 100).toFixed(0)}% relevance`,
+                impact: 0.03,
+            });
+        }
+    }
+
     // Base score: 0.82 — text must earn confidence through quality signals
     const baseScore = 0.82 + quality.qualityBonus;
     const confidence = Math.max(0, Math.min(1, baseScore - totalPenalty));
@@ -412,7 +543,7 @@ function scoreText(text, context) {
 
     const reasons = excerpts.map(function(e) { return e.signal; });
 
-    return {
+    const result = {
         confidence: parseFloat(confidence.toFixed(3)),
         decision,
         reasons,
@@ -421,11 +552,15 @@ function scoreText(text, context) {
         detectedContext: autoContext,
         effectiveContext: effectiveContext,
     };
+
+    if (queryAnalysis) result.queryAnalysis = queryAnalysis;
+
+    return result;
 }
 
 // Async wrapper: runs Wikipedia verification on extracted claims
-async function scoreTextWithVerification(text, context) {
-    const result = scoreText(text, context);
+async function scoreTextWithVerification(text, context, userQuery) {
+    const result = scoreText(text, context, userQuery);
     if (result.claims && result.claims.length > 0) {
         // Verify claims against Wikipedia (parallel, with timeout)
         const verifiedClaims = await verifyAllClaims(result.claims);
@@ -700,18 +835,19 @@ app.post('/api/chat', requireKey, async (req, res) => {
 
 // POST /api/check — main scoring endpoint
 app.post('/api/check', requireKey, async (req, res) => {
-    const { text, context, userId, metadata } = req.body;
+    const { text, context, userId, metadata, userQuery } = req.body;
     if (!text) return res.status(400).json({ error: 'text is required' });
 
     // Use Wikipedia verification by default; skip with ?verify=false
     const shouldVerify = req.query.verify !== 'false';
     const scored = shouldVerify
-        ? await scoreTextWithVerification(text, context || 'general')
-        : scoreText(text, context || 'general');
+        ? await scoreTextWithVerification(text, context || 'general', userQuery || null)
+        : scoreText(text, context || 'general', userQuery || null);
     const record = {
         id: uuidv4(),
         timestamp: new Date().toISOString(),
         text: text.substring(0, 300),
+        userQuery: userQuery ? userQuery.substring(0, 300) : null,
         context: context || 'general',
         userId: userId || 'anonymous',
         metadata: metadata || {},

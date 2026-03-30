@@ -1,52 +1,62 @@
-# guardrail-mcp
+# guardrail-mcp-server
 
-MCP server for [Guardrail](https://guardrail-mvp-production.up.railway.app) — AI confidence scoring for Claude Desktop.
+MCP server for [Guardrail AI](https://guardrail-mvp-production.up.railway.app) — score AI responses for hallucinations, safety risks, and confidence before they reach your users.
 
-Score any AI response for uncertainty, hallucination risk, and high-stakes domain signals. Deterministic pattern matching — no LLM tokens burned.
+Works with **Claude Desktop**, **Cursor**, and any MCP-compatible client.
 
 ## Quick Start
 
-```bash
-npx guardrail-mcp --key gr_live_xxx
-```
+### 1. Get a Free API Key
 
-Get a free API key at [guardrail-mvp-production.up.railway.app](https://guardrail-mvp-production.up.railway.app).
+Sign up at [guardrail-mvp-production.up.railway.app](https://guardrail-mvp-production.up.railway.app)
 
-## Claude Desktop Config
+### 2. Configure Claude Desktop
 
-Add to `~/.config/claude/claude_desktop_config.json`:
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "guardrail": {
       "command": "npx",
-      "args": ["guardrail-mcp", "--key", "gr_live_xxx"]
+      "args": ["guardrail-mcp-server", "--key", "gr_live_YOUR_KEY_HERE"]
     }
   }
 }
 ```
 
-Restart Claude Desktop — three Guardrail tools appear automatically:
+### 3. Restart Claude Desktop
 
-| Tool | What it does |
+Three new tools will appear:
+
+| Tool | What It Does |
 |------|-------------|
 | `check_confidence` | Score text → deliver / flag / escalate |
-| `get_my_stats` | View usage stats and decision breakdown |
 | `score_and_explain` | Score + human-readable explanation |
+| `get_my_stats` | Your usage stats |
 
-## Options
+## Context-Aware Scoring
+
+For best results, pass the user's original question alongside the AI response:
 
 ```
---key <key>         Guardrail API key (required)
---endpoint <url>    Custom API URL (default: production Railway)
---help              Show help
+Use check_confidence with:
+  text: "The capital of France is Paris"
+  userQuery: "What is the capital of France?"
 ```
 
-## How It Works
+This enables:
+- **Question-type detection** — fact vs opinion vs instruction
+- **Relevance scoring** — does the response address the question?
+- **Scope analysis** — is the response proportionate to the question?
+- **Refusal audit** — did the model answer a dangerous question freely?
 
-Guardrail uses 55 deterministic signal patterns across 8 categories (uncertainty, hallucination, sycophancy, etc.) to score AI responses. No LLM calls in the scoring path — results are instant and reproducible.
+## 23+ Detection Signals
 
-## License
+Hallucinated facts • Fabricated citations • Medical/legal/financial risk • Sycophancy • Knowledge cutoff disclaimers • Self-contradiction • Unverified claims • and more.
 
-MIT
+## Links
+
+- [Live Playground](https://guardrail-mvp-production.up.railway.app/playground.html)
+- [API Docs](https://guardrail-mvp-production.up.railway.app/docs.html)
+- [Audit Report](https://github.com/saifsysim/guardrail-audit)

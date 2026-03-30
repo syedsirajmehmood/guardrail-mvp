@@ -204,15 +204,16 @@ async function logCheck(record) {
     if (!usePostgres) return;
     try {
         await pool.query(
-            `INSERT INTO usage_logs (customer_api_key, score, decision, flags_triggered, context, response_length)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
+            `INSERT INTO usage_logs (customer_api_key, score, decision, flags_triggered, context, response_length, user_query)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
                 record.apiKey,
                 record.confidence,
                 record.decision,
-                record.flags ? record.flags.map(f => f.label || f) : [],
+                record.reasons || [],
                 record.context || 'general',
-                record.text ? record.text.length : 0
+                record.text ? record.text.length : 0,
+                record.userQuery || null
             ]
         );
     } catch (e) {
