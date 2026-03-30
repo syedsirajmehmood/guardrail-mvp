@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const db = require('./db');
 const Anthropic = require('@anthropic-ai/sdk');
 const { verifyAllClaims } = require('./wikipedia');
 
@@ -14,46 +15,8 @@ const PORT = process.env.PORT || 3001;
 // ── Master key (set GUARDRAIL_MASTER_KEY in .env) ─────────────────────────────
 const MASTER_KEY = process.env.GUARDRAIL_MASTER_KEY || 'gr_master_changeme';
 
-// ── Persistent API key store ──────────────────────────────────────────────────
-// Keys persist in data/keys.json so they survive Railway redeploys
-const fs = require('fs');
-const DATA_DIR = path.join(__dirname, 'data');
-const KEYS_FILE = path.join(DATA_DIR, 'keys.json');
-
-const apiKeys = new Map();
-
-function saveKeys() {
-    try {
-        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-        const obj = {};
-        apiKeys.forEach((v, k) => { obj[k] = v; });
-        fs.writeFileSync(KEYS_FILE, JSON.stringify(obj, null, 2));
-    } catch (e) { console.error('[keys] save failed:', e.message); }
-}
-
-function loadKeys() {
-    try {
-        if (fs.existsSync(KEYS_FILE)) {
-            const obj = JSON.parse(fs.readFileSync(KEYS_FILE, 'utf8'));
-            for (const [k, v] of Object.entries(obj)) apiKeys.set(k, v);
-            console.log(`[keys] Loaded ${apiKeys.size} keys from disk`);
-        }
-    } catch (e) { console.error('[keys] load failed:', e.message); }
-}
-loadKeys();
-
-function createKey(email, label) {
-    const key = 'gr_live_' + uuidv4().replace(/-/g, '');
-    apiKeys.set(key, {
-        email: email || null,
-        label: label || email || 'unnamed',
-        created: new Date().toISOString(),
-        requests: 0,
-        decisions: { deliver: 0, flag: 0, escalate: 0 }
-    });
-    saveKeys();
-    return key;
-}
+// ── API Key store backed by PostgreSQL (with in-memory fallback) ──────────────
+// See db.js for implementation — uses DATABASE_URL when available
 
 // ── In-memory event/log store ─────────────────────────────────────────────────
 const store = { logs: [], clients: [], stats: { total: 0, deliver: 0, flag: 0, escalate: 0 } };
@@ -91,13 +54,17 @@ function requireKey(req, res, next) {
         req.isMaster = true;
         return next();
     }
-    const entry = apiKeys.get(key);
-    if (!entry) {
-        return res.status(401).json({ error: 'Invalid or revoked API key.' });
-    }
-    entry.requests++;
-    req.guardrailKey = key;
-    next();
+    db.getCustomerByKey(key).then(entry => {
+        if (!entry) {
+            return res.status(401).json({ error: 'Invalid or revoked API key.' });
+        }
+        req.guardrailKey = key;
+        req.guardrailCustomer = entry;
+        next();
+    }).catch(err => {
+        console.error('[auth] DB error:', err.message);
+        return res.status(500).json({ error: 'Internal auth error.' });
+    });
 }
 
 /** Validate the master admin key. */
@@ -546,63 +513,84 @@ app.post('/api/demo-check', async (req, res) => {
 // ── Public Signup ─────────────────────────────────────────────────────────────
 
 // POST /api/signup — self-serve key generation
-app.post('/api/signup', (req, res) => {
-    const { email } = req.body || {};
-    if (!email || !email.includes('@')) {
-        return res.status(400).json({ error: 'Valid email is required.' });
-    }
-    // Check if email already has a key
-    for (const [k, v] of apiKeys.entries()) {
-        if (v.email === email.toLowerCase().trim()) {
-            return res.json({ key: k, email: v.email, created: v.created, existed: true });
+app.post('/api/signup', async (req, res) => {
+    try {
+        const { email } = req.body || {};
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ error: 'Valid email is required.' });
         }
+        // Check if email already has a key
+        const existing = await db.getCustomerByEmail(email);
+        if (existing) {
+            return res.json({ key: existing.api_key, email: existing.email, created: existing.created, existed: true });
+        }
+        const customer = await db.createCustomer(email.toLowerCase().trim());
+        console.log(`[signup] New key created for ${email}: ${customer.api_key}`);
+        res.json({ key: customer.api_key, email: customer.email, created: customer.created, existed: false });
+    } catch (e) {
+        console.error('[signup] Error:', e.message);
+        res.status(500).json({ error: 'Signup failed.' });
     }
-    const key = createKey(email.toLowerCase().trim());
-    const entry = apiKeys.get(key);
-    console.log(`[signup] New key created for ${email}: ${key}`);
-    res.json({ key, email: entry.email, created: entry.created, existed: false });
 });
 
 // GET /api/developer/me — per-key stats (self-serve)
-app.get('/api/developer/me', requireKey, (req, res) => {
-    if (req.isMaster) {
-        return res.json({ email: 'admin', key: MASTER_KEY, requests: store.stats.total, decisions: store.stats, created: 'N/A' });
+app.get('/api/developer/me', requireKey, async (req, res) => {
+    try {
+        if (req.isMaster) {
+            return res.json({ email: 'admin', key: MASTER_KEY, requests: store.stats.total, decisions: store.stats, created: 'N/A' });
+        }
+        const entry = req.guardrailCustomer || await db.getCustomerByKey(req.guardrailKey);
+        const myLogs = store.logs.filter(l => l.apiKey === req.guardrailKey).slice(0, 100);
+        res.json({
+            email: entry.email,
+            key: req.guardrailKey,
+            created: entry.created,
+            requests: entry.requests,
+            decisions: entry.decisions,
+            recentLogs: myLogs
+        });
+    } catch (e) {
+        console.error('[developer/me] Error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch stats.' });
     }
-    const entry = apiKeys.get(req.guardrailKey);
-    const myLogs = store.logs.filter(l => l.apiKey === req.guardrailKey).slice(0, 100);
-    res.json({
-        email: entry.email,
-        key: req.guardrailKey,
-        created: entry.created,
-        requests: entry.requests,
-        decisions: entry.decisions,
-        recentLogs: myLogs
-    });
 });
 
 // ── Key Management Routes (master-key protected) ──────────────────────────────
 
 // POST /api/keys — generate a new API key (admin)
-app.post('/api/keys', requireMasterKey, (req, res) => {
-    const { label, email } = req.body || {};
-    const key = createKey(email, label);
-    res.json({ key, label: label || 'unnamed', created: apiKeys.get(key).created });
+app.post('/api/keys', requireMasterKey, async (req, res) => {
+    try {
+        const { label, email } = req.body || {};
+        const customer = await db.createCustomer(email, label);
+        res.json({ key: customer.api_key, label: customer.label, created: customer.created });
+    } catch (e) {
+        console.error('[keys] Create error:', e.message);
+        res.status(500).json({ error: 'Key creation failed.' });
+    }
 });
 
 // GET /api/keys — list all keys
-app.get('/api/keys', requireMasterKey, (req, res) => {
-    const list = [];
-    apiKeys.forEach((val, key) => list.push({ key, ...val }));
-    res.json(list);
+app.get('/api/keys', requireMasterKey, async (req, res) => {
+    try {
+        const list = await db.listCustomers();
+        res.json(list);
+    } catch (e) {
+        console.error('[keys] List error:', e.message);
+        res.status(500).json({ error: 'Failed to list keys.' });
+    }
 });
 
 // DELETE /api/keys/:key — revoke a key
-app.delete('/api/keys/:key', requireMasterKey, (req, res) => {
-    const { key } = req.params;
-    if (!apiKeys.has(key)) return res.status(404).json({ error: 'Key not found' });
-    apiKeys.delete(key);
-    saveKeys();
-    res.json({ revoked: key });
+app.delete('/api/keys/:key', requireMasterKey, async (req, res) => {
+    try {
+        const { key } = req.params;
+        const deleted = await db.deleteCustomer(key);
+        if (!deleted) return res.status(404).json({ error: 'Key not found' });
+        res.json({ revoked: key });
+    } catch (e) {
+        console.error('[keys] Delete error:', e.message);
+        res.status(500).json({ error: 'Key deletion failed.' });
+    }
 });
 
 // ── Protected API Routes ──────────────────────────────────────────────────────
@@ -735,10 +723,10 @@ app.post('/api/check', requireKey, async (req, res) => {
     if (store.logs.length > 500) store.logs.pop();
     store.stats.total++;
     store.stats[record.decision]++;
-    // Per-key decision tracking
+    // Per-key decision tracking — persist to database
     if (!req.isMaster) {
-        const entry = apiKeys.get(req.guardrailKey);
-        if (entry) entry.decisions[record.decision]++;
+        db.incrementUsage(req.guardrailKey, record.decision).catch(e => console.error('[db] incrementUsage error:', e.message));
+        db.logCheck(record).catch(e => console.error('[db] logCheck error:', e.message));
     }
     broadcast(record);
 
