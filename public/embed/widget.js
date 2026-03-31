@@ -125,6 +125,7 @@
     typingEl.style.display = 'flex';
     scrollBottom();
 
+    // Try live chat first, fall back to demo-chat if no LLM key
     fetch(ENDPOINT + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Guardrail-Key': API_KEY },
@@ -132,6 +133,18 @@
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      if (data.error && data.error.indexOf('Anthropic') !== -1) {
+        // No LLM key — fall back to demo-chat
+        return fetch(ENDPOINT + '/api/demo-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, context: CONTEXT }),
+        }).then(function(r) { return r.json(); })
+        .then(function(demo) {
+          typingEl.style.display = 'none';
+          addMsg(demo.aiResponse || demo.text, 'ai', demo.decision, demo.confidence);
+        });
+      }
       typingEl.style.display = 'none';
       if (data.error) { addMsg('Error: ' + data.error, 'ai'); return; }
       addMsg(data.fullText || data.text, 'ai', data.decision, data.confidence);
