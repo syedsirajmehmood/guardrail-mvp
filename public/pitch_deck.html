@@ -116,7 +116,7 @@
     </div>
     <p style="margin-top: 48px; color: #666; font-size: 14px;">symehmoo@gmail.com &nbsp;•&nbsp; guardrail-mvp-production.up.railway.app</p>
   </div>
-  <div class="slide-number">1 / 17</div>
+  <div class="slide-number">1 / 18</div>
 </div>
 
 <!-- SLIDE 2: THE PROBLEM -->
@@ -139,7 +139,7 @@
       <p style="color: #666; font-size: 13px; margin-top: 16px;">Based on 100 real responses from 5 open-source LLMs</p>
     </div>
   </div>
-  <div class="slide-number">2 / 17</div>
+  <div class="slide-number">2 / 18</div>
 </div>
 
 <!-- SLIDE 3: THE SOLUTION -->
@@ -167,7 +167,7 @@
   <div style="margin-top: 28px; padding: 16px 24px; background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.15); border-radius: 12px;">
     <p style="font-size: 15px; color: #a0a0c0;">💡 <strong style="color: #2ecc71;">Key differentiator:</strong> Guardrail uses deterministic pattern matching — not another LLM. It's fast, it's predictable, and <em>it never hallucinates itself.</em></p>
   </div>
-  <div class="slide-number">3 / 17</div>
+  <div class="slide-number">3 / 18</div>
 </div>
 
 <!-- SLIDE 4: HOW IT WORKS -->
@@ -193,7 +193,7 @@
   </div>
   <p style="text-align: center; color: #666; margin-top: 20px; font-size: 14px;">🆕 <strong>Context-aware scoring:</strong> Pass the user's question alongside the AI response for question-type detection, relevance analysis, scope checking, and refusal auditing.</p>
   <p style="text-align: center; color: #666; margin-top: 8px; font-size: 14px;">Works with any LLM — OpenAI, Claude, Gemini, Llama, Mistral, or your fine-tuned internal model.</p>
-  <div class="slide-number">4 / 17</div>
+  <div class="slide-number">4 / 18</div>
 </div>
 
 <!-- SLIDE 5: WHAT WE DETECT -->
@@ -215,7 +215,7 @@
     <div class="card" style="padding: 20px; border-color: rgba(0,210,255,0.3);"><span style="font-size: 22px;">📏</span>&nbsp;&nbsp; <strong style="color:#00d2ff">Scope creep detection</strong></div>
   </div>
   <p style="text-align: center; color: #666; margin-top: 20px; font-size: 14px;">+ 16 more including knowledge cutoff, self-contradiction, question-type classification, query-context matching, and formatting anomalies</p>
-  <div class="slide-number">5 / 17</div>
+  <div class="slide-number">5 / 18</div>
 </div>
 
 <!-- SLIDE 6: AUDIT RESULTS OVERVIEW -->
@@ -241,7 +241,40 @@
       <div class="stat-label">Models Fabricated Citations</div>
     </div>
   </div>
-  <div class="slide-number">6 / 17</div>
+  <div class="slide-number">6 / 18</div>
+</div>
+
+<!-- SLIDE 6.5: CONTEXT-AWARE AUDIT -->
+<div class="slide bg-gradient" id="s6b">
+  <div class="slide-logo">GUARDRAIL AI</div>
+  <h2>Context-Aware Scoring:<br><span class="accent">45 Responses Re-Tested</span></h2>
+  <p class="subtitle" style="margin-top: -16px; margin-bottom: 24px;">Same models, same prompts — scored with and without the user's question. 15 customer-support &amp; RAG prompts × 3 LLMs.</p>
+  <div class="grid-2">
+    <div>
+      <table class="deck-table" style="font-size: 14px;">
+        <tr><th></th><th style="text-align:center">Without Query</th><th style="text-align:center">With Query</th></tr>
+        <tr><td>✅ Deliver</td><td style="text-align:center">10 (22%)</td><td style="text-align:center; color: #2ecc71;"><strong>12 (27%)</strong></td></tr>
+        <tr><td>⚠️ Flag</td><td style="text-align:center">20 (44%)</td><td style="text-align:center">17 (38%)</td></tr>
+        <tr><td>🔴 Escalate</td><td style="text-align:center">15 (33%)</td><td style="text-align:center; color: #ff6b6b;"><strong>16 (36%)</strong></td></tr>
+      </table>
+      <p style="color: #666; font-size: 13px; margin-top: 12px;">Good answers promoted (+2 delivers). Dangerous borderline answers caught (+1 escalation).</p>
+    </div>
+    <div>
+      <div class="card" style="padding: 20px; margin-bottom: 12px; border-color: rgba(255,107,107,0.3);">
+        <h3 style="font-size: 15px; color: #ff6b6b; margin-bottom: 8px;">🚨 no-refusal-on-dangerous — fired 6x</h3>
+        <p style="color: #a0a0c0; font-size: 13px; line-height: 1.5;">Models answered medical dosage &amp; investment questions directly without any refusal. Score dropped 10–14%.</p>
+      </div>
+      <div class="card" style="padding: 20px; margin-bottom: 12px; border-color: rgba(0,210,255,0.3);">
+        <h3 style="font-size: 15px; color: #00d2ff; margin-bottom: 8px;">🎯 low-relevance — fired 4x</h3>
+        <p style="color: #a0a0c0; font-size: 13px; line-height: 1.5;">Off-topic responses detected. Shipping questions answered with medical advice, etc.</p>
+      </div>
+      <div class="card" style="padding: 20px; border-color: rgba(123,47,247,0.3);">
+        <h3 style="font-size: 15px; color: #7b2ff7; margin-bottom: 8px;">📏 scope-creep — fired 19x</h3>
+        <p style="color: #a0a0c0; font-size: 13px; line-height: 1.5;">Verbose responses 5–10x longer than necessary. More words = more hallucination surface area.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 18</div>
 </div>
 
 <!-- SLIDE 7: MODEL COMPARISON -->
@@ -257,7 +290,7 @@
     <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Qwen 2.5</td><td>Alibaba</td><td>3B</td><td>5%</td><td><span class="bar-mini" style="width: 190px;"></span> 95%</td></tr>
   </table>
   <p style="color: #666; margin-top: 24px; font-size: 14px; text-align: center;">Even the best model (Mistral 7B) failed 80% of safety checks. The "winner" is simply the least dangerous.</p>
-  <div class="slide-number">7 / 17</div>
+  <div class="slide-number">7 / 18</div>
 </div>
 
 <!-- SLIDE 8: KEY FINDINGS -->
@@ -282,7 +315,7 @@
       <p style="color: #a0a0c0; font-size: 15px; line-height: 1.6;">Models that gave longer responses scored lower. Every additional sentence is another opportunity to hallucinate.</p>
     </div>
   </div>
-  <div class="slide-number">8 / 17</div>
+  <div class="slide-number">8 / 18</div>
 </div>
 
 <!-- SLIDE 9: INTEGRATION -->
@@ -319,7 +352,7 @@
     <span class="tag">PostgreSQL Persistence</span>
     <span class="tag">Self-hosted option</span>
   </div>
-  <div class="slide-number">9 / 17</div>
+  <div class="slide-number">9 / 18</div>
 </div>
 
 <!-- SLIDE 10: USE CASES -->
@@ -358,7 +391,7 @@
       <p style="color: #a0a0c0; font-size: 14px; line-height: 1.6;">Any company adding "AI features" to their product. Add a safety net before shipping AI to customers.</p>
     </div>
   </div>
-  <div class="slide-number">10 / 17</div>
+  <div class="slide-number">10 / 18</div>
 </div>
 
 <!-- SLIDE 11: WHAT WE'VE BUILT -->
@@ -394,7 +427,7 @@
     <div style="text-align: center;"><strong style="font-size: 24px;">Railway</strong><br><span style="font-size: 13px; color: #a0a0c0;">CI/CD</span></div>
     <div style="text-align: center;"><strong style="font-size: 24px;">Heuristic</strong><br><span style="font-size: 13px; color: #a0a0c0;">No LLM dependency</span></div>
   </div>
-  <div class="slide-number">11 / 17</div>
+  <div class="slide-number">11 / 18</div>
 </div>
 
 <!-- SLIDE 12: CURRENT PHASE — HARDENING -->
@@ -435,7 +468,7 @@
       <p style="color: #a0a0c0; font-size: 13px; line-height: 1.6;">API key rotation, rate limiting, usage dashboards, and team management for enterprise customers.</p>
     </div>
   </div>
-  <div class="slide-number">12 / 17</div>
+  <div class="slide-number">12 / 18</div>
 </div>
 
 <!-- SLIDE 13: PRODUCT ROADMAP -->
@@ -510,7 +543,7 @@
       </div>
     </div>
   </div>
-  <div class="slide-number">13 / 17</div>
+  <div class="slide-number">13 / 18</div>
 </div>
 
 <!-- SLIDE 14: DESIGN PARTNER PROGRAM -->
@@ -557,7 +590,7 @@
   <div style="margin-top: 24px; text-align: center;">
     <span class="tag" style="font-size: 14px; padding: 8px 20px;">🎯 Ideal partners: Companies with live AI chatbots in healthcare, finance, legal, or customer support</span>
   </div>
-  <div class="slide-number">14 / 17</div>
+  <div class="slide-number">14 / 18</div>
 </div>
 
 <!-- SLIDE 15: BUSINESS MODEL -->
@@ -610,7 +643,7 @@
     </div>
   </div>
   <p style="text-align: center; color: #666; margin-top: 24px; font-size: 14px;">Design partners receive 50% off Pro / Enterprise pricing for life.</p>
-  <div class="slide-number">15 / 17</div>
+  <div class="slide-number">15 / 18</div>
 </div>
 
 <!-- SLIDE 16: COMPETITIVE EDGE -->
@@ -671,7 +704,7 @@
   <div style="margin-top: 24px; padding: 14px 24px; background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.15); border-radius: 12px; text-align: center;">
     <p style="font-size: 15px; color: #a0a0c0;">💡 <strong style="color: #2ecc71;">The key insight:</strong> You can't trust an LLM to judge another LLM. Guardrail uses deterministic pattern matching — it's fast, cheap, and <em>never wrong about being wrong.</em></p>
   </div>
-  <div class="slide-number">16 / 17</div>
+  <div class="slide-number">16 / 18</div>
 </div>
 
 <!-- SLIDE 17: CONTACT / CTA -->
@@ -691,7 +724,7 @@
     </div>
     <p style="margin-top: 40px; color: #444; font-size: 13px;">The question isn't whether your AI will make mistakes.<br>It's whether you'll catch them before your users do.</p>
   </div>
-  <div class="slide-number">17 / 17</div>
+  <div class="slide-number">17 / 18</div>
 </div>
 
 <!-- NAVIGATION -->
