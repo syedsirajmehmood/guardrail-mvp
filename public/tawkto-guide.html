@@ -1,0 +1,95 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guardrail AI + tawk.to Integration</title><style>body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;max-width:660px;margin:0 auto;padding:40px 24px 60px;line-height:1.8;color:#2d3748;font-size:15px}h1{color:#1a202c;border-bottom:3px solid #1db99a;padding-bottom:12px;font-size:1.5em;margin-top:0}h2{color:#1db99a;margin-top:40px;font-size:1.15em;padding-bottom:6px;border-bottom:1px solid #e8edf2}h3{margin-top:24px;color:#2d3748}pre{white-space:pre-wrap;word-break:break-word;background:#f5f7fa;padding:16px 18px;border-radius:8px;font-size:13px;line-height:1.7;border:1px solid #e2e8f0;overflow-x:auto}code{font-family:"SF Mono",Menlo,Consolas,monospace;background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px}table{border-collapse:collapse;width:100%;margin:14px 0}td,th{padding:12px 14px;border:1px solid #e2e8f0;font-size:14px;text-align:left}th{background:#f7fafc;font-weight:600}li{margin:6px 0}strong{color:#1a202c}.banner{background:linear-gradient(135deg,#0a1628 0%,#1a3050 100%);color:white;padding:32px 36px;border-radius:14px;margin-bottom:36px}.banner h1{color:white;border:none;margin:0;padding:0;font-size:1.4em}.banner p{color:#8ab4d7;margin:8px 0 0;font-size:14px}.note{background:#f0faf7;border-left:3px solid #1db99a;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}hr{margin:32px 0;border:none;border-top:1px solid #e8edf2}</style></head><body>
+
+<div class="banner">
+<h1>🛡️ Guardrail AI + tawk.to</h1>
+<p>Add AI safety monitoring to your tawk.to chatbot</p>
+</div>
+
+<h2>What This Does</h2>
+<p>Every AI response from your tawk.to chatbot gets scored by Guardrail. You'll see which answers were safe, which were risky, and which should have been flagged — all in your dashboard.</p>
+
+<hr>
+
+<h2>Step 1: Get Your Guardrail API Key (2 min)</h2>
+<ol>
+<li>Open: <strong><a href="https://guardrail-mvp-production.up.railway.app/developer.html">guardrail-mvp-production.up.railway.app/developer.html</a></strong></li>
+<li>Enter your email → you'll get a key like <code>gr_live_abc123...</code></li>
+<li><strong>Save this key</strong> — you need it in Step 2</li>
+</ol>
+
+<hr>
+
+<h2>Step 2: Set Up the Webhook in tawk.to (3 min)</h2>
+<ol>
+<li>Log into your <strong>tawk.to dashboard</strong></li>
+<li>Go to <strong>Administration</strong> → <strong>Settings</strong> → <strong>Webhooks</strong></li>
+<li>Click <strong>Create Webhook</strong></li>
+<li>Set the Endpoint URL to:</li>
+</ol>
+<pre>https://guardrail-mvp-production.up.railway.app/api/tawkto/webhook?key=YOUR_API_KEY</pre>
+<p>Replace <code>YOUR_API_KEY</code> with your key from Step 1.</p>
+<ol start="5">
+<li>Select these events: <strong>Chat End</strong>, <strong>Chat Transcript</strong></li>
+<li>Click <strong>Save</strong></li>
+</ol>
+
+<div class="note">
+<strong>What happens:</strong> After every chat ends, tawk.to sends the conversation to Guardrail. Guardrail scores each AI message and logs the results to your dashboard.
+</div>
+
+<hr>
+
+<h2>Step 3: Connect AI Assist (Optional — 5 min)</h2>
+<p>If you're using tawk.to's <strong>AI Assist</strong> feature, you can connect Guardrail as a Custom Tool so the AI can check its own answers:</p>
+<ol>
+<li>Go to <strong>Add-ons</strong> → <strong>AI Assist</strong> → <strong>Settings</strong></li>
+<li>Select your AI agent → <strong>Integration / API</strong></li>
+<li>Click <strong>Add Custom Tool (OpenAPI Server)</strong></li>
+<li>Enter this schema URL:</li>
+</ol>
+<pre>https://guardrail-mvp-production.up.railway.app/api/tawkto/openapi.json</pre>
+<ol start="5">
+<li>Click <strong>Save</strong></li>
+</ol>
+
+<div class="note">
+<strong>What this does:</strong> The AI Assist agent can now call Guardrail to check the safety of its own responses before sending them. It will see the confidence score and may adjust its answer.
+</div>
+
+<hr>
+
+<h2>Step 4: View Your Dashboard</h2>
+<p>See every scored response at:</p>
+<p>👉 <strong><a href="https://guardrail-mvp-production.up.railway.app/developer.html">guardrail-mvp-production.up.railway.app/developer.html</a></strong></p>
+<p>Enter your API key to see:</p>
+<ul>
+<li>Total responses scored</li>
+<li>How many were delivered vs flagged vs escalated</li>
+<li>Confidence scores and safety signals for each</li>
+</ul>
+
+<hr>
+
+<h2>What Gets Scored</h2>
+<table>
+<tr><th>Risk</th><th>Example</th><th>Result</th></tr>
+<tr><td>Wrong info</td><td>Bot gives wrong pricing</td><td>⚠️ Flagged</td></tr>
+<tr><td>Bad advice</td><td>Bot gives legal/medical advice</td><td>🔴 Escalated</td></tr>
+<tr><td>Made-up facts</td><td>Bot invents a service</td><td>🔴 Escalated</td></tr>
+<tr><td>Good answer</td><td>Bot correctly answers a question</td><td>✅ Delivered</td></tr>
+</table>
+
+<hr>
+
+<h2>API Access</h2>
+<p>You can also score responses directly via API:</p>
+<pre>curl -X POST https://guardrail-mvp-production.up.railway.app/api/check \
+  -H "Content-Type: application/json" \
+  -H "X-Guardrail-Key: YOUR_API_KEY" \
+  -d '{"text": "AI response to check", "userQuery": "original question"}'</pre>
+
+<hr>
+
+<p><strong>Need help?</strong> Email symehmoo@gmail.com</p>
+
+</body></html>

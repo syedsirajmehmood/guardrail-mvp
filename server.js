@@ -728,6 +728,85 @@ app.delete('/api/keys/:key', requireMasterKey, async (req, res) => {
     }
 });
 
+// ── tawk.to Integration ──────────────────────────────────────────────────────
+
+// POST /api/tawkto/webhook — receive tawk.to chat events and score messages
+app.post('/api/tawkto/webhook', async (req, res) => {
+    const apiKey = req.headers['x-guardrail-key'] || req.query.key;
+    if (!apiKey) return res.status(401).json({ error: 'API key required. Add X-Guardrail-Key header or ?key= param.' });
+
+    const event = req.body;
+    const messages = event.message?.text ? [event.message] :
+                     event.messages ? event.messages :
+                     event.history ? event.history : [];
+
+    const results = [];
+    for (const msg of messages) {
+        // Only score agent/system messages (not visitor messages)
+        if (msg.sender?.type === 'visitor' || msg.type === 'visitor') continue;
+        const text = msg.text || msg.msg || '';
+        if (!text || text.length < 10) continue;
+
+        const scored = scoreText(text, 'general');
+        const record = {
+            id: uuidv4(),
+            timestamp: new Date().toISOString(),
+            text: text.substring(0, 300),
+            context: 'general',
+            source: 'tawkto',
+            ...scored
+        };
+
+        // Log to database
+        try { await db.logCheck(record, apiKey); } catch(e) { /* skip db errors */ }
+        results.push({ text: text.substring(0, 100) + '...', confidence: scored.confidence, decision: scored.decision, reasons: scored.reasons });
+    }
+
+    res.json({ processed: results.length, results });
+});
+
+// GET /api/tawkto/openapi.json — OpenAPI schema for tawk.to AI Assist Custom Tool
+app.get('/api/tawkto/openapi.json', (req, res) => {
+    res.json({
+        openapi: '3.0.0',
+        info: { title: 'Guardrail AI Safety Check', version: '1.0.0', description: 'Score AI responses for hallucinations, unsafe advice, and fabricated citations.' },
+        servers: [{ url: 'https://guardrail-mvp-production.up.railway.app' }],
+        paths: {
+            '/api/check': {
+                post: {
+                    operationId: 'checkSafety',
+                    summary: 'Score an AI response for safety and accuracy',
+                    description: 'Analyzes text for hallucinations, unsafe advice, hedging, and fabricated citations. Returns a confidence score and deliver/flag/escalate decision.',
+                    parameters: [{ name: 'X-Guardrail-Key', in: 'header', required: true, schema: { type: 'string' }, description: 'Your Guardrail API key' }],
+                    requestBody: {
+                        required: true,
+                        content: { 'application/json': { schema: {
+                            type: 'object',
+                            required: ['text'],
+                            properties: {
+                                text: { type: 'string', description: 'The AI response text to score' },
+                                userQuery: { type: 'string', description: 'The original user question (improves accuracy)' },
+                                context: { type: 'string', enum: ['general', 'medical', 'financial', 'legal', 'security'], description: 'Domain context for scoring' }
+                            }
+                        }}}
+                    },
+                    responses: {
+                        '200': { description: 'Safety score result', content: { 'application/json': { schema: {
+                            type: 'object',
+                            properties: {
+                                confidence: { type: 'number', description: 'Confidence score 0-1' },
+                                decision: { type: 'string', enum: ['deliver', 'flag', 'escalate'], description: 'Recommended action' },
+                                reasons: { type: 'array', items: { type: 'string' }, description: 'Detected safety signals' }
+                            }
+                        }}}}
+                    }
+                }
+            }
+        }
+    });
+});
+
+
 // ── Protected API Routes ──────────────────────────────────────────────────────
 
 // POST /api/chat — call Claude then score
