@@ -901,7 +901,7 @@ app.get('/api/mcp-download', (req, res) => {
     if (!require('fs').existsSync(mcpPath)) {
         return res.status(404).json({ error: 'MCP server file not found' });
     }
-    res.setHeader('Content-Disposition', 'attachment; filename="guardrail-mcp-server.js"');
+    res.setHeader('Content-Disposition', 'attachment; filename="guardrail-ai-mcp.js"');
     res.setHeader('Content-Type', 'application/javascript');
     res.sendFile(mcpPath);
 });

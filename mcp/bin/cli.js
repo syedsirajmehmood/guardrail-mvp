@@ -2,8 +2,8 @@
 'use strict';
 
 /**
- * guardrail-mcp-server CLI
- * Usage: npx guardrail-mcp-server --key gr_live_xxx [--endpoint https://...]
+ * guardrail-ai-mcp CLI
+ * Usage: npx guardrail-ai-mcp --key gr_live_xxx [--endpoint https://...]
  *
  * Starts a Guardrail MCP server that connects to Claude Desktop.
  */
@@ -15,7 +15,7 @@ if (args.includes('--help') || args.includes('-h')) {
 🛡️  Guardrail MCP Server — AI Confidence Scoring for Claude Desktop
 
 USAGE:
-  npx guardrail-mcp-server --key <your-api-key> [--endpoint <url>]
+  npx guardrail-ai-mcp --key <your-api-key> [--endpoint <url>]
 
 OPTIONS:
   --key <key>       Your Guardrail API key (required). Get one free at:
@@ -33,7 +33,7 @@ SETUP (CLAUDE DESKTOP):
        "mcpServers": {
          "guardrail": {
            "command": "npx",
-           "args": ["guardrail-mcp-server", "--key", "gr_live_xxx"]
+           "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
          }
        }
      }
@@ -59,7 +59,7 @@ const endIdx = args.indexOf('--endpoint');
 
 if (keyIdx === -1 || !args[keyIdx + 1]) {
     console.error('❌ Missing --key argument.');
-    console.error('   Usage: npx guardrail-mcp-server --key gr_live_xxx');
+    console.error('   Usage: npx guardrail-ai-mcp --key gr_live_xxx');
     console.error('   Run with --help for full usage.');
     process.exit(1);
 }

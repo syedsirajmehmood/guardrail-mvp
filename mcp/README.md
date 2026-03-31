@@ -1,4 +1,4 @@
-# guardrail-mcp-server
+# guardrail-ai-mcp
 
 MCP server for [Guardrail AI](https://guardrail-mvp-production.up.railway.app) — score AI responses for hallucinations, safety risks, and confidence before they reach your users.
 
@@ -19,7 +19,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "guardrail": {
       "command": "npx",
-      "args": ["guardrail-mcp-server", "--key", "gr_live_YOUR_KEY_HERE"]
+      "args": ["guardrail-ai-mcp", "--key", "gr_live_YOUR_KEY_HERE"]
     }
   }
 }

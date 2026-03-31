@@ -11,7 +11,7 @@
  *     "mcpServers": {
  *       "guardrail": {
  *         "command": "npx",
- *         "args": ["guardrail-mcp-server", "--key", "gr_live_xxx"]
+ *         "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
  *       }
  *     }
  *   }

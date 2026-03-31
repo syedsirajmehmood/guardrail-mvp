@@ -312,14 +312,14 @@ const result = await gr.check(aiResponse);</pre>
             <p>Guardrail has a native MCP server for use with Claude Desktop and other MCP-compatible clients. Now supports <code>userQuery</code> for context-aware scoring.</p>
 
             <h3>Install via npx (recommended)</h3>
-<pre>npx guardrail-mcp-server --key gr_live_xxx</pre>
+<pre>npx guardrail-ai-mcp --key gr_live_xxx</pre>
 
             <h3>Claude Desktop config (zero-setup)</h3>
 <pre>{
   "mcpServers": {
     "guardrail": {
       "command": "npx",
-      "args": ["guardrail-mcp-server", "--key", "gr_live_xxx"]
+      "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
     }
   }
 }</pre>

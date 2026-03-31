@@ -1,9 +1,9 @@
 {
-  "name": "guardrail-mcp-server",
-  "version": "1.1.0",
+  "name": "guardrail-ai-mcp",
+  "version": "2.1.0",
   "description": "Guardrail AI — MCP server for Claude Desktop. Score AI responses for hallucinations, safety, and confidence. Zero setup.",
   "bin": {
-    "guardrail-mcp-server": "./bin/cli.js"
+    "guardrail-ai-mcp": "bin/cli.js"
   },
   "main": "server.js",
   "files": [
@@ -28,7 +28,7 @@
   "homepage": "https://guardrail-mvp-production.up.railway.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/saifsysim/guardrail-mvp",
+    "url": "git+https://github.com/saifsysim/guardrail-mvp.git",
     "directory": "mcp"
   },
   "engines": {
