@@ -21,7 +21,22 @@ That's it. No `npm install`, no manual dependency setup — npx handles everythi
 
 ### Step 1: Get a free API key
 
+**Option A — Web (easiest):**
 Go to [guardrail-mvp-production.up.railway.app/developer.html](https://guardrail-mvp-production.up.railway.app/developer.html) and enter your email. You'll get a key starting with `gr_live_`.
+
+**Option B — Terminal:**
+```bash
+curl -X POST https://guardrail-mvp-production.up.railway.app/api/keys/create \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com"}'
+```
+
+The response will include your API key:
+```json
+{ "apiKey": "gr_live_abc123...", "email": "you@example.com" }
+```
+
+> ⚠️ **Save your key immediately!** It is shown only once and cannot be recovered. Store it somewhere safe (password manager, `.env` file, etc.).
 
 ### Step 2: Open your Claude Desktop config file
 
@@ -37,7 +52,7 @@ open ~/Library/Application\ Support/Claude/claude_desktop_config.json
 
 ### Step 3: Add the Guardrail MCP server
 
-Paste this into your config. Replace `gr_live_xxx` with your actual key:
+Paste this into your config. Replace `gr_live_xxx` with the API key you saved in Step 1:
 
 ```json
 {
