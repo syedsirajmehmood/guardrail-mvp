@@ -1,62 +1,173 @@
-# guardrail-ai-mcp
+# 🛡️ Guardrail AI — MCP Server for Claude Desktop
 
-MCP server for [Guardrail AI](https://guardrail-mvp-production.up.railway.app) — score AI responses for hallucinations, safety risks, and confidence before they reach your users.
+Real-time AI confidence scoring. Detect hallucinations, unsafe advice, and fabricated citations in any AI response — in under 50ms.
 
-Works with **Claude Desktop**, **Cursor**, and any MCP-compatible client.
+**npm**: [guardrail-ai-mcp](https://www.npmjs.com/package/guardrail-ai-mcp)
+**Docs**: [guardrail-mvp-production.up.railway.app/docs.html](https://guardrail-mvp-production.up.railway.app/docs.html)
 
-## Quick Start
+---
 
-### 1. Get a Free API Key
+## Quick Install
 
-Sign up at [guardrail-mvp-production.up.railway.app](https://guardrail-mvp-production.up.railway.app)
+```bash
+npx guardrail-ai-mcp --key YOUR_API_KEY
+```
 
-### 2. Configure Claude Desktop
+That's it. No `npm install`, no manual dependency setup — npx handles everything.
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+---
+
+## Step-by-Step Setup (Claude Desktop)
+
+### Step 1: Get a free API key
+
+Go to [guardrail-mvp-production.up.railway.app/developer.html](https://guardrail-mvp-production.up.railway.app/developer.html) and enter your email. You'll get a key starting with `gr_live_`.
+
+### Step 2: Open your Claude Desktop config file
+
+**Mac:**
+```bash
+open ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+**Windows:**
+```
+%APPDATA%\Claude\claude_desktop_config.json
+```
+
+### Step 3: Add the Guardrail MCP server
+
+Paste this into your config. Replace `gr_live_xxx` with your actual key:
 
 ```json
 {
   "mcpServers": {
     "guardrail": {
       "command": "npx",
-      "args": ["guardrail-ai-mcp", "--key", "gr_live_YOUR_KEY_HERE"]
+      "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
     }
   }
 }
 ```
 
-### 3. Restart Claude Desktop
+> ⚠️ **If your config already has content** (like a `"preferences"` section), merge them into ONE JSON object:
 
-Three new tools will appear:
+```json
+{
+  "preferences": {
+    "coworkScheduledTasksEnabled": true,
+    "sidebarMode": "chat"
+  },
+  "mcpServers": {
+    "guardrail": {
+      "command": "npx",
+      "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
+    }
+  }
+}
+```
 
-| Tool | What It Does |
+### Step 4: Restart Claude Desktop
+
+**Cmd+Q** (Mac) or fully close and reopen. The Guardrail tools load on startup.
+
+### Step 5: Verify it's working
+
+1. Click the **+** button in the chat input
+2. Click **Connectors** — you should see **"guardrail"** with a blue toggle ON
+3. Type: `Use the guardrail score_and_explain tool to score this: "The Earth is flat."`
+4. Claude will call Guardrail and show you the confidence score and signals
+
+---
+
+## Auto-Use (Optional)
+
+By default you need to say "use the guardrail tool..." To make it automatic:
+
+1. Click **+** → **Connectors** → **Tool access** → select **"Tools already loaded"**
+2. Create a **Project** (e.g. "Guardrail Testing")
+3. Click **+** next to **Instructions** and add:
+
+```
+Always use the guardrail score_and_explain tool to score any AI-generated
+text I share. Show the confidence score, decision, and detected signals.
+Do not answer the text's question — only score it.
+```
+
+Now every message in that project automatically uses Guardrail.
+
+---
+
+## Available Tools
+
+| Tool | Description |
 |------|-------------|
-| `check_confidence` | Score text → deliver / flag / escalate |
-| `score_and_explain` | Score + human-readable explanation |
-| `get_my_stats` | Your usage stats |
+| `check_confidence` | Quick score — returns confidence 0-1 and deliver/flag/escalate decision |
+| `score_and_explain` | Detailed score with human-readable explanation of all signals detected |
+| `get_my_stats` | Your API usage — total checks, decision breakdown, recent logs |
 
-## Context-Aware Scoring
+### Context-Aware Scoring
 
-For best results, pass the user's original question alongside the AI response:
+All tools support an optional `userQuery` parameter. When you provide the original user question alongside the AI response, Guardrail runs 5 additional signals:
 
-```
-Use check_confidence with:
-  text: "The capital of France is Paris"
-  userQuery: "What is the capital of France?"
-```
-
-This enables:
-- **Question-type detection** — fact vs opinion vs instruction
+- **Question-type classification** — fact, opinion, instruction, dangerous
 - **Relevance scoring** — does the response address the question?
-- **Scope analysis** — is the response proportionate to the question?
-- **Refusal audit** — did the model answer a dangerous question freely?
+- **Scope creep detection** — is the response absurdly verbose?
+- **Refusal audit** — does a dangerous question get a free answer?
+- **Context match boost** — +3% for directly relevant responses
 
-## 23+ Detection Signals
+---
 
-Hallucinated facts • Fabricated citations • Medical/legal/financial risk • Sycophancy • Knowledge cutoff disclaimers • Self-contradiction • Unverified claims • and more.
+## Dashboard
 
-## Links
+Every MCP tool call automatically logs to your dashboard — no extra setup needed.
 
-- [Live Playground](https://guardrail-mvp-production.up.railway.app/playground.html)
-- [API Docs](https://guardrail-mvp-production.up.railway.app/docs.html)
-- [Audit Report](https://github.com/saifsysim/guardrail-audit)
+### View your dashboard
+
+👉 **[guardrail-mvp-production.up.railway.app/dashboard.html](https://guardrail-mvp-production.up.railway.app/dashboard.html)**
+
+Log in with your API key to see:
+
+| Section | What It Shows |
+|---------|---------------|
+| **Overview** | Total checks, deliver rate, average confidence, recent flags/escalations |
+| **Decision Breakdown** | Pie chart of deliver vs flag vs escalate decisions |
+| **Recent Logs** | Every check with timestamp, score, decision, signals, and text preview |
+| **Trends** | Confidence scores over time |
+
+### What gets logged
+
+Every time Claude calls `check_confidence` or `score_and_explain`, the following is saved:
+
+- Confidence score (0-1)
+- Decision (deliver / flag / escalate)
+- Signals detected (e.g., "Hedged language", "Unverified claim")
+- Domain context (general, medical, financial, etc.)
+- User query (if provided)
+- Timestamp
+
+### API access to your stats
+
+```bash
+# Get your dashboard stats
+curl -H "X-Guardrail-Key: gr_live_xxx" \
+  https://guardrail-mvp-production.up.railway.app/api/stats
+
+# Get recent logs
+curl -H "X-Guardrail-Key: gr_live_xxx" \
+  https://guardrail-mvp-production.up.railway.app/api/logs?limit=50
+```
+
+---
+
+## Resources
+
+- [Setup Guide](https://guardrail-mvp-production.up.railway.app/setup.html) — visual step-by-step
+- [API Docs](https://guardrail-mvp-production.up.railway.app/docs.html) — full endpoint reference
+- [Playground](https://guardrail-mvp-production.up.railway.app/playground.html) — test scoring in your browser
+- [GitHub](https://github.com/saifsysim/guardrail-mvp) — source code
+- [Audit Results](https://guardrail-mvp-production.up.railway.app/medium_article_v2.html) — context-aware scoring tested on 3 LLMs
+
+## License
+
+MIT

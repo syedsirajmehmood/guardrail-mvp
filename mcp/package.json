@@ -1,6 +1,6 @@
 {
   "name": "guardrail-ai-mcp",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Guardrail AI — MCP server for Claude Desktop. Score AI responses for hallucinations, safety, and confidence. Zero setup.",
   "bin": {
     "guardrail-ai-mcp": "bin/cli.js"
