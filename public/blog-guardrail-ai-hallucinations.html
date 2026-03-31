@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Even $2.5B AI Tools Don't Trust Themselves — Here's What That Means for You | Guardrail AI</title>
+    <meta name="description" content="Claude Code's leaked source reveals it treats its own memory as untrustworthy. Here's how Guardrail AI gives every company the same protection — without modifying their models.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-code: #1a1a2e;
+            --border: #1e1e2e;
+            --text: #e4e4e7;
+            --text-muted: #71717a;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Nav ─────────────────────────────────── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.85);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+        }
+        .nav-inner {
+            max-width: 800px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 56px;
+        }
+        .nav-logo {
+            font-weight: 700; font-size: 1rem;
+            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .nav-links a {
+            color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;
+            margin-left: 1.5rem; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta {
+            background: var(--accent) !important; color: #fff !important;
+            padding: 6px 14px; border-radius: 6px;
+            -webkit-text-fill-color: #fff !important;
+        }
+
+        /* ── Article ─────────────────────────────── */
+        article {
+            max-width: 720px; margin: 0 auto;
+            padding: 7rem 1.5rem 4rem;
+        }
+        .meta {
+            display: flex; align-items: center; gap: 0.75rem;
+            color: var(--text-muted); font-size: 0.82rem; margin-bottom: 1.5rem;
+        }
+        .meta-tag {
+            background: var(--accent-glow); color: var(--accent);
+            padding: 3px 10px; border-radius: 20px; font-weight: 600;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+            font-weight: 800; line-height: 1.2; margin-bottom: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+        h1 .highlight {
+            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.15rem; color: var(--text-muted); line-height: 1.6;
+            margin-bottom: 2.5rem; border-bottom: 1px solid var(--border);
+            padding-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.35rem; font-weight: 700; margin: 2.5rem 0 1rem;
+            letter-spacing: -0.01em;
+        }
+        h3 {
+            font-size: 1.05rem; font-weight: 600; margin: 1.75rem 0 0.5rem;
+            color: var(--accent);
+        }
+
+        p { margin-bottom: 1.25rem; color: #c4c4cc; }
+
+        strong { color: var(--text); font-weight: 600; }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── Callout Boxes ────────────────────────── */
+        .callout {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .callout.warning { border-left-color: var(--amber); }
+        .callout.success { border-left-color: var(--green); }
+        .callout p:last-child { margin-bottom: 0; }
+        .callout-title {
+            font-weight: 700; font-size: 0.85rem; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 0.5rem;
+        }
+        .callout.warning .callout-title { color: var(--amber); }
+        .callout.success .callout-title { color: var(--green); }
+        .callout .callout-title { color: var(--accent); }
+
+        /* ── Code ─────────────────────────────────── */
+        code {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.85em;
+            background: var(--bg-code); padding: 2px 6px; border-radius: 4px;
+            color: #c4b5fd;
+        }
+        pre {
+            background: var(--bg-code); border: 1px solid var(--border);
+            border-radius: 8px; padding: 1.25rem; margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none; padding: 0; font-size: 0.82rem; line-height: 1.7;
+            color: #c4c4cc;
+        }
+
+        /* ── Comparison Table ────────────────────── */
+        .comparison {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1rem; margin: 1.5rem 0;
+        }
+        .comp-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 1.25rem;
+        }
+        .comp-card h4 {
+            font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 0.75rem; font-weight: 700;
+        }
+        .comp-card.theirs h4 { color: var(--text-muted); }
+        .comp-card.ours h4 { color: var(--accent); }
+        .comp-card ul { list-style: none; }
+        .comp-card li {
+            font-size: 0.88rem; color: #a1a1aa; padding: 0.3rem 0;
+            padding-left: 1.2rem; position: relative;
+        }
+        .comp-card li::before {
+            content: '›'; position: absolute; left: 0; color: var(--text-muted);
+            font-weight: 700;
+        }
+        .comp-card.ours li::before { color: var(--accent); }
+
+        /* ── Stats Row ───────────────────────────── */
+        .stats {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 1rem; margin: 1.5rem 0;
+        }
+        .stat {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 1.25rem; text-align: center;
+        }
+        .stat-value {
+            font-size: 1.8rem; font-weight: 800;
+            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+        /* ── CTA ──────────────────────────────────── */
+        .cta-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            text-align: center;
+            margin: 3rem 0 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--gradient);
+        }
+        .cta-section h2 { margin-top: 0; }
+        .cta-section p { color: var(--text-muted); }
+        .cta-btn {
+            display: inline-block;
+            background: var(--gradient); color: #fff; font-weight: 600;
+            padding: 12px 28px; border-radius: 8px; text-decoration: none;
+            font-size: 0.95rem; margin-top: 0.75rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+            text-decoration: none;
+        }
+
+        .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+        /* ── Mobile ───────────────────────────────── */
+        @media (max-width: 640px) {
+            .comparison { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-inner">
+        <span class="nav-logo">Guardrail AI</span>
+        <div class="nav-links">
+            <a href="/playground.html">Playground</a>
+            <a href="/developer.html">Dashboard</a>
+            <a href="/developer.html" class="nav-cta">Get API Key</a>
+        </div>
+    </div>
+</nav>
+
+<article>
+
+    <div class="meta">
+        <span class="meta-tag">Industry Analysis</span>
+        <span>March 31, 2026</span>
+        <span>·</span>
+        <span>5 min read</span>
+    </div>
+
+    <h1>Even $2.5B AI Tools <span class="highlight">Don't Trust Themselves.</span> Neither Should You.</h1>
+
+    <p class="subtitle">
+        Anthropic's accidentally leaked Claude Code source reveals a radical internal strategy: the AI treats its own memory as untrustworthy. Here's what this means for every company using LLMs — and how to protect yourself without building 512,000 lines of custom safety code.
+    </p>
+
+    <h2>What Happened</h2>
+
+    <p>
+        Earlier today, Anthropic accidentally published the full internal source code of Claude Code — their $2.5 billion AI coding agent — to a public npm registry. Within hours, developers had mirrored <strong>512,000 lines of TypeScript</strong> and started analyzing how the most commercially successful AI tool in history actually works under the hood.
+    </p>
+
+    <p>
+        The most revealing finding? <strong>Claude Code doesn't trust itself.</strong>
+    </p>
+
+    <div class="callout warning">
+        <div class="callout-title">⚠️ The Core Insight</div>
+        <p>
+            Claude Code's internal architecture forces the model to <strong>verify its work against real files</strong> before taking any action. It treats its own memory and past outputs as potentially unreliable — essentially built-in hallucination skepticism at the system level.
+        </p>
+    </div>
+
+    <p>
+        This is not a bug. It's a deliberate design choice. Anthropic's engineers know that even the most advanced AI models hallucinate — they fabricate function names, invent APIs, and confidently reference code that doesn't exist. The only defense is to <strong>never trust the output without verification</strong>.
+    </p>
+
+    <h2>If Anthropic Doesn't Trust Their Own Model, Why Would You?</h2>
+
+    <p>
+        Here's the uncomfortable truth for any company deploying AI:
+    </p>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value">15-20%</div>
+            <div class="stat-label">of LLM outputs contain hallucinations</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">$2.5B</div>
+            <div class="stat-label">ARR tool still needs guardrails</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">512K</div>
+            <div class="stat-label">lines of safety code leaked</div>
+        </div>
+    </div>
+
+    <p>
+        Anthropic built <strong>hundreds of thousands of lines</strong> of internal verification code to make Claude Code safe. Most companies don't have the engineering resources to build anything close to that. They're deploying GPT, Claude, Gemini, or Llama outputs directly to customers — in chatbots, support tools, content systems — with nothing but hope standing between the AI and the end user.
+    </p>
+
+    <p>
+        This is the gap Guardrail AI fills.
+    </p>
+
+    <h2>The Claude Code Approach vs. The Guardrail Approach</h2>
+
+    <div class="comparison">
+        <div class="comp-card theirs">
+            <h4>Claude Code (Internal)</h4>
+            <ul>
+                <li>Built into the model's own codebase</li>
+                <li>Only works for Claude, only for code</li>
+                <li>Requires 512K lines of custom logic</li>
+                <li>Verifies against files on disk</li>
+                <li>Not available to other companies</li>
+            </ul>
+        </div>
+        <div class="comp-card ours">
+            <h4>Guardrail AI (External)</h4>
+            <ul>
+                <li>One API call — works with any LLM</li>
+                <li>Works for text, support, medical, legal, financial</li>
+                <li>Zero custom code needed</li>
+                <li>Verifies claims against Wikipedia + heuristic analysis</li>
+                <li>Available to every company, today</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>How Guardrail AI Works</h2>
+
+    <p>
+        Guardrail AI sits between your LLM and your end user. Every AI response passes through our scoring engine, which analyzes it for:
+    </p>
+
+    <h3>🔍 Hallucination Detection</h3>
+    <p>
+        Identifies fabricated citations, invented statistics, unverifiable biographical claims, and suspiciously precise numbers — the exact patterns that make AI outputs dangerous.
+    </p>
+
+    <h3>⚖️ Domain-Aware Risk Scoring</h3>
+    <p>
+        Automatically detects high-stakes domains (medical, legal, financial, security) and applies stricter thresholds. An AI suggesting a medication dosage gets different scrutiny than one recommending a restaurant.
+    </p>
+
+    <h3>🧪 Claim Verification</h3>
+    <p>
+        Extracts factual claims from AI responses and verifies them against Wikipedia in real-time. Verified claims boost confidence; contradicted claims trigger escalation.
+    </p>
+
+    <h3>🎯 Query-Context Matching</h3>
+    <p>
+        Compares the AI's response against the original user question to detect scope creep, irrelevance, and dangerous queries answered without appropriate refusal.
+    </p>
+
+    <hr class="divider">
+
+    <h2>A Real Example</h2>
+
+    <p>Send any AI output to our API:</p>
+
+    <pre><code>curl -X POST https://guardrail-mvp-production.up.railway.app/api/check \
+  -H "Content-Type: application/json" \
+  -H "X-Guardrail-Key: YOUR_KEY" \
+  -d '{
+    "text": "Aspirin was invented by Felix Hoffmann in 1897 at Bayer. The recommended dosage is 325mg every 4 hours.",
+    "userQuery": "Who invented aspirin?",
+    "context": "medical"
+  }'</code></pre>
+
+    <p>The response tells you exactly what to do:</p>
+
+    <pre><code>{
+  "confidence": 0.42,
+  "decision": "escalate",
+  "reasons": [
+    "Auto-detected domain: medical",
+    "High-stakes medical content",
+    "Unverifiable biographical claim",
+    "1 unverified claim detected"
+  ],
+  "claims": [
+    {
+      "text": "Aspirin was invented by Felix Hoffmann in 1897 at Bayer.",
+      "type": "claim",
+      "verification": "unverified"
+    }
+  ]
+}</code></pre>
+
+    <div class="callout success">
+        <div class="callout-title">✅ Result: Escalate</div>
+        <p>
+            The response contains a medical dosage recommendation and an unverified historical claim. Guardrail flags it for human review before it reaches the patient — exactly the kind of protection Claude Code built 512K lines of code to achieve.
+        </p>
+    </div>
+
+    <hr class="divider">
+
+    <h2>The Bottom Line</h2>
+
+    <p>
+        The Claude Code leak confirms what we've been building toward: <strong>every AI output needs a safety layer</strong>. Anthropic spent years and millions of dollars building theirs internally. With Guardrail AI, you can add the same protection to any LLM in under 10 minutes.
+    </p>
+
+    <p>
+        No model modifications. No 512,000 lines of custom code. Just one API call between your AI and your users.
+    </p>
+
+    <div class="cta-section">
+        <h2>Try It Now — Free</h2>
+        <p>Score any AI output in seconds. No credit card, no setup.</p>
+        <a href="/playground.html" class="cta-btn">Open the Playground →</a>
+        <br><br>
+        <a href="/developer.html" style="color: var(--text-muted); font-size: 0.85rem;">Or get your free API key →</a>
+    </div>
+
+</article>
+
+</body>
+</html>
