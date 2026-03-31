@@ -1,0 +1,67 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Chatbot + Safety Guide — Guardrail AI</title><meta name="description" content="Step-by-step guide to add AI safety scoring to your Chatflow chatbot with Guardrail AI"><style>body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;max-width:660px;margin:0 auto;padding:40px 24px 60px;line-height:1.8;color:#2d3748;font-size:15px}h1{color:#1a202c;border-bottom:3px solid #1db99a;padding-bottom:12px;font-size:1.5em;margin-top:0}h2{color:#1db99a;margin-top:40px;font-size:1.15em;padding-bottom:6px;border-bottom:1px solid #e8edf2}pre{white-space:pre-wrap;word-break:break-word}table{border-collapse:collapse;width:100%;margin:14px 0}td{padding:12px 14px;border:1px solid #e2e8f0;font-size:14px}tr:first-child td{background:#f7fafc;font-weight:600}code{font-family:"SF Mono",Menlo,Consolas,monospace}li{margin:6px 0}strong{color:#1a202c}.banner{background:linear-gradient(135deg,#0a1628 0%,#1a3050 100%);color:white;padding:32px 36px;border-radius:14px;margin-bottom:36px}.banner h1{color:white;border:none;margin:0;padding:0;font-size:1.4em}.banner p{color:#8ab4d7;margin:8px 0 0;font-size:14px}@media(max-width:600px){body{padding:20px 16px;font-size:14px}.banner{padding:20px 24px}pre{font-size:12px;padding:12px}}</style></head><body><div class="banner"><h1>🛡️ AI Chatbot + Safety Guide</h1><p>Complete setup: Chatflow bot + Guardrail AI safety scoring</p></div><p style="margin:12px 0"><h1>Complete Guide: AI Chatbot with Safety for Your Website</h1></p><p style="margin:12px 0"><strong>For: AM Notary LLC</strong></p><p style="margin:12px 0">This guide walks you through two things:
+<li style="margin:8px 0"><strong>Setting up your chatbot</strong> using Chatflow (Flowise)</li>
+<li style="margin:8px 0"><strong>Adding Guardrail AI safety</strong> so the bot doesn't give bad answers</li></p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 1: Install Chatflow (10 minutes)</h2></p><p style="margin:12px 0">Chatflow (also called Flowise) is a free chatbot builder. Install it:</p><p style="margin:12px 0"><li style="margin:8px 0">Make sure you have <strong>Node.js</strong> installed. Check by opening Terminal and typing: <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">node --version</code>. If you see a version number, you're good. If not, download it from <strong>https://nodejs.org</strong> (choose the LTS version).</li></p><p style="margin:12px 0"><li style="margin:8px 0">Open Terminal and run this command:</li>
+<pre style="background:#f5f7fa;padding:16px 18px;border-radius:8px;font-size:13px;overflow-x:auto;line-height:1.7;border:1px solid #e2e8f0"><code>npm install -g flowise
+</code></pre></p><p style="margin:12px 0"><li style="margin:8px 0">Once installed, start it:</li>
+<pre style="background:#f5f7fa;padding:16px 18px;border-radius:8px;font-size:13px;overflow-x:auto;line-height:1.7;border:1px solid #e2e8f0"><code>npx flowise start
+</code></pre></p><p style="margin:12px 0"><li style="margin:8px 0">Open your browser and go to: <strong>http://localhost:3000</strong></li></p><p style="margin:12px 0"><li style="margin:8px 0">You should see the Chatflow dashboard. You're ready to build your bot!</li></p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 2: Build Your Notary Bot (15 minutes)</h2></p><p style="margin:12px 0"><li style="margin:8px 0">In Chatflow, click <strong>Chatflows</strong> → <strong>Add New</strong></li>
+<li style="margin:8px 0">Give it a name like "AM Notary Assistant"</li>
+<li style="margin:8px 0">Drag these nodes onto the canvas:</li>
+   - <strong>Chat Model</strong> (pick one like ChatOpenAI or ChatAnthropic — you'll need an API key from them)
+   - <strong>Prompt Template</strong> — this tells the bot what it knows
+   - <strong>LLM Chain</strong> — connects the prompt to the model
+<li style="margin:8px 0">In the <strong>Prompt Template</strong>, paste something like:</li></p><p style="margin:12px 0"><pre style="background:#f5f7fa;padding:16px 18px;border-radius:8px;font-size:13px;overflow-x:auto;line-height:1.7;border:1px solid #e2e8f0"><code>You are the virtual assistant for Amazing Mobile Notary LLC.</p><p style="margin:12px 0">Our services:
+<li style="margin:6px 0">Mobile Notary ($25 per notarization + travel fee)</li>
+<li style="margin:6px 0">Loan Signing Agent (NNA & Notary2Pro certified)</li>
+<li style="margin:6px 0">Remote Online Notary (e-notary)</li></p><p style="margin:12px 0">Service areas: Haymarket, Gainesville, Manassas, Bristow, Aldie, Ashburn, Prince William County VA</p><p style="margin:12px 0">We are available 24/7. We have 4+ years experience and $1M E&O insurance.</p><p style="margin:12px 0">Rules:
+<li style="margin:6px 0">Never give legal advice. Say "Please consult an attorney."</li>
+<li style="margin:6px 0">If unsure about pricing, say "Please call us for current pricing."</li>
+<li style="margin:6px 0">Keep answers short and friendly.</li></p><p style="margin:12px 0">Customer question: {question}
+</code></pre></p><p style="margin:12px 0"><li style="margin:8px 0">Connect the nodes: Prompt Template → LLM Chain → Chat Model</li>
+<li style="margin:8px 0">Click <strong>Save</strong> and test the bot in the chat preview</li></p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 3: Get Your Guardrail API Key (2 minutes)</h2></p><p style="margin:12px 0">Now let's add the safety layer.</p><p style="margin:12px 0"><li style="margin:8px 0">Open: <strong>https://guardrail-mvp-production.up.railway.app/developer.html</strong></li>
+<li style="margin:8px 0">Enter your email (e.g. <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">info@amnotaryllc.com</code>)</li>
+<li style="margin:8px 0">Click <strong>Load</strong></li>
+<li style="margin:8px 0">You'll see a key like <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">gr_live_abc123def456...</code></li>
+<li style="margin:8px 0"><strong>COPY AND SAVE THIS KEY.</strong> You cannot get it again.</li></p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 4: Add the Guardrail Safety Tool (5 minutes)</h2></p><p style="margin:12px 0"><li style="margin:8px 0">In Chatflow, click <strong>Tools</strong> in the left sidebar</li>
+<li style="margin:8px 0">Click <strong>Create New</strong></li>
+<li style="margin:8px 0">Fill in:</li>
+   - <strong>Name:</strong> <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">guardrailSafetyCheck</code>
+   - <strong>Description:</strong> <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">Checks AI responses for safety before showing to customers</code>
+<li style="margin:8px 0">Add two <strong>Input Variables:</strong></li>
+   - Name: <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">aiResponse</code>, Type: <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">string</code>
+   - Name: <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">customerQuestion</code>, Type: <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">string</code>
+<li style="margin:8px 0">In the <strong>JavaScript Function</strong> box, paste this:</li></p><p style="margin:12px 0"><pre style="background:#f5f7fa;padding:16px 18px;border-radius:8px;font-size:13px;overflow-x:auto;line-height:1.7;border:1px solid #e2e8f0"><code>const fetch = require('node-fetch');</p><p style="margin:12px 0">const GUARDRAIL_KEY = 'PASTE_YOUR_API_KEY_HERE';
+const GUARDRAIL_URL = 'https://guardrail-mvp-production.up.railway.app/api/check';</p><p style="margin:12px 0">const response = await fetch(GUARDRAIL_URL, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-Guardrail-Key': GUARDRAIL_KEY
+    },
+    body: JSON.stringify({
+        text: $aiResponse,
+        userQuery: $customerQuestion
+    })
+});</p><p style="margin:12px 0">const score = await response.json();</p><p style="margin:12px 0">if (score.decision === 'escalate') {
+    return $aiResponse +
+        '\n\n📞 For accuracy, I\'d recommend confirming with our team. ' +
+        'Call us or book at amnotaryllc.com';
+}</p><p style="margin:12px 0">if (score.decision === 'flag') {
+    return $aiResponse +
+        '\n\nℹ️ Have more questions? We\'re available 24/7 — call us anytime!';
+}</p><p style="margin:12px 0">return $aiResponse;
+</code></pre></p><p style="margin:12px 0"><li style="margin:8px 0">Replace <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">PASTE_YOUR_API_KEY_HERE</code> with your key from Step 3</li>
+<li style="margin:8px 0">Click <strong>Save</strong></li></p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 5: Connect Guardrail to Your Bot (3 minutes)</h2></p><p style="margin:12px 0"><li style="margin:8px 0">Open your chatflow canvas</li>
+<li style="margin:8px 0">Drag a <strong>Custom Tool</strong> node onto the canvas</li>
+<li style="margin:8px 0">In the dropdown, select <strong>guardrailSafetyCheck</strong></li>
+<li style="margin:8px 0">Wire it up:</li>
+   - AI output → <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">aiResponse</code>
+   - Customer's question → <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276">customerQuestion</code>
+<li style="margin:8px 0">Make the Custom Tool's output the final response</li>
+<li style="margin:8px 0">Click <strong>Save</strong></li></p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 6: Test It</h2></p><p style="margin:12px 0">In Chatflow's chat preview:</p><p style="margin:12px 0"><strong>Test 1:</strong> "What areas do you serve?"
+→ Should show a clean answer ✅</p><p style="margin:12px 0"><strong>Test 2:</strong> "Can I notarize my own documents?"
+→ Should show answer + "Call us or book at amnotaryllc.com" 📞</p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 7: Add the Bot to Your Website</h2></p><p style="margin:12px 0">In Chatflow, click the <strong>Share</strong> icon (or <strong>Embed</strong>) on your chatflow. Copy the embed code and paste it into your website's HTML before <code style="background:#eef2f7;padding:2px 6px;border-radius:4px;font-size:13px;color:#1a5276"></body></code>.</p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>Step 8: View Your Dashboard</h2></p><p style="margin:12px 0">See every response that was checked:</p><p style="margin:12px 0">👉 <strong>https://guardrail-mvp-production.up.railway.app/developer.html</strong></p><p style="margin:12px 0">Enter your API key to see scores, flagged responses, and trends.</p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><h2>What Your Customers Will See</h2></p><p style="margin:12px 0"><tr><td style="padding:12px 14px;border:1px solid #e2e8f0">Situation</td><td style="padding:12px 14px;border:1px solid #e2e8f0">What Happens</td></tr>
+<tr><td style="padding:12px 14px;border:1px solid #e2e8f0">-----------</td><td style="padding:12px 14px;border:1px solid #e2e8f0">-------------</td></tr>
+<tr><td style="padding:12px 14px;border:1px solid #e2e8f0">Good answer</td><td style="padding:12px 14px;border:1px solid #e2e8f0">Shows normally, no extra text</td></tr>
+<tr><td style="padding:12px 14px;border:1px solid #e2e8f0">Uncertain answer</td><td style="padding:12px 14px;border:1px solid #e2e8f0">Shows + "Have more questions? Call us!"</td></tr>
+<tr><td style="padding:12px 14px;border:1px solid #e2e8f0">Risky answer</td><td style="padding:12px 14px;border:1px solid #e2e8f0">Shows + "I'd recommend confirming with our team"</td></tr></p><p style="margin:12px 0">Nobody gets blocked. Everyone gets an answer. Risky ones include a nudge to call you — which means more leads.</p><p style="margin:12px 0"><hr style="margin:32px 0;border:none;border-top:1px solid #e8edf2"></p><p style="margin:12px 0"><strong>Need help?</strong> Email symehmoo@gmail.com
+</p></body></html>
