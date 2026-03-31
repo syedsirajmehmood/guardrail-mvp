@@ -23,6 +23,9 @@
   var CONTEXT   = script.getAttribute('data-context') || 'general';
   var TITLE     = script.getAttribute('data-title')  || 'AI Assistant';
   var THEME     = script.getAttribute('data-theme')  || 'dark';
+  var SYS_PROMPT= script.getAttribute('data-system-prompt') || '';
+  var WELCOME   = script.getAttribute('data-welcome') || 'Hi! I\'m your AI assistant. How can I help?';
+  var PLACEHOLDER = script.getAttribute('data-placeholder') || 'Ask anything...';
   var ENDPOINT  = script.src.replace('/embed/widget.js', '');
 
   if (!API_KEY) {
@@ -83,11 +86,11 @@
     '  <button id="gr-panel-close" title="Close">✕</button>',
     '</div>',
     '<div id="gr-messages">',
-    '  <div class="gr-msg ai">Hi! I\'m your AI assistant with Guardrail confidence scoring. Every response is rated for reliability. How can I help?</div>',
+    '  <div class="gr-msg ai">' + WELCOME + '</div>',
     '  <div class="gr-typing" id="gr-typing"><span></span><span></span><span></span></div>',
     '</div>',
     '<div id="gr-input-row">',
-    '  <textarea id="gr-input" placeholder="Ask anything..." rows="1"></textarea>',
+    '  <textarea id="gr-input" placeholder="' + PLACEHOLDER + '" rows="1"></textarea>',
     '  <button id="gr-send">➤</button>',
     '</div>',
     '<div id="gr-powered">Powered by <a href="' + ENDPOINT + '" target="_blank">Guardrail</a></div>',
@@ -125,7 +128,7 @@
     fetch(ENDPOINT + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Guardrail-Key': API_KEY },
-      body: JSON.stringify({ message: text, context: CONTEXT }),
+      body: JSON.stringify({ message: text, context: CONTEXT, systemPrompt: SYS_PROMPT || undefined }),
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
