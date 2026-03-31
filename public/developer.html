@@ -230,9 +230,10 @@
             <div class="tab-panel" id="tab-widget"><pre><code id="snippet-widget"></code></pre></div>
             <div class="tab-panel" id="tab-mcp">
                 <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                    <a href="/api/mcp-download" download="guardrail-ai-mcp.js"
-                        style="background:var(--teal);color:#fff;padding:8px 18px;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:700">⬇️ Download MCP Server</a>
-                    <span style="font-size:.75rem;color:var(--muted)">Save it anywhere, then update the path below</span>
+                    <a href="setup.html"
+                        style="background:var(--teal);color:#fff;padding:8px 18px;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:700">📖 Full Setup Guide</a>
+                    <a href="https://www.npmjs.com/package/guardrail-ai-mcp"
+                        style="background:var(--card2);color:var(--teal);padding:8px 18px;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;border:1px solid var(--border)">npm: guardrail-ai-mcp</a>
                 </div>
                 <pre><code id="snippet-mcp"></code></pre>
             </div>
@@ -355,21 +356,20 @@
 
             // MCP tab
             document.getElementById('snippet-mcp').innerHTML =
-                `<span class="tk-comment">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>\n` +
+                `<span class="tk-comment">// Step 1: Open config file</span>\n` +
+                `<span class="tk-comment">// Mac: ~/Library/Application Support/Claude/claude_desktop_config.json</span>\n\n` +
+                `<span class="tk-comment">// Step 2: Add this config (merge with existing if needed)</span>\n` +
                 `{\n` +
                 `  <span class="tk-key">"mcpServers"</span>: {\n` +
                 `    <span class="tk-key">"guardrail"</span>: {\n` +
-                `      <span class="tk-key">"command"</span>: <span class="tk-str">"node"</span>,\n` +
-                `      <span class="tk-key">"args"</span>: [<span class="tk-str">"PATH_TO/guardrail-mvp/mcp/server.js"</span>],\n` +
-                `      <span class="tk-key">"env"</span>: {\n` +
-                `        <span class="tk-key">"GUARDRAIL_API_KEY"</span>: <span class="tk-str">"${k}"</span>,\n` +
-                `        <span class="tk-key">"GUARDRAIL_ENDPOINT"</span>: <span class="tk-str">"${o}"</span>\n` +
-                `      }\n` +
+                `      <span class="tk-key">"command"</span>: <span class="tk-str">"npx"</span>,\n` +
+                `      <span class="tk-key">"args"</span>: [<span class="tk-str">"guardrail-ai-mcp"</span>, <span class="tk-str">"--key"</span>, <span class="tk-str">"${k}"</span>]\n` +
                 `    }\n` +
                 `  }\n` +
                 `}\n\n` +
-                `<span class="tk-comment">// Then restart Claude Desktop. Claude can now call:</span>\n` +
-                `<span class="tk-comment">// check_confidence · get_my_stats · score_and_explain</span>`;
+                `<span class="tk-comment">// Step 3: Restart Claude Desktop (Cmd+Q → reopen)</span>\n` +
+                `<span class="tk-comment">// Step 4: Click + → Connectors → verify "guardrail" is ON</span>\n` +
+                `<span class="tk-comment">// Tools: check_confidence · score_and_explain · get_my_stats</span>`;
         }
 
         let activeTab = 'sdk';
