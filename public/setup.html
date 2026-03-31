@@ -1,87 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Guardrail — Setup Guide</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-    <style>
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        :root{--teal:#1db99a;--amber:#f5a623;--coral:#ff5c5c;--bg:#06111f;--card:#0d1e33;--border:#1e3050;--text:#e2edf8;--muted:#6b8aab}
-        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px}
-        .container{max-width:680px;margin:0 auto}
-        h1{font-size:1.6rem;font-weight:800;margin-bottom:8px}
-        .sub{color:var(--muted);font-size:.9rem;margin-bottom:40px}
-        .key-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:24px}
-        .key-card h2{font-size:1.1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
-        .key-card .what{color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:16px}
-        .key-card .billing{font-size:.78rem;padding:8px 14px;border-radius:8px;margin-bottom:16px;display:inline-block}
-        .billing.paid{background:rgba(245,166,35,.1);color:var(--amber);border:1px solid rgba(245,166,35,.2)}
-        .billing.free{background:rgba(29,185,154,.1);color:var(--teal);border:1px solid rgba(29,185,154,.2)}
-        .steps{list-style:none;counter-reset:step;padding:0}
-        .steps li{counter-increment:step;display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;font-size:.88rem;line-height:1.5}
-        .steps li::before{content:counter(step);background:var(--teal);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:1px}
-        .steps a{color:var(--teal);text-decoration:underline}
-        code{background:#0a1929;padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--teal)}
-        .back{display:inline-flex;align-items:center;gap:6px;color:var(--teal);font-size:.85rem;text-decoration:none;margin-bottom:24px}
-        .back:hover{text-decoration:underline}
-        hr{border:none;border-top:1px solid var(--border);margin:32px 0}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Setup Guide — Guardrail AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a1628; --card:#0d1e33; --border:#1e3050; --text:#e2edf8; --muted:#6b8aab; --teal:#1db99a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; }
+  a { color:var(--teal); text-decoration:none; }
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); background:var(--card); }
+  .nav-brand { font-weight:900; font-size:1rem; }
+  .nav-links { display:flex; gap:20px; font-size:.82rem; font-weight:600; }
+  .nav-links a { color:var(--muted); }
+
+  .container { max-width:720px; margin:0 auto; padding:48px 24px 80px; }
+  h1 { font-size:2rem; font-weight:900; margin-bottom:8px; }
+  .sub { color:var(--muted); font-size:.9rem; margin-bottom:48px; }
+  h2 { font-size:1.2rem; font-weight:800; margin:40px 0 16px; color:var(--teal); }
+
+  .step { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px 28px; margin-bottom:20px; position:relative; }
+  .step-num { position:absolute; top:-12px; left:20px; background:var(--teal); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; }
+  .step h3 { font-size:1rem; font-weight:700; margin-bottom:8px; }
+  .step p { font-size:.87rem; color:var(--muted); margin-bottom:12px; }
+
+  pre { background:#081420; border:1px solid var(--border); border-radius:8px; padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:.8rem; line-height:1.8; overflow-x:auto; color:var(--text); margin:8px 0 12px; }
+  code { background:#081420; padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.8rem; color:var(--teal); }
+
+  .copy-btn { background:var(--teal); color:#fff; border:none; padding:6px 14px; border-radius:6px; font-size:.75rem; font-weight:700; cursor:pointer; float:right; margin-top:-4px; }
+  .copy-btn:hover { opacity:.8; }
+
+  .tip { background:rgba(29,185,154,.08); border:1px solid rgba(29,185,154,.2); border-radius:10px; padding:16px 20px; margin:16px 0; font-size:.85rem; }
+  .tip strong { color:var(--teal); }
+
+  .warning { background:rgba(255,107,107,.08); border:1px solid rgba(255,107,107,.2); border-radius:10px; padding:16px 20px; margin:16px 0; font-size:.85rem; }
+  .warning strong { color:#ff6b6b; }
+
+  @media(max-width:600px) { .container { padding:24px 16px 60px; } pre { font-size:.72rem; padding:12px 14px; } }
+</style>
 </head>
 <body>
-    <div class="container">
-        <a href="/chat.html" class="back">← Back to Chat Demo</a>
 
-        <h1>🔑 Setup Guide</h1>
-        <p class="sub">You need two keys to use the Chat Demo. Here's what each one is and how to get it.</p>
+<nav class="nav">
+  <a href="/" class="nav-brand">🛡️ Guardrail</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="playground.html">Playground</a>
+    <a href="docs.html">API Docs</a>
+    <a href="dashboard.html">Dashboard</a>
+  </div>
+</nav>
 
-        <!-- Anthropic Key -->
-        <div class="key-card">
-            <h2>🤖 Anthropic API Key</h2>
-            <p class="what">
-                This is your personal key from <strong>Anthropic</strong> (the company that makes Claude).
-                It lets Claude answer your questions. Think of it like a login for the AI — you bring your own account.
-            </p>
-            <div class="billing paid">💳 Claude uses your Anthropic tokens — you pay Anthropic directly, not us</div>
+<div class="container">
 
-            <ol class="steps">
-                <li>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></li>
-                <li><strong>Sign up</strong> for an account (or log in if you already have one)</li>
-                <li>Click <strong>Settings → API Keys → Create Key</strong></li>
-                <li>Copy the key — it starts with <code>sk-ant-api03-...</code></li>
-                <li>Paste it in the chat sidebar under <strong>"Anthropic Key"</strong></li>
-            </ol>
-        </div>
+<h1>MCP Server Setup Guide</h1>
+<p class="sub">Get Guardrail running in Claude Desktop in 3 minutes. Every check automatically logs to your dashboard.</p>
 
-        <hr>
+<!-- STEP 1 -->
+<h2>Installation</h2>
 
-        <!-- Guardrail Key -->
-        <div class="key-card">
-            <h2>🛡️ Guardrail API Key</h2>
-            <p class="what">
-                This is your free key from <strong>Guardrail</strong>.
-                It lets our engine analyze every Claude response for confidence, risk signals, and decide whether to
-                deliver it, flag it for review, or escalate to a human. We sit <em>between</em> you and Claude — we don't
-                generate any AI text or use any tokens.
-            </p>
-            <div class="billing free">🛡️ 100% free — no tokens, no charges, ever</div>
+<div class="step">
+  <div class="step-num">1</div>
+  <h3>Get your API key</h3>
+  <p>Go to <a href="https://guardrail-mvp-production.up.railway.app/developer.html">Developer Portal</a> and enter your email to get a free API key (starts with <code>gr_live_</code>).</p>
+</div>
 
-            <ol class="steps">
-                <li>Go to the <a href="/" target="_blank">Guardrail home page</a></li>
-                <li>Enter your email → click <strong>Get Free Key</strong></li>
-                <li>Copy the key — it starts with <code>gr_live_...</code></li>
-                <li>Paste it in the chat sidebar under <strong>"Guardrail Key"</strong></li>
-            </ol>
-        </div>
+<div class="step">
+  <div class="step-num">2</div>
+  <h3>Open your Claude Desktop config file</h3>
+  <p>On Mac, open Terminal and run:</p>
+<pre>open ~/Library/Application\ Support/Claude/claude_desktop_config.json</pre>
+  <p>On Windows, open:</p>
+<pre>%APPDATA%\Claude\claude_desktop_config.json</pre>
+</div>
 
-        <hr>
+<div class="step">
+  <div class="step-num">3</div>
+  <h3>Add the Guardrail MCP server</h3>
+  <p>Paste this into your config file. Replace <code>gr_live_xxx</code> with your actual API key:</p>
+<pre>{
+  "mcpServers": {
+    "guardrail": {
+      "command": "npx",
+      "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
+    }
+  }
+}</pre>
 
-        <div style="text-align:center;padding:20px 0">
-            <a href="/chat.html" style="background:var(--teal);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.95rem">
-                ← Back to Chat Demo
-            </a>
-        </div>
-    </div>
+  <div class="warning">
+    <strong>⚠️ Important:</strong> If your config file already has a <code>"preferences"</code> section, merge them into <strong>one JSON object</strong>:
+  </div>
+
+<pre>{
+  "preferences": {
+    "coworkScheduledTasksEnabled": true,
+    "sidebarMode": "chat"
+  },
+  "mcpServers": {
+    "guardrail": {
+      "command": "npx",
+      "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"]
+    }
+  }
+}</pre>
+</div>
+
+<div class="step">
+  <div class="step-num">4</div>
+  <h3>Restart Claude Desktop</h3>
+  <p>Fully quit Claude Desktop (<strong>Cmd+Q</strong> on Mac) and reopen it. The Guardrail tools will load automatically.</p>
+</div>
+
+<!-- STEP 2 -->
+<h2>Verify It's Working</h2>
+
+<div class="step">
+  <div class="step-num">5</div>
+  <h3>Check the connector is loaded</h3>
+  <p>Click the <strong>+</strong> button → <strong>Connectors</strong> → you should see <strong>"guardrail"</strong> with a blue toggle ON.</p>
+</div>
+
+<div class="step">
+  <div class="step-num">6</div>
+  <h3>Test it</h3>
+  <p>In a Claude Desktop chat, type:</p>
+<pre>Use the guardrail score_and_explain tool to score this:
+"Taking 500mg of aspirin daily is safe for everyone."</pre>
+  <p>You should see a confidence score, decision (deliver/flag/escalate), and detected signals.</p>
+</div>
+
+<!-- AUTO-USE -->
+<h2>Auto-Use (Optional)</h2>
+
+<div class="step">
+  <div class="step-num">7</div>
+  <h3>Make Guardrail run automatically</h3>
+  <p>To avoid saying "use the guardrail tool" every time:</p>
+  <ol style="margin:12px 0; padding-left:20px; font-size:.87rem; color:var(--muted);">
+    <li>Click <strong>+</strong> → <strong>Connectors</strong> → <strong>Tool access</strong></li>
+    <li>Select <strong>"Tools already loaded"</strong></li>
+    <li>Create a <strong>Project</strong> (e.g. "Guardrail Testing")</li>
+    <li>Click <strong>+</strong> next to <strong>Instructions</strong> and add:</li>
+  </ol>
+<pre>Always use the guardrail score_and_explain tool to score
+any AI-generated text I share. Show the confidence score,
+decision, and detected signals. Do not answer the text's
+question — only score it.</pre>
+  <p>Now every message in that project will automatically use Guardrail.</p>
+</div>
+
+<!-- TOOLS -->
+<h2>Available Tools</h2>
+
+<div class="step">
+  <h3 style="margin-bottom:16px;">Three tools are available in every chat:</h3>
+  <table style="width:100%; font-size:.85rem; border-collapse:collapse;">
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 0;"><code>check_confidence</code></td>
+      <td style="padding:8px 0; color:var(--muted);">Quick score — returns confidence 0-1 and deliver/flag/escalate</td>
+    </tr>
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 0;"><code>score_and_explain</code></td>
+      <td style="padding:8px 0; color:var(--muted);">Detailed score with human-readable explanation of all signals</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;"><code>get_my_stats</code></td>
+      <td style="padding:8px 0; color:var(--muted);">Your API usage stats — total checks, decisions, recent logs</td>
+    </tr>
+  </table>
+</div>
+
+<div class="tip">
+  <strong>💡 Context-aware scoring:</strong> All tools support an optional <code>userQuery</code> parameter. When provided, Guardrail also analyzes whether the response is relevant to the question, detects scope creep, and audits dangerous queries for missing refusals.
+</div>
+
+<div class="tip">
+  <strong>📊 Dashboard:</strong> Every MCP tool call logs to your <a href="dashboard.html">dashboard</a> automatically. View scores, signals, and usage trends at <a href="https://guardrail-mvp-production.up.railway.app/dashboard.html">guardrail-mvp-production.up.railway.app/dashboard.html</a>
+</div>
+
+<div style="margin-top:48px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center;">
+  <div style="font-size:1rem;font-weight:700;margin-bottom:8px;">Need help?</div>
+  <p style="font-size:.85rem;color:var(--muted);">
+    <a href="docs.html">API Reference</a> · <a href="playground.html">Try the Playground</a> · <a href="https://www.npmjs.com/package/guardrail-ai-mcp">npm Package</a> · <a href="https://github.com/saifsysim/guardrail-mvp">GitHub</a>
+  </p>
+</div>
+
+</div>
 </body>
 </html>
