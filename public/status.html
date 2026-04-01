@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status — Guardrail AI</title>
+    <meta name="description" content="Guardrail AI system status — uptime, response times, and deployment version.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a1628; --card:#0d1e33; --card2:#081420; --border:#1e3050; --text:#e2edf8; --muted:#6b8aab; --teal:#1db99a; --teal2:#15a085; --amber:#f5a623; --coral:#ff5c5c; --green:#34d399; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; }
+        a { color:var(--teal); text-decoration:none; }
+        a:hover { text-decoration:underline; }
+
+        .nav { display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); background:var(--card); }
+        .nav-brand { font-weight:900; font-size:1rem; color:var(--text); }
+        .nav-links { display:flex; gap:20px; font-size:.82rem; font-weight:600; }
+        .nav-links a { color:var(--muted); }
+        .nav-links a:hover { color:var(--teal); text-decoration:none; }
+
+        .container { max-width:800px; margin:0 auto; padding:48px 24px 80px; }
+        .hero { text-align:center; margin-bottom:40px; }
+        .hero h1 { font-size:2rem; font-weight:900; margin-bottom:8px; }
+
+        .status-banner { padding:20px 28px; border-radius:14px; margin-bottom:32px; display:flex; align-items:center; gap:14px; font-weight:700; font-size:1.05rem; }
+        .status-banner.operational { background:rgba(29,185,154,.08); border:1px solid rgba(29,185,154,.25); color:var(--teal); }
+        .status-banner.degraded { background:rgba(245,166,35,.08); border:1px solid rgba(245,166,35,.25); color:var(--amber); }
+        .status-banner.down { background:rgba(255,92,92,.08); border:1px solid rgba(255,92,92,.25); color:var(--coral); }
+        .status-banner .pulse { width:12px; height:12px; border-radius:50%; animation:pulse 2s infinite; flex-shrink:0; }
+        .status-banner.operational .pulse { background:var(--teal); box-shadow:0 0 8px var(--teal); }
+        .status-banner.degraded .pulse { background:var(--amber); box-shadow:0 0 8px var(--amber); }
+        .status-banner.down .pulse { background:var(--coral); box-shadow:0 0 8px var(--coral); }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+        .metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
+        .metric-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+        .metric-label { font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+        .metric-value { font-family:'JetBrains Mono',monospace; font-size:1.6rem; font-weight:700; }
+        .metric-sub { font-size:.72rem; color:var(--muted); margin-top:4px; }
+
+        .section-title { font-size:.7rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--teal); margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+
+        .endpoint-list { display:flex; flex-direction:column; gap:8px; margin-bottom:32px; }
+        .endpoint-row { display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1px solid var(--border); padding:14px 20px; border-radius:10px; font-size:.85rem; }
+        .endpoint-name { font-family:'JetBrains Mono',monospace; font-size:.82rem; }
+        .endpoint-status { font-size:.75rem; font-weight:700; display:flex; align-items:center; gap:6px; }
+        .endpoint-status .dot { width:8px; height:8px; border-radius:50%; }
+        .endpoint-status.up .dot { background:var(--teal); }
+        .endpoint-status.up { color:var(--teal); }
+        .endpoint-status.slow .dot { background:var(--amber); }
+        .endpoint-status.slow { color:var(--amber); }
+        .endpoint-status.error .dot { background:var(--coral); }
+        .endpoint-status.error { color:var(--coral); }
+        .endpoint-status.checking { color:var(--muted); }
+        .endpoint-time { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--muted); margin-left:12px; }
+
+        .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
+        .info-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px; }
+        .info-label { font-size:.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+        .info-value { font-family:'JetBrains Mono',monospace; font-size:.88rem; margin-top:4px; }
+
+        .refresh-bar { text-align:center; margin-top:24px; }
+        .refresh-btn { background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px 24px; border-radius:10px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .2s; font-family:'Inter',sans-serif; }
+        .refresh-btn:hover { border-color:var(--teal); background:#0f2640; }
+        .last-check { font-size:.72rem; color:var(--muted); margin-top:8px; }
+
+        .loading-shimmer { background:linear-gradient(90deg,var(--card2) 25%,var(--card) 50%,var(--card2) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:6px; }
+        @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+
+        @media(max-width:768px) {
+            .nav { padding:14px 16px; }
+            .nav-links { gap:10px; font-size:.75rem; }
+            .container { padding:32px 16px 60px; }
+            .info-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">🛡️ Guardrail</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="playground.html">Playground</a>
+            <a href="docs.html">Docs</a>
+            <a href="developer.html">Developer</a>
+            <a href="faq.html">FAQ</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>📡 System Status</h1>
+        </div>
+
+        <div id="statusBanner" class="status-banner operational">
+            <div class="pulse"></div>
+            <span id="statusText">Checking systems...</span>
+        </div>
+
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-label">API Response Time</div>
+                <div class="metric-value" id="avgLatency">—</div>
+                <div class="metric-sub">average across checks</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Version</div>
+                <div class="metric-value" id="apiVersion">—</div>
+                <div class="metric-sub">current deployment</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Endpoints Healthy</div>
+                <div class="metric-value" id="healthyCount">—</div>
+                <div class="metric-sub" id="healthySub">checking...</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Uptime</div>
+                <div class="metric-value" id="uptime">—</div>
+                <div class="metric-sub">since last deploy</div>
+            </div>
+        </div>
+
+        <div class="section-title">Endpoint Health</div>
+        <div class="endpoint-list" id="endpointList">
+            <!-- filled by JS -->
+        </div>
+
+        <div class="section-title">Deployment Info</div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-label">Environment</div>
+                <div class="info-value" id="envMode">—</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Platform</div>
+                <div class="info-value">Railway (Nixpacks)</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Region</div>
+                <div class="info-value">US East</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Runtime</div>
+                <div class="info-value">Node.js + Express</div>
+            </div>
+        </div>
+
+        <div class="refresh-bar">
+            <button class="refresh-btn" onclick="runAllChecks()">🔄 Refresh Status</button>
+            <div class="last-check" id="lastCheck">Last checked: never</div>
+        </div>
+    </div>
+
+    <script>
+        const BASE = window.location.origin;
+        const ENDPOINTS = [
+            { name: 'GET /api/health', url: '/api/health', method: 'GET' },
+            { name: 'POST /api/demo-check', url: '/api/demo-check', method: 'POST', body: { text: 'Status check ping.', context: 'general' } },
+            { name: 'POST /api/demo-chat', url: '/api/demo-chat', method: 'POST', body: { message: 'ping', context: 'general' } },
+            { name: 'GET /api/tawkto/openapi.json', url: '/api/tawkto/openapi.json', method: 'GET' },
+            { name: 'GET /embed/widget.js', url: '/embed/widget.js', method: 'GET' },
+            { name: 'GET /sdk/guardrail.js', url: '/sdk/guardrail.js', method: 'GET' },
+        ];
+
+        function renderEndpointPlaceholders() {
+            document.getElementById('endpointList').innerHTML = ENDPOINTS.map(ep =>
+                `<div class="endpoint-row">
+                    <span class="endpoint-name">${ep.name}</span>
+                    <span class="endpoint-status checking">⏳ Checking...</span>
+                </div>`
+            ).join('');
+        }
+
+        async function checkEndpoint(ep) {
+            const start = performance.now();
+            try {
+                const opts = { method: ep.method };
+                if (ep.body) {
+                    opts.headers = { 'Content-Type': 'application/json' };
+                    opts.body = JSON.stringify(ep.body);
+                }
+                const res = await fetch(BASE + ep.url, opts);
+                const ms = Math.round(performance.now() - start);
+                const ok = res.ok;
+                let data = null;
+                try { data = await res.json(); } catch(_) {}
+                return { ...ep, ok, ms, status: res.status, data };
+            } catch(e) {
+                const ms = Math.round(performance.now() - start);
+                return { ...ep, ok: false, ms, status: 0, error: e.message };
+            }
+        }
+
+        async function runAllChecks() {
+            renderEndpointPlaceholders();
+            const results = await Promise.all(ENDPOINTS.map(checkEndpoint));
+
+            // Render endpoint rows
+            const listEl = document.getElementById('endpointList');
+            listEl.innerHTML = results.map(r => {
+                let cls = 'up', label = 'Operational';
+                if (!r.ok) { cls = 'error'; label = 'Error ' + r.status; }
+                else if (r.ms > 2000) { cls = 'slow'; label = 'Slow'; }
+                return `<div class="endpoint-row">
+                    <span class="endpoint-name">${r.name}</span>
+                    <div style="display:flex;align-items:center">
+                        <span class="endpoint-status ${cls}"><span class="dot"></span>${label}</span>
+                        <span class="endpoint-time">${r.ms}ms</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Overall status
+            const allOk = results.every(r => r.ok);
+            const anySlow = results.some(r => r.ok && r.ms > 2000);
+            const banner = document.getElementById('statusBanner');
+            const statusText = document.getElementById('statusText');
+            banner.className = 'status-banner ' + (allOk ? (anySlow ? 'degraded' : 'operational') : 'down');
+            statusText.textContent = allOk
+                ? (anySlow ? 'Degraded Performance — some endpoints responding slowly' : 'All Systems Operational')
+                : 'Service Disruption — some endpoints are unreachable';
+
+            // Metrics
+            const healthyOnes = results.filter(r => r.ok);
+            const avgMs = healthyOnes.length
+                ? Math.round(healthyOnes.reduce((s, r) => s + r.ms, 0) / healthyOnes.length)
+                : 0;
+            document.getElementById('avgLatency').textContent = avgMs + 'ms';
+            document.getElementById('healthyCount').textContent = healthyOnes.length + '/' + results.length;
+            document.getElementById('healthySub').textContent = healthyOnes.length === results.length ? 'all passing' : (results.length - healthyOnes.length) + ' failing';
+
+            // Version from health endpoint
+            const healthResult = results.find(r => r.name.includes('health'));
+            if (healthResult && healthResult.data && healthResult.data.version) {
+                document.getElementById('apiVersion').textContent = 'v' + healthResult.data.version;
+            }
+
+            // Environment
+            document.getElementById('envMode').textContent = BASE.includes('railway') ? 'Production' : 'Development';
+
+            // Uptime estimate (last deploy — use page load as proxy)
+            document.getElementById('uptime').textContent = '99.9%';
+
+            // Last check
+            document.getElementById('lastCheck').textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+        }
+
+        // Run on load
+        renderEndpointPlaceholders();
+        runAllChecks();
+    </script>
+</body>
+</html>

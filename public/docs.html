@@ -32,7 +32,10 @@
         h3 { font-size:.95rem; font-weight:700; margin:24px 0 8px; color:var(--teal); }
         p { font-size:.87rem; color:var(--muted); margin-bottom:12px; }
         code { background:var(--card2); padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.8rem; color:var(--teal); }
-        pre { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.8; overflow-x:auto; margin:12px 0 20px; color:var(--text); }
+        pre { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.8; overflow-x:auto; margin:12px 0 20px; color:var(--text); position:relative; }
+        .copy-btn { position:absolute; top:8px; right:8px; background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:6px; font-size:.68rem; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s; z-index:2; display:flex; align-items:center; gap:4px; }
+        .copy-btn:hover { background:rgba(29,185,154,.12); border-color:var(--teal); color:var(--teal); }
+        .copy-btn.copied { background:rgba(29,185,154,.2); border-color:var(--teal); color:var(--teal); }
 
         .method { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.7rem; font-weight:800; margin-right:8px; font-family:'JetBrains Mono',monospace; }
         .method.get { background:rgba(130,170,255,.15); color:#82aaff; }
@@ -598,4 +601,25 @@ const result = await gr.check(aiResponse);</pre>
         </div>
     </div>
 </body>
+<script>
+    // Auto-add copy buttons to all <pre> blocks
+    document.querySelectorAll('pre').forEach(pre => {
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '📋 Copy';
+        btn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(pre.textContent.trim());
+                btn.innerHTML = '✅ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.innerHTML = '📋 Copy'; btn.classList.remove('copied'); }, 1500);
+            } catch(e) {
+                btn.textContent = '❌ Failed';
+                setTimeout(() => { btn.innerHTML = '📋 Copy'; }, 1500);
+            }
+        });
+        pre.style.position = 'relative';
+        pre.insertBefore(btn, pre.firstChild);
+    });
+</script>
 </html>

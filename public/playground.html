@@ -802,6 +802,20 @@
                 ? r.reasons.map(x => '<span class="reason-chip">⚡ ' + x + '</span>').join('')
                 : '<span class="reason-chip">No risk signals detected</span>';
 
+            // Build SVG gauge
+            const gaugeColor = r.decision === 'deliver' ? '#1db99a' : r.decision === 'flag' ? '#f5a623' : '#ff5c5c';
+            const gaugeColorDim = r.decision === 'deliver' ? 'rgba(29,185,154,.15)' : r.decision === 'flag' ? 'rgba(245,166,35,.15)' : 'rgba(255,92,92,.15)';
+            const radius = 70, cx = 80, cy = 80, stroke = 10;
+            const circumference = Math.PI * radius; // half circle
+            const dashOffset = circumference - (circumference * r.confidence);
+            const gaugeHtml = '<div style="text-align:center;margin-bottom:20px">'
+                + '<svg width="160" height="100" viewBox="0 0 160 100">'
+                + '<path d="M 10 90 A 70 70 0 0 1 150 90" fill="none" stroke="' + gaugeColorDim + '" stroke-width="' + stroke + '" stroke-linecap="round"/>'
+                + '<path d="M 10 90 A 70 70 0 0 1 150 90" fill="none" stroke="' + gaugeColor + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + dashOffset + '" style="transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)"/>'
+                + '<text x="80" y="72" text-anchor="middle" fill="' + gaugeColor + '" font-family="JetBrains Mono,monospace" font-size="28" font-weight="700">' + pct + '%</text>'
+                + '<text x="80" y="92" text-anchor="middle" fill="' + gaugeColor + '" font-family="Inter,sans-serif" font-size="10" font-weight="700" text-transform="uppercase" letter-spacing="1">' + m.title + '</text>'
+                + '</svg></div>';
+
             document.getElementById('resultCard').innerHTML = 
     '<div class="result-card ' + r.decision + '">'
     + '<div class="decision-header">'
@@ -810,6 +824,7 @@
     + '<div class="decision-label">Guardrail Decision</div>'
     + '<div class="decision-val">' + m.title + '</div>'
     + '</div></div>'
+    + gaugeHtml
     + '<div class="confidence-bar">'
     + '<div class="conf-label"><span>Confidence Score</span><span>' + pct + '%</span></div>'
     + '<div class="conf-track"><div class="conf-fill" style="width:' + pct + '%"></div></div>'
