@@ -70,6 +70,7 @@
             <a href="developer.html">Developer</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="chat.html">Chat Demo</a>
+            <a href="faq.html">FAQ</a>
         </div>
     </nav>
 
@@ -107,9 +108,11 @@
             <a href="#webhooks">Webhooks</a>
 
             <div class="cat">Reference</div>
+            <a href="#architecture">Architecture</a>
             <a href="#errors">Error Codes</a>
             <a href="#signals">Signal Categories</a>
             <a href="#contexts">Contexts</a>
+            <a href="faq.html">FAQ →</a>
         </div>
 
         <div class="main">
@@ -527,9 +530,70 @@ const result = await gr.check(aiResponse);</pre>
             </table>
             <p>When <code>general</code> is selected, Guardrail auto-scans for domain keywords and elevates the context automatically. The <code>detectedContext</code> field in the response shows what was detected.</p>
 
+            <!-- ═══ ARCHITECTURE ═══ -->
+            <h2 id="architecture">Architecture Overview</h2>
+            <p>Guardrail sits between your AI model and your users, scoring every response in real-time.</p>
+
+            <h3>System Architecture</h3>
+            <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:24px;margin:16px 0;font-size:.82rem;line-height:2.2;font-family:'JetBrains Mono',monospace">
+                <div style="text-align:center;color:var(--muted);margin-bottom:8px">── Your Application ──</div>
+                <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
+                    <span style="background:rgba(130,170,255,.12);border:1px solid rgba(130,170,255,.25);padding:6px 14px;border-radius:6px;color:#82aaff">Any LLM</span>
+                    <span style="color:var(--muted)">→</span>
+                    <span style="background:rgba(130,170,255,.12);border:1px solid rgba(130,170,255,.25);padding:6px 14px;border-radius:6px;color:#82aaff">Your App</span>
+                </div>
+                <div style="text-align:center;color:var(--muted);margin:8px 0">↓ AI response text</div>
+                <div style="text-align:center;color:var(--muted);margin-bottom:8px">── Guardrail Platform ──</div>
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
+                    <span style="background:rgba(29,185,154,.12);border:1px solid rgba(29,185,154,.3);padding:6px 14px;border-radius:6px;color:var(--teal)">API Gateway</span>
+                    <span style="color:var(--muted)">→</span>
+                    <span style="background:rgba(29,185,154,.12);border:1px solid rgba(29,185,154,.3);padding:6px 14px;border-radius:6px;color:var(--teal)">Scoring Engine (60+ signals)</span>
+                    <span style="color:var(--muted)">→</span>
+                    <span style="background:rgba(29,185,154,.12);border:1px solid rgba(29,185,154,.3);padding:6px 14px;border-radius:6px;color:var(--teal)">Wikipedia Verification</span>
+                </div>
+                <div style="text-align:center;color:var(--muted);margin:8px 0">↓ decision + confidence</div>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    <span style="background:rgba(29,185,154,.12);border:1px solid rgba(29,185,154,.3);padding:6px 14px;border-radius:6px;color:var(--teal)">✅ Deliver (≥75%)</span>
+                    <span style="background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.3);padding:6px 14px;border-radius:6px;color:var(--amber)">⚠️ Flag (45–74%)</span>
+                    <span style="background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.3);padding:6px 14px;border-radius:6px;color:var(--coral)">🔴 Escalate (&lt;45%)</span>
+                </div>
+            </div>
+
+            <h3>Integration Paths</h3>
+            <table>
+                <tr><th>Integration</th><th>How It Works</th><th>Best For</th></tr>
+                <tr><td><strong>Browser SDK</strong></td><td><code>guardrail.js</code> → <code>/api/check</code></td><td>Custom apps with any LLM</td></tr>
+                <tr><td><strong>Chat Widget</strong></td><td><code>embed/widget.js</code> → <code>/api/chat</code> + auto page scraping</td><td>Adding AI chat to any website</td></tr>
+                <tr><td><strong>Chatflow / Flowise</strong></td><td>Custom Tool → <code>/api/check</code></td><td>No-code chatbot builders</td></tr>
+                <tr><td><strong>tawk.to</strong></td><td>Webhook → <code>/api/tawkto/webhook</code></td><td>Monitoring existing chatbot quality</td></tr>
+                <tr><td><strong>MCP / Claude Desktop</strong></td><td><code>npx guardrail-ai-mcp</code> → <code>/api/check</code></td><td>AI developers using Claude Desktop</td></tr>
+                <tr><td><strong>Direct REST</strong></td><td><code>curl /api/check</code></td><td>Any language, any platform</td></tr>
+            </table>
+
+            <h3>Scoring Pipeline</h3>
+            <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:20px;margin:16px 0;font-size:.8rem;line-height:2">
+                <div style="font-family:'JetBrains Mono',monospace;color:var(--muted)">
+                    <div>1. <span style="color:var(--text)">Input:</span> AI response text + context + userQuery</div>
+                    <div>2. <span style="color:var(--text)">Scan:</span> 60+ signal patterns across 7 categories</div>
+                    <div style="padding-left:20px;color:var(--muted);font-size:.75rem">Uncertainty · Knowledge Cutoff · Contradiction · Evasion · Hallucination · Frustration · Sycophancy</div>
+                    <div>3. <span style="color:var(--text)">Domain:</span> Auto-detect context + apply risk penalty (−20% to −35%)</div>
+                    <div>4. <span style="color:var(--text)">Quality:</span> Assess structure (lists, code, URLs) → quality bonus (+2% to +10%)</div>
+                    <div>5. <span style="color:var(--text)">Claims:</span> Extract factual statements → count unverified (−3% each)</div>
+                    <div>6. <span style="color:var(--text)">Query:</span> If userQuery provided → relevance, scope, danger analysis</div>
+                    <div>7. <span style="color:var(--text)">Verify:</span> Cross-check claims against Wikipedia (optional)</div>
+                    <div>8. <span style="color:var(--text)">Score:</span> <code>confidence = 0.82 + bonus − penalty</code> → clamp to 0.0–1.0</div>
+                    <div>9. <span style="color:var(--text)">Decide:</span>
+                        <span style="color:var(--teal)">deliver</span> |
+                        <span style="color:var(--amber)">flag</span> |
+                        <span style="color:var(--coral)">escalate</span>
+                    </div>
+                </div>
+            </div>
+            <p>Full Mermaid architecture diagrams available at: <a href="https://github.com/saifsysim/guardrail-mvp/blob/main/docs/architecture_customer.md">Customer Architecture</a> · <a href="https://github.com/saifsysim/guardrail-mvp/blob/main/docs/architecture_internal.md">Internal Architecture</a></p>
+
             <div style="margin-top:48px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center">
                 <div style="font-size:1rem;font-weight:700;margin-bottom:8px">Need help?</div>
-                <p style="font-size:.85rem">Try the <a href="playground.html">Interactive Playground</a> · Check the <a href="changelog.html">Changelog</a> · View the <a href="developer.html">Developer Portal</a></p>
+                <p style="font-size:.85rem">Read the <a href="faq.html">FAQ</a> · Try the <a href="playground.html">Interactive Playground</a> · Check the <a href="changelog.html">Changelog</a> · View the <a href="developer.html">Developer Portal</a></p>
             </div>
         </div>
     </div>

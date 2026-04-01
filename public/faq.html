@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ — Guardrail AI</title>
+    <meta name="description" content="Frequently asked questions about Guardrail AI — scoring, integrations, privacy, pricing, and troubleshooting.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a1628; --card:#0d1e33; --card2:#081420; --border:#1e3050; --text:#e2edf8; --muted:#6b8aab; --teal:#1db99a; --teal2:#15a085; --amber:#f5a623; --coral:#ff5c5c; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; }
+        a { color:var(--teal); text-decoration:none; }
+        a:hover { text-decoration:underline; }
+
+        .nav { display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); background:var(--card); }
+        .nav-brand { font-weight:900; font-size:1rem; color:var(--text); }
+        .nav-links { display:flex; gap:20px; font-size:.82rem; font-weight:600; }
+        .nav-links a { color:var(--muted); }
+        .nav-links a:hover { color:var(--teal); text-decoration:none; }
+        .nav-links a.active { color:var(--teal); }
+
+        .hero { text-align:center; padding:48px 24px 32px; }
+        .hero h1 { font-size:2rem; font-weight:900; margin-bottom:8px; }
+        .hero p { color:var(--muted); font-size:.95rem; max-width:500px; margin:0 auto; }
+
+        .faq-container { max-width:780px; margin:0 auto; padding:0 24px 80px; }
+
+        .faq-category { margin-top:40px; }
+        .faq-category-title { font-size:.7rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--teal); margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+
+        .faq-item { margin-bottom:4px; border-radius:10px; overflow:hidden; }
+        .faq-q { background:var(--card); border:1px solid var(--border); padding:16px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:.88rem; font-weight:600; transition:all .2s; border-radius:10px; user-select:none; }
+        .faq-q:hover { border-color:var(--teal); background:#0f2640; }
+        .faq-q .arrow { font-size:.75rem; color:var(--muted); transition:transform .2s; flex-shrink:0; margin-left:12px; }
+        .faq-item.open .faq-q { border-color:var(--teal); border-bottom-left-radius:0; border-bottom-right-radius:0; background:#0f2640; }
+        .faq-item.open .faq-q .arrow { transform:rotate(180deg); color:var(--teal); }
+
+        .faq-a { display:none; background:var(--card2); border:1px solid var(--border); border-top:none; padding:16px 20px; font-size:.84rem; color:var(--muted); line-height:1.8; border-bottom-left-radius:10px; border-bottom-right-radius:10px; }
+        .faq-item.open .faq-a { display:block; }
+        .faq-a code { background:rgba(29,185,154,.1); color:var(--teal); padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:.78rem; }
+        .faq-a strong { color:var(--text); }
+        .faq-a ul { padding-left:20px; margin:8px 0; }
+        .faq-a li { margin:4px 0; }
+        .faq-a p { margin:8px 0; }
+
+        .search-wrap { max-width:500px; margin:0 auto 24px; }
+        .search-input { width:100%; padding:12px 18px; background:var(--card); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:.88rem; font-family:'Inter',sans-serif; outline:none; transition:border-color .2s; }
+        .search-input:focus { border-color:var(--teal); }
+        .search-input::placeholder { color:var(--muted); }
+
+        .no-results { text-align:center; color:var(--muted); padding:40px; font-size:.9rem; display:none; }
+
+        .cta-box { margin-top:48px; padding:28px; background:var(--card); border:1px solid var(--border); border-radius:14px; text-align:center; }
+        .cta-box h3 { font-size:1rem; margin-bottom:8px; }
+        .cta-box p { font-size:.85rem; color:var(--muted); }
+
+        @media(max-width:768px) {
+            .nav { padding:14px 16px; }
+            .nav-links { gap:10px; font-size:.75rem; }
+            .hero h1 { font-size:1.5rem; }
+            .faq-container { padding:0 16px 60px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">🛡️ Guardrail</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="playground.html">Playground</a>
+            <a href="docs.html">Docs</a>
+            <a href="developer.html">Developer</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="faq.html" class="active">FAQ</a>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1>❓ Frequently Asked Questions</h1>
+        <p>Everything you need to know about Guardrail AI scoring, integrations, privacy, and more.</p>
+    </div>
+
+    <div class="faq-container">
+        <div class="search-wrap">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search FAQs..." oninput="filterFAQs()">
+        </div>
+        <div id="noResults" class="no-results">No matching questions found. Try different keywords.</div>
+
+        <!-- ═══ GETTING STARTED ═══ -->
+        <div class="faq-category" data-cat="getting-started">
+            <div class="faq-category-title">Getting Started</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What is Guardrail? <span class="arrow">▼</span></div>
+                <div class="faq-a">Guardrail is an <strong>AI Escalation Intelligence Layer</strong> — a hosted API that sits between your AI model and your users. It scores every AI response in real-time for confidence, detects 60+ risk signals (hallucinations, uncertainty, evasion, etc.), and routes to one of three decisions: <strong>deliver</strong>, <strong>flag</strong>, or <strong>escalate</strong>. It works with any LLM — OpenAI, Claude, Gemini, or your own model.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">How do I get started? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Three steps:</p>
+                    <ul>
+                        <li><strong>Sign up</strong> on the <a href="/">landing page</a> — enter your email and get a free API key instantly.</li>
+                        <li><strong>Pick an integration</strong> — SDK, embeddable chat widget, Chatflow, tawk.to, MCP, or direct REST API.</li>
+                        <li><strong>Start scoring</strong> — wrap your AI calls with <code>gr.check(text)</code> and handle the decision.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Is Guardrail free? <span class="arrow">▼</span></div>
+                <div class="faq-a">Yes. Every account gets a <strong>free API key</strong> with 1,000 checks per month. The scoring engine runs on heuristic patterns (no AI tokens consumed for scoring). The only cost is if you use the <code>/api/chat</code> endpoint, which uses <strong>your</strong> Anthropic key for Claude calls — those tokens are billed by Anthropic, not by us.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What's the difference between a Guardrail key and an Anthropic key? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <ul>
+                        <li><strong>Guardrail key</strong> (<code>gr_live_xxx</code>) — identifies your account for Guardrail scoring. Free. Used for authentication and usage tracking.</li>
+                        <li><strong>Anthropic key</strong> (<code>sk-ant-xxx</code>) — needed ONLY if you want to use the <code>/api/chat</code> endpoint to call Claude through Guardrail. You pay Anthropic for those tokens.</li>
+                    </ul>
+                    <p>For the <code>/api/check</code> endpoint (scoring only), you only need a Guardrail key. No LLM tokens are used.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SCORING & DECISIONS ═══ -->
+        <div class="faq-category" data-cat="scoring">
+            <div class="faq-category-title">Scoring & Decision Logic</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">How does the scoring engine work? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Guardrail uses <strong>60+ regex-based signal patterns</strong> across 7 categories: uncertainty, knowledge cutoff, contradiction, evasion, hallucination, frustration, and sycophancy. Each signal has a weighted penalty.</p>
+                    <p>Every response starts with a <strong>base score of 82%</strong>. Signals subtract from it, quality indicators (lists, code, URLs) add to it. The final score determines the decision:</p>
+                    <ul>
+                        <li><strong>≥ 75%</strong> → ✅ Deliver</li>
+                        <li><strong>45–74%</strong> → ⚠️ Flag</li>
+                        <li><strong>< 45%</strong> → 🔴 Escalate</li>
+                    </ul>
+                    <p><strong>No LLM is used in the scoring path.</strong> It's purely pattern-based, so it's fast (&lt; 50ms) and deterministic.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What are domain contexts and why do they matter? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Contexts tell Guardrail what kind of content is being scored. High-stakes domains like <code>medical</code>, <code>legal</code>, and <code>financial</code> apply extra penalties (−20% to −35%) because errors in those areas are more dangerous.</p>
+                    <p>Supported contexts: <code>general</code> · <code>medical</code> · <code>legal</code> · <code>financial</code> · <code>security</code> · <code>safety</code> · <code>mental_health</code> · <code>child_safety</code> · <code>nuclear</code>.</p>
+                    <p>If you set <code>general</code>, Guardrail will <strong>auto-detect</strong> the real domain from the text and elevate automatically.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Does Guardrail use AI to score responses? <span class="arrow">▼</span></div>
+                <div class="faq-a"><strong>No.</strong> The scoring engine is 100% pattern-based (regex + heuristics). This means it's fast, cheap, deterministic, and doesn't have its own hallucination risk. The only AI call is when you use <code>/api/chat</code> to generate responses via Claude — scoring that response is still pattern-based.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What is Wikipedia verification? <span class="arrow">▼</span></div>
+                <div class="faq-a">When using <code>/api/check</code>, Guardrail extracts factual claims from the text and cross-checks them against Wikipedia in parallel. Claims that match get a confidence boost (+2% each), contradicted claims get a penalty (−8% each). This runs automatically — you can disable it with <code>?verify=false</code>.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What does the userQuery parameter do? <span class="arrow">▼</span></div>
+                <div class="faq-a">When you include the original user question via <code>userQuery</code>, Guardrail enables <strong>context-aware scoring</strong>:
+                    <ul>
+                        <li><strong>Relevance check</strong> — is the response actually addressing the question?</li>
+                        <li><strong>Scope analysis</strong> — is the response disproportionately long for a simple question?</li>
+                        <li><strong>Dangerous query detection</strong> — does the question ask about dosage, lawsuits, etc. and does the AI properly refuse?</li>
+                    </ul>
+                    This significantly improves scoring accuracy. Always pass it when you have the original question.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Can I customize the confidence thresholds? <span class="arrow">▼</span></div>
+                <div class="faq-a">Not yet via API, but you can implement custom thresholds client-side. Guardrail returns a <code>confidence</code> score (0.0–1.0) — you can set your own cutoffs in your code. For example, a medical app might escalate anything below 80% instead of the default 75%.</div>
+            </div>
+        </div>
+
+        <!-- ═══ INTEGRATIONS ═══ -->
+        <div class="faq-category" data-cat="integrations">
+            <div class="faq-category-title">Integrations</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Which LLMs does Guardrail work with? <span class="arrow">▼</span></div>
+                <div class="faq-a"><strong>All of them.</strong> Guardrail scores text, not model calls. Pass any AI-generated text to <code>/api/check</code> — it works with OpenAI, Claude, Gemini, Llama, Mistral, Cohere, or any model. The <code>/api/chat</code> endpoint specifically uses Claude, but scoring works with any text source.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">How does the embeddable chat widget work? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>One script tag before <code>&lt;/body&gt;</code> and you get a full AI chat with confidence scoring on any page:</p>
+                    <p><code>&lt;script src=".../embed/widget.js" data-key="gr_live_xxx"&gt;&lt;/script&gt;</code></p>
+                    <p>It automatically <strong>scrapes the host page</strong> (title, meta tags, headings, body text) and sends that as context, so the AI can answer questions about <em>your</em> website. The widget supports dark/light themes, custom titles, welcome messages, and system prompts via <code>data-*</code> attributes.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What is auto page scraping? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>When the chat widget loads, it reads your page's content — title, URL, meta description, keywords, headings (h1–h3), and first 3,000 characters of visible body text. This is cached once and sent with every chat message as <code>pageContext</code>.</p>
+                    <p>The server injects this into Claude's system prompt so the AI can answer site-specific questions like "What are your pricing plans?" or "Do you offer mobile RON?"</p>
+                    <p>Disable with <code>data-scrape="false"</code>. See the <a href="docs.html#scraping">docs</a> for full details.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">How do I integrate with tawk.to? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Two options:</p>
+                    <ul>
+                        <li><strong>Webhook (post-chat audit)</strong> — Add <code>/api/tawkto/webhook?key=YOUR_KEY</code> as a webhook URL in tawk.to's settings. Every chat transcript gets scored automatically.</li>
+                        <li><strong>AI Assist Custom Tool</strong> — Add <code>/api/tawkto/openapi.json</code> as a Custom Tool URL so the AI can check its own answers before sending.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">How do I use Guardrail with Claude Desktop (MCP)? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Add this to your Claude Desktop config file:</p>
+                    <p><code>{ "mcpServers": { "guardrail": { "command": "npx", "args": ["guardrail-ai-mcp", "--key", "gr_live_xxx"] } } }</code></p>
+                    <p>Claude Desktop can then call Guardrail to check response safety as a tool.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Can I use Guardrail with Chatflow / Flowise? <span class="arrow">▼</span></div>
+                <div class="faq-a">Yes. Create a Custom Tool in Chatflow that calls <code>/api/check</code> with the AI response and original question. Add a safety disclaimer if the decision is <code>flag</code> or <code>escalate</code>. See the <a href="guide-amnotary-8f3k2x.html">Chatflow Integration Guide</a> for step-by-step instructions.</div>
+            </div>
+        </div>
+
+        <!-- ═══ CHAT WIDGET ═══ -->
+        <div class="faq-category" data-cat="widget">
+            <div class="faq-category-title">Chat Widget</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Whose AI tokens are used when the widget is on my site? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>The <strong>server operator's</strong> Anthropic key pays for Claude API calls. The <code>data-key</code> on the widget is a Guardrail key for authentication — it's NOT an LLM key.</p>
+                    <p>If no Anthropic key is configured on the server, the widget automatically falls back to <strong>demo mode</strong> with pre-recorded responses (zero AI token cost).</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What data does the widget collect from my visitors? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>The widget scrapes <strong>publicly visible page content only</strong>: title, URL, meta tags, headings, and body text. It does NOT collect:</p>
+                    <ul>
+                        <li>❌ Cookies or localStorage</li>
+                        <li>❌ Form inputs or user data</li>
+                        <li>❌ Scripts, styles, or hidden elements</li>
+                        <li>❌ Data from other browser tabs</li>
+                    </ul>
+                    <p>Data is sent to YOUR Guardrail server, not a third party. Disable with <code>data-scrape="false"</code>.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">How much does the page context add to token costs? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Each chat message with page context adds roughly <strong>800–1,200 input tokens</strong> to the system prompt. At Claude's pricing, that's approximately:</p>
+                    <ul>
+                        <li>Short page (~500 chars): ~$0.0003/message</li>
+                        <li>Medium page (~2,000 chars): ~$0.001/message</li>
+                        <li>Full page (3,000 char cap): ~$0.0015/message</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Can I customize the widget appearance? <span class="arrow">▼</span></div>
+                <div class="faq-a">Yes. Use <code>data-*</code> attributes: <code>data-theme="dark"</code> or <code>"light"</code>, <code>data-title="Your Brand"</code>, <code>data-welcome="Custom greeting"</code>, <code>data-placeholder="Custom input text"</code>, and <code>data-system-prompt="Custom instructions"</code>.</div>
+            </div>
+        </div>
+
+        <!-- ═══ PRIVACY & SECURITY ═══ -->
+        <div class="faq-category" data-cat="privacy">
+            <div class="faq-category-title">Privacy & Security</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Is my data stored? <span class="arrow">▼</span></div>
+                <div class="faq-a">Guardrail stores the <strong>first 300 characters</strong> of scored text in usage logs for your dashboard. Full response text is NOT stored server-side. API keys, usage counts, and decision history are stored in PostgreSQL. All data stays on your Railway deployment.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Can I self-host Guardrail? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <p>Yes. Clone the repo, set your environment variables, and deploy anywhere:</p>
+                    <ul>
+                        <li><code>git clone https://github.com/saifsysim/guardrail-mvp</code></li>
+                        <li>Set <code>ANTHROPIC_API_KEY</code> and <code>GUARDRAIL_MASTER_KEY</code> in <code>.env</code></li>
+                        <li><code>npm install && npm start</code></li>
+                    </ul>
+                    <p>Works on Railway, Render, Heroku, AWS, or any Node.js host. Add <code>DATABASE_URL</code> for PostgreSQL persistence.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Is the API key sent to third parties? <span class="arrow">▼</span></div>
+                <div class="faq-a">No. Your Guardrail API key is only sent to your Guardrail server. If you use the <code>anthropicKey</code> parameter in <code>/api/chat</code>, that key is sent from your server to Anthropic — it never leaves the server-to-Anthropic connection.</div>
+            </div>
+        </div>
+
+        <!-- ═══ API & TECHNICAL ═══ -->
+        <div class="faq-category" data-cat="technical">
+            <div class="faq-category-title">API & Technical</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What's the difference between /api/check and /api/chat? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <ul>
+                        <li><code>/api/check</code> — <strong>Score only.</strong> You pass in pre-generated AI text. No LLM call. Fast (&lt;50ms). Works with any model.</li>
+                        <li><code>/api/chat</code> — <strong>Generate + score.</strong> Sends your message to Claude, gets a response, scores it, and returns everything in one call. Uses Anthropic tokens.</li>
+                    </ul>
+                    <p>Use <code>/api/check</code> when you already have the AI response. Use <code>/api/chat</code> when you want Guardrail to handle both generation and scoring.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What are the rate limits? <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <ul>
+                        <li><code>/api/demo-check</code>: 5 requests/hour per IP (no key needed)</li>
+                        <li><code>/api/demo-chat</code>: 10 requests/hour per IP (no key needed)</li>
+                        <li><code>/api/check</code>: <strong>Unlimited</strong> with a valid API key</li>
+                        <li><code>/api/chat</code>: <strong>Unlimited</strong> with a valid API key</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Can I use the real-time dashboard? <span class="arrow">▼</span></div>
+                <div class="faq-a">Yes. The <a href="dashboard.html">Dashboard</a> uses Server-Sent Events (SSE) to show every scoring decision in real-time. It streams from <code>/api/events</code>. Your <a href="developer.html">Developer Portal</a> shows per-key stats, decision breakdowns, and recent scoring logs.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">What happens if the server is down? <span class="arrow">▼</span></div>
+                <div class="faq-a">If Guardrail is unreachable, the SDK's <code>check()</code> method throws an error, which your <code>onError</code> callback can handle. Best practice: default to <strong>deliver</strong> with a disclaimer if Guardrail is unavailable, so your users aren't blocked.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">Is there a latency impact? <span class="arrow">▼</span></div>
+                <div class="faq-a">The scoring engine runs in <strong>&lt;50ms</strong> (pattern matching, no AI calls). With Wikipedia verification enabled, it may take 200–500ms due to external API calls. You can disable verification with <code>?verify=false</code> for latency-sensitive applications.</div>
+            </div>
+        </div>
+
+        <!-- ═══ TROUBLESHOOTING ═══ -->
+        <div class="faq-category" data-cat="troubleshooting">
+            <div class="faq-category-title">Troubleshooting</div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">I'm getting 401 "API key required" <span class="arrow">▼</span></div>
+                <div class="faq-a">Make sure you're sending your key in the <code>X-Guardrail-Key</code> header or as a <code>?key=</code> query parameter. The key must start with <code>gr_live_</code>. If you lost your key, sign up again with the same email — it returns your existing key.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">The chat widget says "Connection error" <span class="arrow">▼</span></div>
+                <div class="faq-a">
+                    <ul>
+                        <li>Check that the <code>src</code> URL in the script tag points to your running Guardrail server</li>
+                        <li>Verify the <code>data-key</code> is a valid Guardrail API key</li>
+                        <li>Check the browser console for CORS errors — your server must allow the widget's origin</li>
+                        <li>If no Anthropic key is on the server, the widget should fall back to demo-chat automatically</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">My responses always show "escalate" <span class="arrow">▼</span></div>
+                <div class="faq-a">This usually means you're scoring in a high-stakes domain (<code>medical</code>, <code>legal</code>, etc.) where the base penalty is −25% to −35%. Combined with any uncertainty language, it can push confidence below 45%. Try scoring with <code>context: "general"</code> to see if the domain penalty is the cause.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFAQ(this)">503 "No Anthropic API key available" <span class="arrow">▼</span></div>
+                <div class="faq-a">The <code>/api/chat</code> endpoint requires an Anthropic API key. Either set <code>ANTHROPIC_API_KEY</code> in your server's <code>.env</code> file, or pass <code>anthropicKey</code> in the request body. If neither is available, use <code>/api/demo-chat</code> for testing.</div>
+            </div>
+        </div>
+
+        <div class="cta-box">
+            <h3>Still have questions?</h3>
+            <p>Try the <a href="playground.html">Interactive Playground</a> · Read the <a href="docs.html">API Docs</a> · Email symehmoo@gmail.com</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleFAQ(el) {
+            el.parentElement.classList.toggle('open');
+        }
+
+        function filterFAQs() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.faq-item');
+            const cats = document.querySelectorAll('.faq-category');
+            let anyVisible = false;
+
+            items.forEach(item => {
+                const question = item.querySelector('.faq-q').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-a').textContent.toLowerCase();
+                const match = !q || question.includes(q) || answer.includes(q);
+                item.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
+            });
+
+            // Hide category titles if all items are hidden
+            cats.forEach(cat => {
+                const visibleItems = cat.querySelectorAll('.faq-item:not([style*="display: none"])');
+                cat.style.display = visibleItems.length > 0 ? '' : 'none';
+            });
+
+            document.getElementById('noResults').style.display = anyVisible ? 'none' : 'block';
+        }
+    </script>
+</body>
+</html>
