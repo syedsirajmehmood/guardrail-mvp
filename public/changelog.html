@@ -45,13 +45,47 @@
             <a href="docs.html">Docs</a>
             <a href="developer.html">Developer</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="chat.html">Chat Demo</a>
+            <a href="faq.html">FAQ</a>
+            <a href="status.html">Status</a>
         </div>
     </nav>
 
     <div class="container">
         <h1>Changelog</h1>
         <p class="subtitle">What's new in Guardrail. Active development — shipping weekly.</p>
+
+        <div class="entry">
+            <div class="entry-date">April 1, 2026</div>
+            <div class="entry-version">v3.2.0 — FAQ, Architecture Diagrams, UI Enhancements</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag fix">Docs</span>
+            <ul>
+                <li><strong>Searchable FAQ page</strong> — 26 questions across 6 categories (scoring, integrations, widget, privacy, troubleshooting) with instant search filtering</li>
+                <li><strong>Architecture diagrams</strong> — customer-facing (GitHub Mermaid) and internal (data model, auth flow, scoring pipeline, sequence diagrams)</li>
+                <li><strong>Architecture section in docs.html</strong> — system diagram, integration paths table, scoring pipeline visualization</li>
+                <li><strong>Copy-to-clipboard buttons</strong> on all code snippets in API docs — 📋 one-click copy with ✅ feedback</li>
+                <li><strong>SVG confidence gauge</strong> on Playground — colored semicircle arc (green/amber/red) with animated fill</li>
+                <li><strong>Status page</strong> (<a href="status.html">/status.html</a>) — live endpoint health checks, response times, deployment version, refresh button</li>
+                <li>FAQ link added to all page navbars and docs sidebar</li>
+                <li>186 tests passing</li>
+            </ul>
+        </div>
+
+        <div class="entry">
+            <div class="entry-date">March 31, 2026</div>
+            <div class="entry-version">v3.1.0 — Site-Aware Chat Widget + Docs Expansion</div>
+            <span class="entry-tag feat">Feature</span>
+            <span class="entry-tag fix">Docs</span>
+            <ul>
+                <li><strong>Widget auto-scraping</strong> — chat widget extracts page title, URL, meta tags, headings, and body text (3k cap) from host page</li>
+                <li><strong>Site-aware AI responses</strong> — <code>buildSystemPrompt()</code> injects page context so Claude answers about <em>your</em> website</li>
+                <li><strong>pageContext support</strong> in <code>/api/chat</code> — accepts scraped page data for context-aware AI</li>
+                <li>New <code>data-scrape</code> attribute to enable/disable auto-scraping (default: true)</li>
+                <li><strong>docs.html expanded</strong> with 4 missing sections: <code>/api/chat</code>, <code>/api/demo-chat</code>, Chat Widget, Auto Page Scraping, tawk.to endpoints</li>
+                <li>Updated widget documentation at <code>docs/widget_site_context.md</code></li>
+                <li>All changes committed and deployed to Railway</li>
+            </ul>
+        </div>
 
         <div class="entry">
             <div class="entry-date">March 30, 2026</div>
