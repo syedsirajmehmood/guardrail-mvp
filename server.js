@@ -1036,8 +1036,52 @@ app.get('/api/mcp-download', (req, res) => {
     res.sendFile(mcpPath);
 });
 
+// ── Support Tickets ──────────────────────────────────────────────────────────
+
+// In-memory ticket storage (persists until redeploy)
+if (!store.tickets) store.tickets = [];
+
+// POST /api/support — submit a support ticket (public, rate-limited)
+const supportLimits = {};
+app.post('/api/support', (req, res) => {
+    const ip = req.ip;
+    if (!supportLimits[ip]) supportLimits[ip] = [];
+    const now = Date.now();
+    supportLimits[ip] = supportLimits[ip].filter(t => now - t < 3600000);
+    if (supportLimits[ip].length >= 5) {
+        return res.status(429).json({ error: 'Rate limit: 5 tickets/hour.' });
+    }
+    supportLimits[ip].push(now);
+
+    const { name, email, category, message } = req.body || {};
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email is required.' });
+    if (!message || message.trim().length < 10) return res.status(400).json({ error: 'Message must be at least 10 characters.' });
+
+    const ticket = {
+        id: 'tkt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name: (name || '').trim().substring(0, 100),
+        email: email.trim().toLowerCase().substring(0, 200),
+        category: category || 'general',
+        message: message.trim().substring(0, 2000),
+        status: 'open',
+        created: new Date().toISOString(),
+        ip,
+    };
+    store.tickets.unshift(ticket);
+    if (store.tickets.length > 200) store.tickets.pop();
+
+    console.log(`[support] New ticket ${ticket.id} from ${ticket.email}: ${ticket.message.substring(0, 80)}`);
+    res.json({ success: true, ticketId: ticket.id, message: 'Ticket submitted! We\'ll respond within 24 hours.' });
+});
+
+// GET /api/support — view tickets (admin only)
+app.get('/api/support', requireKey, (req, res) => {
+    if (!req.isMaster) return res.status(403).json({ error: 'Admin access required.' });
+    res.json({ tickets: store.tickets, total: store.tickets.length });
+});
+
 // Health check (public)
-app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.0.0' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '3.2.0' }));
 
 // Only start listening when run directly (not in tests)
 if (require.main === module) {
