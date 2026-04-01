@@ -82,7 +82,9 @@
 
             <div class="cat">Core API</div>
             <a href="#check">POST /api/check</a>
+            <a href="#chat">POST /api/chat</a>
             <a href="#demo-check">POST /api/demo-check</a>
+            <a href="#demo-chat">POST /api/demo-chat</a>
             <a href="#signup">POST /api/signup</a>
 
             <div class="cat">Dashboard</div>
@@ -98,6 +100,9 @@
 
             <div class="cat">Integrations</div>
             <a href="#sdk">Browser SDK</a>
+            <a href="#widget">Chat Widget</a>
+            <a href="#scraping">Auto Page Scraping</a>
+            <a href="#tawkto">tawk.to</a>
             <a href="#mcp">MCP Server</a>
             <a href="#webhooks">Webhooks</a>
 
@@ -220,9 +225,53 @@
                 <tr><td><code>self_hedging</code></td><td>Disclaimer/caveat — informational only</td></tr>
             </table>
 
+            <!-- ═══ POST /api/chat ═══ -->
+            <h2 id="chat"><span class="method post">POST</span> <span class="endpoint">/api/chat</span></h2>
+            <p>Call Claude and score the response in one step. Supports page context from the chat widget for site-aware AI answers. <span class="badge auth">Auth Required</span></p>
+
+            <h3>Request Body</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td><code>message</code></td><td>string</td><td><span class="badge required">Required</span></td><td>The user's message to send to Claude</td></tr>
+                <tr><td><code>context</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Domain context for confidence scoring (default: <code>general</code>)</td></tr>
+                <tr><td><code>systemPrompt</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Custom system prompt for Claude</td></tr>
+                <tr><td><code>anthropicKey</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Use caller's own Anthropic key (their tokens). Falls back to server key if omitted</td></tr>
+                <tr><td><code>pageContext</code></td><td>object</td><td><span class="badge optional">Optional</span></td><td>Scraped page data from the chat widget (see <a href="#scraping">Auto Page Scraping</a>)</td></tr>
+                <tr><td><code>userId</code></td><td>string</td><td><span class="badge optional">Optional</span></td><td>Your internal user ID for tracking</td></tr>
+            </table>
+
+            <h3>pageContext Object</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td><code>title</code></td><td>string</td><td>Page title from <code>document.title</code></td></tr>
+                <tr><td><code>url</code></td><td>string</td><td>Full page URL</td></tr>
+                <tr><td><code>description</code></td><td>string</td><td>Meta description or OG description</td></tr>
+                <tr><td><code>keywords</code></td><td>string</td><td>Meta keywords</td></tr>
+                <tr><td><code>headings</code></td><td>string[]</td><td>All h1–h3 headings (e.g. <code>"h1: Pricing"</code>)</td></tr>
+                <tr><td><code>bodyText</code></td><td>string</td><td>Visible page text (max 3,000 chars)</td></tr>
+                <tr><td><code>scrapedAt</code></td><td>string</td><td>ISO timestamp of when scraping occurred</td></tr>
+            </table>
+
+            <h3>Response (200 OK)</h3>
+<pre>{
+  "id": "a1b2c3d4-...",
+  "fullText": "Claude's full response text...",
+  "confidence": 0.78,
+  "decision": "deliver",
+  "reasons": [...],
+  "inputTokens": 842,
+  "outputTokens": 256,
+  "hasPageContext": true
+}</pre>
+            <p>Returns <code>503</code> if no Anthropic API key is available (neither caller's nor server's).</p>
+
             <!-- ═══ POST /api/demo-check ═══ -->
             <h2 id="demo-check"><span class="method post">POST</span> <span class="endpoint">/api/demo-check</span></h2>
             <p>Same as <code>/api/check</code> but requires no authentication. Rate-limited to 5 requests per hour per IP. Response includes <code>"demo": true</code> and <code>"remaining": N</code>.</p>
+
+            <!-- ═══ POST /api/demo-chat ═══ -->
+            <h2 id="demo-chat"><span class="method post">POST</span> <span class="endpoint">/api/demo-chat</span></h2>
+            <p>Keyless chat endpoint with pre-recorded responses. No LLM tokens consumed. Rate-limited to 10 requests per hour per IP. Returns a random domain-appropriate response scored by Guardrail. Used as fallback when no Anthropic key is available.</p>
 
             <!-- ═══ POST /api/signup ═══ -->
             <h2 id="signup"><span class="method post">POST</span> <span class="endpoint">/api/signup</span></h2>
@@ -306,6 +355,87 @@ const gr = new Guardrail({
 });
 
 const result = await gr.check(aiResponse);</pre>
+
+            <!-- ═══ CHAT WIDGET ═══ -->
+            <h2 id="widget">Chat Widget</h2>
+            <p>Drop-in embeddable AI chat with confidence scoring for any website. One script tag — no build step, no dependencies.</p>
+
+            <h3>Basic Integration</h3>
+<pre>&lt;!-- Paste before &lt;/body&gt; --&gt;
+&lt;script
+  src="https://guardrail-mvp-production.up.railway.app/embed/widget.js"
+  data-key="gr_live_xxx"
+&gt;&lt;/script&gt;</pre>
+
+            <h3>All Options</h3>
+<pre>&lt;script
+  src="https://guardrail-mvp-production.up.railway.app/embed/widget.js"
+  data-key="gr_live_xxx"
+  data-context="general"
+  data-title="AI Assistant"
+  data-theme="dark"
+  data-scrape="true"
+  data-system-prompt="You are Acme Corp's support agent."
+  data-welcome="Hi! Ask me anything about our products."
+  data-placeholder="Ask anything..."
+&gt;&lt;/script&gt;</pre>
+
+            <h3>Data Attributes</h3>
+            <table>
+                <tr><th>Attribute</th><th>Default</th><th>Description</th></tr>
+                <tr><td><code>data-key</code></td><td><em>required</em></td><td>Your Guardrail API key</td></tr>
+                <tr><td><code>data-scrape</code></td><td><code>"true"</code></td><td>Enable/disable auto page scraping</td></tr>
+                <tr><td><code>data-context</code></td><td><code>"general"</code></td><td>Domain context for scoring</td></tr>
+                <tr><td><code>data-title</code></td><td><code>"AI Assistant"</code></td><td>Widget header title</td></tr>
+                <tr><td><code>data-theme</code></td><td><code>"dark"</code></td><td><code>"dark"</code> or <code>"light"</code></td></tr>
+                <tr><td><code>data-system-prompt</code></td><td><code>""</code></td><td>Extra instructions appended to Claude's system prompt</td></tr>
+                <tr><td><code>data-welcome</code></td><td><code>"Hi! I'm your..."</code></td><td>First message shown in chat</td></tr>
+                <tr><td><code>data-placeholder</code></td><td><code>"Ask anything..."</code></td><td>Input placeholder text</td></tr>
+            </table>
+            <p>The widget calls <code>/api/chat</code> with your key. If no Anthropic key is set on the server, it falls back to <code>/api/demo-chat</code> automatically.</p>
+
+            <!-- ═══ AUTO PAGE SCRAPING ═══ -->
+            <h2 id="scraping">Auto Page Scraping</h2>
+            <p>When <code>data-scrape="true"</code> (default), the widget automatically extracts structured content from the host page and sends it as <code>pageContext</code> with every chat message. This makes the AI <strong>site-aware</strong> — it can answer questions about your website.</p>
+
+            <h3>What Gets Scraped</h3>
+            <table>
+                <tr><th>Data</th><th>Source</th></tr>
+                <tr><td>Title</td><td><code>document.title</code></td></tr>
+                <tr><td>URL</td><td><code>window.location.href</code></td></tr>
+                <tr><td>Description</td><td><code>&lt;meta name="description"&gt;</code></td></tr>
+                <tr><td>Keywords</td><td><code>&lt;meta name="keywords"&gt;</code></td></tr>
+                <tr><td>OG Tags</td><td><code>&lt;meta property="og:title"&gt;</code>, <code>og:description</code></td></tr>
+                <tr><td>Headings</td><td>All <code>h1</code>–<code>h3</code> elements (max 30)</td></tr>
+                <tr><td>Body Text</td><td>Visible text content (max 3,000 characters)</td></tr>
+            </table>
+
+            <h3>What is NOT Scraped</h3>
+            <p>Scripts, styles, SVGs, iframes, hidden elements, the widget's own UI, user inputs, cookies, localStorage, or data from other tabs.</p>
+
+            <h3>Privacy</h3>
+            <p>Text only. One-time scrape cached on load (no continuous monitoring). Body capped at 3,000 chars. Data is sent to <em>your</em> server only. Set <code>data-scrape="false"</code> to disable entirely.</p>
+
+            <!-- ═══ TAWK.TO ═══ -->
+            <h2 id="tawkto">tawk.to Integration</h2>
+            <p>Score tawk.to chatbot responses via webhook, or connect Guardrail as an AI Assist Custom Tool.</p>
+
+            <h3><span class="method post">POST</span> <span class="endpoint">/api/tawkto/webhook</span></h3>
+            <p>Receives tawk.to chat events. Scores each agent/AI message and logs results. Requires <code>X-Guardrail-Key</code> header or <code>?key=</code> query param.</p>
+<pre>https://guardrail-mvp-production.up.railway.app/api/tawkto/webhook?key=gr_live_xxx</pre>
+            <p>Configure in tawk.to → Administration → Settings → Webhooks. Select <strong>Chat End</strong> and <strong>Chat Transcript</strong> events.</p>
+
+            <h3>Response</h3>
+<pre>{
+  "processed": 3,
+  "results": [
+    { "text": "Bot response...", "confidence": 0.82, "decision": "deliver", "reasons": [] }
+  ]
+}</pre>
+
+            <h3><span class="method get">GET</span> <span class="endpoint">/api/tawkto/openapi.json</span></h3>
+            <p>OpenAPI 3.0 schema for tawk.to AI Assist Custom Tool integration. Add this URL in tawk.to → AI Assist → Settings → Add Custom Tool (OpenAPI Server).</p>
+<pre>https://guardrail-mvp-production.up.railway.app/api/tawkto/openapi.json</pre>
 
             <!-- ═══ MCP ═══ -->
             <h2 id="mcp">MCP Server (Claude Desktop)</h2>
