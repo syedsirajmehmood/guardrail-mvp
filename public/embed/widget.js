@@ -26,11 +26,106 @@
   var SYS_PROMPT= script.getAttribute('data-system-prompt') || '';
   var WELCOME   = script.getAttribute('data-welcome') || 'Hi! I\'m your AI assistant. How can I help?';
   var PLACEHOLDER = script.getAttribute('data-placeholder') || 'Ask anything...';
+  var SCRAPE    = (script.getAttribute('data-scrape') || 'true').toLowerCase() !== 'false';
   var ENDPOINT  = script.src.replace('/embed/widget.js', '');
 
   if (!API_KEY) {
     console.warn('[Guardrail Widget] data-key is required.');
     return;
+  }
+
+  // ── Page Scraper ───────────────────────────────────────────────────────────
+  // Extracts structured context from the host page so the AI can answer
+  // questions about the website. Runs once on load, cached for all messages.
+  var _pageContext = null;
+
+  function scrapePage() {
+    if (_pageContext) return _pageContext;
+    if (!SCRAPE) return null;
+
+    try {
+      // 1. Page title
+      var title = document.title || '';
+
+      // 2. URL
+      var url = window.location.href || '';
+
+      // 3. Meta description
+      var metaDesc = '';
+      var metaEl = document.querySelector('meta[name="description"]');
+      if (metaEl) metaDesc = metaEl.getAttribute('content') || '';
+
+      // 4. Meta keywords (if present)
+      var metaKeywords = '';
+      var kwEl = document.querySelector('meta[name="keywords"]');
+      if (kwEl) metaKeywords = kwEl.getAttribute('content') || '';
+
+      // 5. Open Graph tags
+      var ogTitle = '';
+      var ogDesc  = '';
+      var ogEl = document.querySelector('meta[property="og:title"]');
+      if (ogEl) ogTitle = ogEl.getAttribute('content') || '';
+      var ogDescEl = document.querySelector('meta[property="og:description"]');
+      if (ogDescEl) ogDesc = ogDescEl.getAttribute('content') || '';
+
+      // 6. All headings (h1–h3) — gives page structure
+      var headings = [];
+      var headingEls = document.querySelectorAll('h1, h2, h3');
+      for (var i = 0; i < headingEls.length && i < 30; i++) {
+        var txt = (headingEls[i].textContent || '').trim();
+        if (txt) headings.push(headingEls[i].tagName.toLowerCase() + ': ' + txt);
+      }
+
+      // 7. Body text — strip scripts, styles, nav, footer, iframes, widget itself
+      var bodyClone = document.body.cloneNode(true);
+      var removeTags = bodyClone.querySelectorAll(
+        'script, style, noscript, iframe, svg, canvas, ' +
+        '#gr-widget-btn, #gr-widget-panel, [aria-hidden="true"]'
+      );
+      for (var j = 0; j < removeTags.length; j++) {
+        removeTags[j].parentNode.removeChild(removeTags[j]);
+      }
+      var bodyText = (bodyClone.textContent || bodyClone.innerText || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Truncate body text to ~3000 chars to stay within token budgets
+      var MAX_BODY = 3000;
+      if (bodyText.length > MAX_BODY) {
+        bodyText = bodyText.substring(0, MAX_BODY) + '…';
+      }
+
+      _pageContext = {
+        title: title,
+        url: url,
+        description: metaDesc || ogDesc,
+        keywords: metaKeywords,
+        ogTitle: ogTitle,
+        headings: headings,
+        bodyText: bodyText,
+        scrapedAt: new Date().toISOString()
+      };
+
+      // Remove empty fields to save payload size
+      Object.keys(_pageContext).forEach(function(k) {
+        var v = _pageContext[k];
+        if (v === '' || (Array.isArray(v) && v.length === 0)) delete _pageContext[k];
+      });
+
+      return _pageContext;
+    } catch (e) {
+      console.warn('[Guardrail Widget] Page scrape failed:', e.message);
+      return null;
+    }
+  }
+
+  // Scrape on load (deferred to avoid blocking page render)
+  if (SCRAPE) {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(scrapePage, 100);
+    } else {
+      document.addEventListener('DOMContentLoaded', function () { setTimeout(scrapePage, 100); });
+    }
   }
 
   var COLORS = {
@@ -125,11 +220,20 @@
     typingEl.style.display = 'flex';
     scrollBottom();
 
+    // Build request payload — include scraped page context if available
+    var pageCtx = scrapePage();
+    var chatBody = {
+      message: text,
+      context: CONTEXT,
+      systemPrompt: SYS_PROMPT || undefined,
+      pageContext: pageCtx || undefined
+    };
+
     // Try live chat first, fall back to demo-chat if no LLM key
     fetch(ENDPOINT + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Guardrail-Key': API_KEY },
-      body: JSON.stringify({ message: text, context: CONTEXT, systemPrompt: SYS_PROMPT || undefined }),
+      body: JSON.stringify(chatBody),
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
@@ -138,7 +242,7 @@
         return fetch(ENDPOINT + '/api/demo-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, context: CONTEXT }),
+          body: JSON.stringify({ message: text, context: CONTEXT, pageContext: pageCtx || undefined }),
         }).then(function(r) { return r.json(); })
         .then(function(demo) {
           typingEl.style.display = 'none';

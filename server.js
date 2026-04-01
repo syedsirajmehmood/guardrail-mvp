@@ -811,6 +811,53 @@ app.get('/api/tawkto/openapi.json', (req, res) => {
 
 // POST /api/chat — call Claude then score
 
+// ── Page Context → System Prompt Builder ─────────────────────────────────────
+// When the widget sends scraped page context, we build a structured system prompt
+// so Claude can answer questions about the host website.
+function buildSystemPrompt(explicitPrompt, pageContext) {
+    // If site owner set data-system-prompt, use that as the base
+    var base = explicitPrompt || 'You are a helpful assistant.';
+
+    if (!pageContext || typeof pageContext !== 'object') {
+        return base + ' Answer questions directly and honestly.';
+    }
+
+    // Build structured context block from scraped page data
+    var parts = [];
+    parts.push('You are an AI assistant for the website described below.');
+    parts.push('Use the website context to answer user questions accurately.');
+    parts.push('If the user asks something not covered by the website context, say so honestly.');
+    parts.push('');
+    parts.push('--- WEBSITE CONTEXT ---');
+
+    if (pageContext.title)       parts.push('Title: ' + pageContext.title);
+    if (pageContext.url)         parts.push('URL: ' + pageContext.url);
+    if (pageContext.description) parts.push('Description: ' + pageContext.description);
+    if (pageContext.keywords)    parts.push('Keywords: ' + pageContext.keywords);
+
+    if (pageContext.headings && pageContext.headings.length > 0) {
+        parts.push('');
+        parts.push('Page Structure (headings):');
+        pageContext.headings.forEach(function(h) { parts.push('  - ' + h); });
+    }
+
+    if (pageContext.bodyText) {
+        parts.push('');
+        parts.push('Page Content:');
+        parts.push(pageContext.bodyText);
+    }
+
+    parts.push('--- END WEBSITE CONTEXT ---');
+    parts.push('');
+
+    // Append the site owner's custom prompt if provided
+    if (explicitPrompt) {
+        parts.push('Additional instructions: ' + explicitPrompt);
+    }
+
+    return parts.join('\n');
+}
+
 // ── Demo Chat — keyless with pre-recorded responses ──────────────────────────
 const DEMO_RESPONSES = {
     'general': [
@@ -865,7 +912,7 @@ app.post('/api/demo-chat', (req, res) => {
 });
 
 app.post('/api/chat', requireKey, async (req, res) => {
-    const { message, context, userId, systemPrompt, anthropicKey } = req.body;
+    const { message, context, userId, systemPrompt, anthropicKey, pageContext } = req.body;
     if (!message) return res.status(400).json({ error: 'message is required' });
 
     // Use caller's own Anthropic key if provided, else fall back to server key
@@ -877,10 +924,13 @@ app.post('/api/chat', requireKey, async (req, res) => {
     }
 
     try {
+        // Build system prompt — injects page context when the widget sends it
+        const finalSystemPrompt = buildSystemPrompt(systemPrompt, pageContext);
+
         const response = await anthropic.messages.create({
             model: 'claude-sonnet-4-5-20250929',
             max_tokens: 1024,
-            system: systemPrompt || 'You are a helpful assistant. Answer questions directly and honestly.',
+            system: finalSystemPrompt,
             messages: [{ role: 'user', content: message }],
         });
         const aiText = response.content[0].text;
@@ -896,6 +946,7 @@ app.post('/api/chat', requireKey, async (req, res) => {
             model: 'claude-3-5-sonnet-20241022',
             inputTokens: response.usage.input_tokens,
             outputTokens: response.usage.output_tokens,
+            hasPageContext: !!pageContext,
             ...scored
         };
 
