@@ -1,0 +1,24 @@
+{
+  "total_raw_deliver": 155362,
+  "total_raw_flag": 41336,
+  "total_raw_escalate": 154356,
+  "total_balanced": 5100,
+  "train_size": 4080,
+  "validation_size": 1020,
+  "train_distribution": {
+    "escalate": 1387,
+    "flag": 1351,
+    "deliver": 1342
+  },
+  "validation_distribution": {
+    "escalate": 313,
+    "flag": 349,
+    "deliver": 358
+  },
+  "target_per_class": 1700,
+  "sources": [
+    "Anthropic HH-RLHF",
+    "Do-Not-Answer",
+    "Synthetic flag from borderline responses"
+  ]
+}
