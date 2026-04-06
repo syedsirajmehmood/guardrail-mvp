@@ -502,7 +502,7 @@
 
     <div class="hero">
         <div class="hero-glow"></div>
-        <div class="hero-badge">🛡️ AI ESCALATION LAYER &nbsp;·&nbsp; v2.0.0</div>
+        <div class="hero-badge">🛡️ AI ESCALATION LAYER &nbsp;·&nbsp; v3.0.0</div>
         <h1>Know when your AI<br />should <span>hand off</span>.</h1>
         <p class="hero-sub">Stop shipping AI responses that should've gone to a human. Guardrail scores every response and routes it: deliver, flag for review, or escalate&nbsp;instantly.</p>
         <div class="hero-actions">
@@ -529,7 +529,7 @@
                 <div class="hstat-label">p99 latency</div>
             </div>
             <div class="hstat">
-                <div class="hstat-val">8</div>
+                <div class="hstat-val">12</div>
                 <div class="hstat-label">signal categories</div>
             </div>
             <div class="hstat">
@@ -888,8 +888,8 @@ Output:
 
     <section id="signals">
         <div class="section-tag">Signals Monitored</div>
-        <h2 class="section-title">Eight layers of detection.</h2>
-        <p class="section-sub">Guardrail runs every response through a multi-signal pipeline before making a routing
+        <h2 class="section-title">Twelve layers of detection.</h2>
+        <p class="section-sub">Guardrail runs every response through 74 pattern-matching signals across 12 categories before making a routing
             decision.</p>
         <div class="signals-grid">
             <div class="sig-item">
@@ -921,6 +921,36 @@ Output:
                 <div class="sig-icon">🎭</div>
                 <div class="sig-name">Hallucination Risk</div>
                 <div class="sig-desc">Fabricated statistics, names, and factual patterns</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-icon">💪</div>
+                <div class="sig-name">Overconfidence</div>
+                <div class="sig-desc">Absolute language, false certainty, and superlative claims</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-icon">🔗</div>
+                <div class="sig-name">Fabricated URLs</div>
+                <div class="sig-desc">Made-up links, fake emails, phone numbers, and addresses</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-icon">🔓</div>
+                <div class="sig-name">Instruction Leakage</div>
+                <div class="sig-desc">System prompt disclosure and prompt injection echoes</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-icon">⏰</div>
+                <div class="sig-name">Temporal Confusion</div>
+                <div class="sig-desc">Future predictions, stale claims, and ambiguous time references</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-icon">😊</div>
+                <div class="sig-name">Sycophancy</div>
+                <div class="sig-desc">Excessive flattery, empty agreement, and overconfident affirmations</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-icon">🔁</div>
+                <div class="sig-name">Repetition & Filler</div>
+                <div class="sig-desc">Verbose padding, repeated blocks, and preamble fluff</div>
             </div>
         </div>
     </section>
@@ -1080,8 +1110,21 @@ Output:
   data-theme="dark"
   data-welcome="Hi! I'm the Guardrail AI assistant. Ask me about AI confidence scoring, pricing, integration, or how Guardrail catches hallucinations. Every response I give is scored by Guardrail itself!"
   data-placeholder="Ask about Guardrail AI..."
-  data-system-prompt="You are the sales and support assistant for Guardrail AI, an AI confidence scoring engine. Guardrail scores any AI response for hallucinations, unsafe advice, and fabricated citations in under 50ms using 28 heuristic signals. Pricing: Free tier (100 checks/day), Pro ($699/month, unlimited). Integration options: JavaScript SDK, MCP Server for Claude Desktop (npx guardrail-ai-mcp), REST API, embeddable chat widget, and Chatflow/Flowise integration. Key features: context-aware scoring with userQuery support, real-time dashboard, domain-specific detection (medical, financial, legal). Website: guardrail-mvp-production.up.railway.app. Keep answers short and helpful."
+  data-system-prompt="You are the sales and support assistant for Guardrail AI, an AI confidence scoring engine. Guardrail scores any AI response for hallucinations, unsafe advice, and fabricated citations in under 50ms using 74 heuristic signals across 12 categories. Pricing: Free tier (100 checks/day), Pro ($699/month, unlimited). Integration options: JavaScript SDK, MCP Server for Claude Desktop (npx guardrail-ai-mcp), REST API, embeddable chat widget, Chatflow/Flowise integration, and tawk.to webhook. Key features: context-aware scoring with userQuery support, real-time dashboard, domain-specific detection (medical, financial, legal, security). Website: guardrail-mvp-production.up.railway.app. Keep answers short and helpful."
 ></script>
+
+<!-- FOOTER -->
+<footer style="border-top:1px solid var(--border);padding:40px 60px;display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:.85rem;max-width:1200px;margin:0 auto">
+    <div>© 2026 Guardrail AI. All rights reserved.</div>
+    <div style="display:flex;gap:24px">
+        <a href="/docs.html" style="color:var(--muted);transition:color .2s" onmouseover="this.style.color='#1db99a'" onmouseout="this.style.color='var(--muted)'">Docs</a>
+        <a href="/changelog.html" style="color:var(--muted);transition:color .2s" onmouseover="this.style.color='#1db99a'" onmouseout="this.style.color='var(--muted)'">Changelog</a>
+        <a href="https://github.com/saifsysim/guardrail-mvp" target="_blank" style="color:var(--muted);transition:color .2s" onmouseover="this.style.color='#1db99a'" onmouseout="this.style.color='var(--muted)'">GitHub</a>
+        <a href="https://www.npmjs.com/package/guardrail-ai-mcp" target="_blank" style="color:var(--muted);transition:color .2s" onmouseover="this.style.color='#1db99a'" onmouseout="this.style.color='var(--muted)'">npm</a>
+        <a href="mailto:symehmoo@gmail.com" style="color:var(--muted);transition:color .2s" onmouseover="this.style.color='#1db99a'" onmouseout="this.style.color='var(--muted)'">Contact</a>
+    </div>
+</footer>
+
 </body>
 
 </html>
