@@ -259,10 +259,41 @@
     });
   }
 
+  // ── Simple Markdown Renderer ─────────────────────────────────────────────
+  function renderMarkdown(text) {
+    // Escape HTML first for safety
+    var safe = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    return safe
+      // Code blocks (```...```)
+      .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,.15);padding:8px 10px;border-radius:6px;font-size:.8rem;margin:6px 0;white-space:pre-wrap"><code>$2</code></pre>')
+      // Inline code
+      .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,.12);padding:1px 5px;border-radius:3px;font-size:.82rem">$1</code>')
+      // Bold
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#1db99a;text-decoration:underline">$1</a>')
+      // Bullet lists (- item)
+      .replace(/^[\-•]\s+(.+)/gm, '<div style="padding-left:12px;margin:2px 0">• $1</div>')
+      // Numbered lists (1. item)
+      .replace(/^\d+\.\s+(.+)/gm, '<div style="padding-left:12px;margin:2px 0">$1</div>')
+      // Line breaks
+      .replace(/\n/g, '<br>');
+  }
+
   function addMsg(text, role, decision, confidence) {
     var div = document.createElement('div');
     div.className = 'gr-msg ' + role;
-    div.textContent = text;
+    if (role === 'ai') {
+      div.innerHTML = renderMarkdown(text);
+    } else {
+      div.textContent = text;
+    }
     if (decision) {
       var badge = document.createElement('div');
       var emoji = { deliver: '✅', flag: '⚠️', escalate: '🔴' }[decision] || '';

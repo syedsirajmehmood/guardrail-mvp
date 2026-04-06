@@ -148,6 +148,50 @@ const SYCOPHANCY_SIGNALS = [
     { pat: /^(absolutely|certainly|of course|definitely)[.!,]/im, weight: 0.04, label: 'Overconfident affirmation' },
 ];
 
+// ── NEW Signal Groups ─────────────────────────────────────────────────────
+
+const FABRICATED_URL_SIGNALS = [
+    { pat: /https?:\/\/[a-z0-9.-]+\.(com|org|net|edu|gov)\/[a-z0-9\/_-]{20,}/i, weight: 0.16, label: 'Long fabricated URL' },
+    { pat: /\b(visit|go to|check out|see|refer to)\s+https?:\/\//i, weight: 0.08, label: 'URL recommendation (possible fabrication)' },
+    { pat: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.\b(com|org|net|edu)\b(?!\s*\))/i, weight: 0.06, label: 'Email address in response' },
+    { pat: /\b(phone|call|contact).{0,20}\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/i, weight: 0.10, label: 'Phone number in response (verify accuracy)' },
+    { pat: /\b(located at|address is|find us at)\s+\d+\s+[A-Z]/i, weight: 0.08, label: 'Physical address claim' },
+];
+
+const TEMPORAL_CONFUSION_SIGNALS = [
+    { pat: /\b(in 20[3-9]\d|in 2[1-9]\d{2}|by 20[3-9]\d)\b/i, weight: 0.12, label: 'Future date prediction' },
+    { pat: /\b(currently|right now|as of today|at this moment|presently)\b/i, weight: 0.06, label: 'Present-tense claim (may be outdated)' },
+    { pat: /\b(recently|just (announced|released|launched)|new(ly)?)\b/i, weight: 0.06, label: 'Recency claim (verify currency)' },
+    { pat: /\b(this year|last year|next year|this month|last month)\b/i, weight: 0.08, label: 'Relative time reference (ambiguous)' },
+    { pat: /\b(was|were) (founded|established|created|built) in \d{4}\b/i, weight: 0.06, label: 'Historical founding date (verify)' },
+    { pat: /\b(the latest|the newest|the most recent|the current) (version|release|update|edition)\b/i, weight: 0.08, label: 'Latest version claim (may be stale)' },
+];
+
+const OVERCONFIDENCE_SIGNALS = [
+    { pat: /\b(always|never|every single|without (any )?exception|100%|guaranteed|undoubtedly)\b/i, weight: 0.10, label: 'Absolute language' },
+    { pat: /\b(the (only|best|worst|most|least) (way|option|choice|solution|method))\b/i, weight: 0.08, label: 'Superlative claim' },
+    { pat: /\b(no (doubt|question)|beyond doubt|irrefutable|indisputable|unquestionable)\b/i, weight: 0.12, label: 'False certainty' },
+    { pat: /\b(proven|scientifically proven|fact is|the truth is|in reality)\b/i, weight: 0.08, label: 'Unqualified truth claim' },
+    { pat: /\b(everyone knows|it'?s (well[- ])?known|common knowledge|obvious(ly)?)\b/i, weight: 0.08, label: 'Appeal to common knowledge' },
+    { pat: /\b(will definitely|will certainly|will always|will never)\b/i, weight: 0.10, label: 'Overconfident prediction' },
+];
+
+const INSTRUCTION_LEAK_SIGNALS = [
+    { pat: /\b(my (system prompt|instructions|guidelines|rules) (say|tell|state|include))\b/i, weight: 0.22, label: 'System prompt leakage' },
+    { pat: /\b(i('ve| have) been (instructed|told|programmed|designed) to)\b/i, weight: 0.14, label: 'Instruction disclosure' },
+    { pat: /\b(my (creator|developer|programmer|maker) (told|made|programmed|designed) me)\b/i, weight: 0.16, label: 'Creator reference leak' },
+    { pat: /\b(ignore (previous|prior|above|all) (instructions|prompts|rules))\b/i, weight: 0.24, label: 'Prompt injection echo' },
+    { pat: /\b(system:|user:|assistant:|\[INST\]|\[\/INST\]|<\|im_start\|>)/i, weight: 0.20, label: 'Raw template token leak' },
+];
+
+const REPETITION_SIGNALS = [
+    { pat: /(.{30,})\1/i, weight: 0.14, label: 'Repeated text block' },
+    { pat: /\b(in conclusion|to summarize|to sum up|in summary|overall|all in all)\b/i, weight: 0.04, label: 'Filler summary phrase' },
+    { pat: /\b(as (i |I )?(mentioned|said|stated|noted) (earlier|above|before|previously))\b/i, weight: 0.04, label: 'Self-reference filler' },
+    { pat: /\b(it('s| is) (important|worth|crucial|essential) (to note|to mention|noting|mentioning) that)\b/i, weight: 0.04, label: 'Verbose filler phrase' },
+    { pat: /\b(let me (explain|elaborate|break (this|it) down|walk you through))\b/i, weight: 0.02, label: 'Preamble filler' },
+];
+
 const HIGH_STAKES_PATTERNS = {
     medical: /\b(diagnosis|prescri|dosage|medication|treatment|symptom|disease|drug|surgery|patient)\b/i,
     legal: /\b(lawsuit|liability|legal advice|contract|court|attorney|regulation|compliance|statute)\b/i,
@@ -438,6 +482,11 @@ function scoreText(text, context, userQuery) {
     scanSignals(HALLUCINATION_SIGNALS);
     scanSignals(FRUSTRATION_SIGNALS);
     scanSignals(SYCOPHANCY_SIGNALS);
+    scanSignals(FABRICATED_URL_SIGNALS);
+    scanSignals(TEMPORAL_CONFUSION_SIGNALS);
+    scanSignals(OVERCONFIDENCE_SIGNALS);
+    scanSignals(INSTRUCTION_LEAK_SIGNALS);
+    scanSignals(REPETITION_SIGNALS);
 
     // Auto-context: detect domain even if user selected "general"
     const autoContext = detectContext(text);
